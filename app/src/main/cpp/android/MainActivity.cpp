@@ -1,57 +1,60 @@
 #include <android/MainActivity.hpp>
 
-MainActivity::MainActivity(JNIEnv* env, jobject handle) : m_env(env), m_this(handle) {
-    m_class = env->FindClass("com/cheerwizard/touch3d/MainActivity");
+#include <Log.hpp>
 
-    m_on_create = env->GetMethodID(m_class, "onCreate", "void(V)");
-    m_on_start = env->GetMethodID(m_class, "onStart", "void(V)");
-    m_on_resume = env->GetMethodID(m_class, "onResume", "void(V)");
-    m_on_pause = env->GetMethodID(m_class, "onPause", "void(V)");
-    m_on_stop = env->GetMethodID(m_class, "onStop", "void(V)");
-    m_on_destroy = env->GetMethodID(m_class, "onDestroy", "void(V)");
+jint MainActivity::Load(JavaVM *vm) {
+    JNIEnv* env = GetEnv();
 
-    m_set_window_flags = env->GetMethodID(m_class, "setWindowFlags", "void(Int, Int)");
-    m_set_window_format = env->GetMethodID(m_class, "setWindowFormat", "void(Int)");
-    m_show_imm = env->GetMethodID(m_class, "showIMM", "void(Int)");
-    m_hide_imm = env->GetMethodID(m_class, "hideIMM", "void(Int)");
+    jclass class_local_ref = env->FindClass("com/cheerwizard/touch3d/MainActivity");
+    s_class = (jclass) env->NewGlobalRef(class_local_ref);
+    env->DeleteLocalRef(class_local_ref);
+
+    s_set_window_flags = env->GetMethodID(s_class, "setWindowFlags", "(II)V");
+    s_set_window_format = env->GetMethodID(s_class, "setWindowFormat", "(I)V");
+    s_show_input = env->GetMethodID(s_class, "showInput", "(I)V");
+    s_hide_input = env->GetMethodID(s_class, "hideInput", "(I)V");
+
+    return JNI_VERSION_1_6;
 }
 
-void MainActivity::OnCreate() {
-    m_env->CallVoidMethod(m_this, m_on_create);
+void MainActivity::Unload(JavaVM *vm) {
+    GetEnv()->DeleteGlobalRef(s_class);
 }
 
-void MainActivity::OnStart() {
-    m_env->CallVoidMethod(m_this, m_on_start);
+MainActivity::MainActivity(jobject thiz) {
+    JNIEnv* env = GetEnv();
+    m_this = env->NewGlobalRef(thiz);
+    env->DeleteLocalRef(thiz);
 }
 
-void MainActivity::OnResume() {
-    m_env->CallVoidMethod(m_this, m_on_resume);
+MainActivity::~MainActivity() {
+    GetEnv()->DeleteGlobalRef(m_this);
 }
 
-void MainActivity::OnPause() {
-    m_env->CallVoidMethod(m_this, m_on_pause);
-}
-
-void MainActivity::OnStop() {
-    m_env->CallVoidMethod(m_this, m_on_stop);
-}
-
-void MainActivity::OnDestroy() {
-    m_env->CallVoidMethod(m_this, m_on_destroy);
+bool MainActivity::IsOpen() const {
+    return lifecycle != T3D_LIFECYCLE_DESTROY;
 }
 
 void MainActivity::SetWindowFlags(int flags, int mask) {
-    m_env->CallVoidMethod(m_this, m_set_window_flags, flags, mask);
+    GetEnv()->CallVoidMethod(m_this, s_set_window_flags, flags, mask);
 }
 
 void MainActivity::SetWindowFormat(int format) {
-    m_env->CallVoidMethod(m_this, m_set_window_format, format);
+    GetEnv()->CallVoidMethod(m_this, s_set_window_format, format);
 }
 
-void MainActivity::ShowIMM(int mode) {
-    m_env->CallVoidMethod(m_this, m_show_imm, mode);
+void MainActivity::ShowInput(int mode) {
+    GetEnv()->CallVoidMethod(m_this, s_show_input, mode);
 }
 
-void MainActivity::HideIMM(int mode) {
-    m_env->CallVoidMethod(m_this, m_hide_imm, mode);
+void MainActivity::HideInput(int mode) {
+    GetEnv()->CallVoidMethod(m_this, s_hide_input, mode);
+}
+
+JNIEnv* MainActivity::GetEnv() {
+    JNIEnv* env;
+    if (s_vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        LogAssert(false, "Failed to get JNIEnv!", "");
+    }
+    return env;
 }

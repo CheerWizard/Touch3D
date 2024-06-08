@@ -20,44 +20,39 @@ Application::~Application() {
 }
 
 void Application::RunLoop() {
-    m_state = T3D_APP_STARTED;
-    while (m_state != T3D_APP_DESTROYED) {
+    while (m_main_activity->IsOpen()) {
         m_window->Update();
-        if (!m_window->IsOpen()) {
-            m_state = T3D_APP_DESTROYED;
-            break;
-        }
     }
 }
 
 void Application::OnCreate() {
     LogDebug("OnCreate()", "");
-    m_state = T3D_APP_CREATED;
+    m_main_activity->lifecycle = T3D_LIFECYCLE_CREATE;
 }
 
 void Application::OnStart() {
     LogDebug("OnStart()", "");
-    m_state = T3D_APP_STARTED;
+    m_main_activity->lifecycle = T3D_LIFECYCLE_START;
 }
 
 void Application::OnResume() {
     LogDebug("OnResume()", "");
-    m_state = T3D_APP_RESUMED;
+    m_main_activity->lifecycle = T3D_LIFECYCLE_RESUME;
 }
 
 void Application::OnPause() {
     LogDebug("OnPause()", "");
-    m_state = T3D_APP_PAUSED;
+    m_main_activity->lifecycle = T3D_LIFECYCLE_PAUSE;
 }
 
 void Application::OnStop() {
     LogDebug("OnStop()", "");
-    m_state = T3D_APP_STOPPED;
+    m_main_activity->lifecycle = T3D_LIFECYCLE_STOP;
 }
 
 void Application::OnDestroy() {
     LogDebug("OnDestroy()", "");
-    m_state = T3D_APP_DESTROYED;
+    m_main_activity->lifecycle = T3D_LIFECYCLE_DESTROY;
 }
 
 MainActivitySavedState Application::OnSaveInstanceState() {
@@ -70,12 +65,20 @@ void Application::OnRestoreInstanceState(const MainActivitySavedState& saved_sta
     m_main_activity->saved_state = saved_state;
 }
 
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+    return MainActivity::Load(vm);
+}
+
+JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved) {
+    MainActivity::Unload(vm);
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_MainActivity_nativeOnCreate(
-        JNIEnv *env, jobject thiz
+        JNIEnv* env, jobject thiz
 ) {
-    s_app = new Application(new MainActivity(env, thiz));
+    s_app = new Application(new MainActivity(thiz));
     s_app->OnCreate();
     s_app->RunLoop();
 }

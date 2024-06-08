@@ -9,7 +9,9 @@
 
 #elif defined(T3D_ANDROID)
 
-#include <android/window.h>
+#include <android/native_window.h>
+#include <android/input.h>
+#include <android/rect.h>
 
 #endif
 
@@ -41,8 +43,6 @@ public:
     bool IsWindowed();
     bool IsFullscreen();
 
-#endif
-
     [[nodiscard]] inline int2 GetSize() const {
         return m_size;
     }
@@ -51,11 +51,30 @@ public:
         return m_refresh_rate;
     }
 
+#endif
+
 private:
-    void* m_handle;
+
+#if defined(T3D_WINDOWS)
+
+    HWND m_window;
     const char* m_title;
     int2 m_position;
     int2 m_size;
     dword m_refresh_rate;
+
+#elif defined(T3D_ANDROID)
+
+    ANativeWindow* m_window;
+    ANativeWindow* m_pending_window;
+
+    AInputQueue* m_input_queue;
+    AInputQueue* m_pending_input_queue;
+
+    ARect m_content_rect;
+    ARect m_pending_content_rect;
+
+#endif
+
     IOBuffer& m_io_buffer;
 };

@@ -33,7 +33,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
     var lastContentH: Int = 0
 
     private lateinit var _contentView: View
-    private lateinit var _imm: InputMethodManager
+    private lateinit var _inputManager: InputMethodManager
 
     private var _currentSurfaceHolder: SurfaceHolder? = null
     private var _currentInputQueue: InputQueue? = null
@@ -73,7 +73,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            _imm = getSystemService(InputMethodManager::class.java)
+            _inputManager = getSystemService(InputMethodManager::class.java)
         } else {
             // TODO(cheerwizard): whole input and app won't work, so need workaround for lower SDK
             throw RuntimeException("getSystemService is not supported on SDK=${Build.VERSION.CODENAME}")
@@ -252,12 +252,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
         window.setFormat(format)
     }
 
-    fun showIMM(mode: Int) {
-        _imm.showSoftInput(_contentView, mode)
+    fun showInput(mode: Int) {
+        _inputManager.showSoftInput(_contentView, mode)
     }
 
-    fun hideIMM(mode: Int) {
-        _imm.hideSoftInputFromWindow(_contentView.windowToken, mode)
+    fun hideInput(mode: Int) {
+        _inputManager.hideSoftInputFromWindow(_contentView.windowToken, mode)
     }
 }
 

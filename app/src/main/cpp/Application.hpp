@@ -17,20 +17,6 @@
 
 #endif
 
-enum AppState {
-    T3D_APP_CREATED,
-    T3D_APP_STARTED,
-    T3D_APP_RESUMED,
-    T3D_APP_PAUSED,
-    T3D_APP_STOPPED,
-    T3D_APP_DESTROYED,
-
-    T3D_APP_REDRAW_NEEDED,
-    T3D_APP_STATE_SAVED,
-
-    T3D_APP_RUNNING,
-};
-
 class Application final {
 
 public:
@@ -75,24 +61,14 @@ public:
 
     virtual void OnContentRectChanged(int x, int y, int w, int h);
 
-    int OnInputEvent(AInputEvent* event);
-    int32_t (*onInputEvent)(AInputEvent* event);
-
 protected:
-    int m_state;
     Window* m_window;
     IOBuffer m_io_buffer;
 
 #if defined(T3D_ANDROID)
     MainActivity* m_main_activity;
-    ANativeWindow* m_window;
-    ANativeWindow* m_pending_window;
     ALooper* m_looper;
     AConfiguration* m_config;
-    AInputQueue* m_input_queue;
-    AInputQueue* m_pending_input_queue;
-    ARect m_content_rect;
-    ARect m_pending_content_rect;
     pthread_mutex_t m_mutex;
     pthread_cond_t m_cond;
     pthread_t m_thread;

@@ -9,40 +9,47 @@ struct MainActivitySavedState {
     usize size;
 };
 
+enum Lifecycle {
+    T3D_LIFECYCLE_CREATE,
+    T3D_LIFECYCLE_START,
+    T3D_LIFECYCLE_RESUME,
+    T3D_LIFECYCLE_PAUSE,
+    T3D_LIFECYCLE_STOP,
+    T3D_LIFECYCLE_DESTROY,
+};
+
 class MainActivity final {
 
 public:
+
+    static jint Load(JavaVM* vm);
+    static void Unload(JavaVM* vm);
+
+    Lifecycle lifecycle;
     MainActivitySavedState saved_state;
     void* user_data;
 
-    MainActivity(JNIEnv* env, jobject handle);
+    MainActivity(jobject thiz);
+    ~MainActivity();
 
-    void OnCreate();
-    void OnStart();
-    void OnResume();
-    void OnPause();
-    void OnStop();
-    void OnDestroy();
+    bool IsOpen() const;
 
     void SetWindowFlags(int flags, int mask);
     void SetWindowFormat(int format);
-    void ShowIMM(int mode);
-    void HideIMM(int mode);
+
+    void ShowInput(int mode);
+    void HideInput(int mode);
 
 private:
-    JNIEnv* m_env;
+    static JNIEnv* GetEnv();
+
+private:
+    static JavaVM* s_vm;
+    static jclass s_class;
+    static jmethodID s_set_window_flags;
+    static jmethodID s_set_window_format;
+    static jmethodID s_show_input;
+    static jmethodID s_hide_input;
+
     jobject m_this;
-    jclass m_class;
-
-    jmethodID m_on_create;
-    jmethodID m_on_start;
-    jmethodID m_on_resume;
-    jmethodID m_on_pause;
-    jmethodID m_on_stop;
-    jmethodID m_on_destroy;
-
-    jmethodID m_set_window_flags;
-    jmethodID m_set_window_format;
-    jmethodID m_show_imm;
-    jmethodID m_hide_imm;
 };

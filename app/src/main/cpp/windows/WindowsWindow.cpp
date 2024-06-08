@@ -59,7 +59,7 @@ Window::Window(HINSTANCE instance, int cmd_show, IOBuffer& event_buffer, const c
     m_position = position;
     m_size = size;
 
-    m_handle = CreateWindowEx(
+    m_window = CreateWindowEx(
             0,
             window_class.lpszClassName,
             title,
@@ -74,11 +74,11 @@ Window::Window(HINSTANCE instance, int cmd_show, IOBuffer& event_buffer, const c
             &m_io_buffer
     );
 
-    if (m_handle == nullptr) {
+    if (m_window == nullptr) {
         LogError("Failed to create Win32 window!");
     }
 
-    ShowWindow(m_handle, cmd_show);
+    ShowWindow(m_window, cmd_show);
 
     DEVMODE devmode;
     EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devmode);
@@ -86,8 +86,8 @@ Window::Window(HINSTANCE instance, int cmd_show, IOBuffer& event_buffer, const c
 }
 
 Window::~Window() {
-    DestroyWindow(m_handle);
-    m_handle = nullptr;
+    DestroyWindow(m_window);
+    m_window = nullptr;
 }
 
 void Window::Update() {
@@ -99,7 +99,7 @@ void Window::Update() {
 }
 
 bool Window::IsOpen() const {
-    return IsWindow(m_handle);
+    return IsWindow(m_window);
 }
 
 bool Window::IsWindowed() {

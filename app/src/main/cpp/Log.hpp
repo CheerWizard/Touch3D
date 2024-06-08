@@ -4,6 +4,7 @@
 #include <PlatformDefs.hpp>
 
 #include <cstdio>
+#include <cstring>
 
 #ifdef T3D_WINDOWS
 #define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
@@ -22,7 +23,7 @@
 {                                \
     if (!(x)) {                  \
         __LogAssert(__FILENAME__, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__); \
-        __debugbreak(); \
+        DebugBreak(); \
     }\
 }
 
@@ -69,8 +70,8 @@ void __PrintLog(LogLevel logLevel, char* log);
 
 template<typename... Args>
 void __LogVerbose(const char* msg, Args... args) {
-    char fmt_buffer[8192] = {};
-    char text_buffer[8192] = {};
+    char fmt_buffer[1024] = {};
+    char text_buffer[1024] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_VERBOSE, text_buffer);
@@ -78,8 +79,8 @@ void __LogVerbose(const char* msg, Args... args) {
 
 template<typename... Args>
 void __LogInfo(const char* msg, Args... args) {
-    char fmt_buffer[8192] = {};
-    char text_buffer[8192] = {};
+    char fmt_buffer[1024] = {};
+    char text_buffer[1024] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_INFO, text_buffer);
@@ -87,8 +88,8 @@ void __LogInfo(const char* msg, Args... args) {
 
 template<typename... Args>
 void __LogDebug(const char* msg, Args... args) {
-    char fmt_buffer[8192] = {};
-    char text_buffer[8192] = {};
+    char fmt_buffer[1024] = {};
+    char text_buffer[1024] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_DEBUG, text_buffer);
@@ -96,8 +97,8 @@ void __LogDebug(const char* msg, Args... args) {
 
 template<typename... Args>
 void __LogWarning(const char* msg, Args... args) {
-    char fmt_buffer[8192] = {};
-    char text_buffer[8192] = {};
+    char fmt_buffer[1024] = {};
+    char text_buffer[1024] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_WARNING, text_buffer);
@@ -105,8 +106,8 @@ void __LogWarning(const char* msg, Args... args) {
 
 template<typename... Args>
 void __LogError(const char* filename, const char* function, int line, const char* msg, Args... args) {
-    char fmt_buffer[8192] = {};
-    char text_buffer[8192] = {};
+    char fmt_buffer[1024] = {};
+    char text_buffer[1024] = {};
     sprintf(fmt_buffer, "Error in %s -> %s(%i line):\n%s", filename, function, line, msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_ERROR, text_buffer);
@@ -114,8 +115,8 @@ void __LogError(const char* filename, const char* function, int line, const char
 
 template<typename... Args>
 void __LogAssert(const char* filename, const char* function, int line, const char* msg, Args... args) {
-    char fmt_buffer[8192] = {};
-    char text_buffer[8192] = {};
+    char fmt_buffer[1024] = {};
+    char text_buffer[1024] = {};
     sprintf(fmt_buffer, "Assertion Failed in %s -> %s(%i line):\n%s", filename, function, line, msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_ASSERTION, text_buffer);

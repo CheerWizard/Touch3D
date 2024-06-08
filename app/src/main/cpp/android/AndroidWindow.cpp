@@ -9,11 +9,10 @@ Window::Window(IOBuffer& io_buffer) : m_io_buffer(io_buffer) {
 }
 
 Window::~Window() {
-
+    ANativeWindow_release(m_window);
 }
 
 void Window::Update() {
-
 }
 
 bool Window::IsOpen() const {
