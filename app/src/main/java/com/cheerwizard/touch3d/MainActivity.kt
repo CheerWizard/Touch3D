@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import dalvik.annotation.optimization.CriticalNative
 
 import java.io.File
 
@@ -41,19 +42,32 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
 
     private external fun nativeGetError(): String
 
+    @CriticalNative
     private external fun nativeOnCreate()
+
+    @CriticalNative
     private external fun nativeOnStart()
+
+    @CriticalNative
     private external fun nativeOnResume()
+
+    @CriticalNative
     private external fun nativeOnPause()
+
+    @CriticalNative
     private external fun nativeOnStop()
+
+    @CriticalNative
     private external fun nativeOnDestroy()
+
+    @CriticalNative
+    private external fun nativeOnConfigurationChanged()
+
+    @CriticalNative
+    private external fun nativeOnLowMemory()
 
     private external fun nativeOnSaveInstanceState(): ByteArray?
     private external fun nativeOnRestoreInstanceState(state: ByteArray?)
-
-    private external fun nativeOnConfigurationChanged()
-
-    private external fun nativeOnLowMemory()
 
     private external fun nativeOnWindowFocusChanged(focused: Boolean)
 
