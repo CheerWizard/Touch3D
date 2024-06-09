@@ -14,5 +14,3 @@
 .cxx
 local.properties
 .idea
-cmake-build-debug
-cmake-build-release

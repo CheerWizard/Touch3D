@@ -1,3 +1,0 @@
-C:/Users/mecha/AndroidStudioProjects/Touch3D/app/src/main/cpp/cmake-build-debug/CMakeFiles/T3D.dir
-C:/Users/mecha/AndroidStudioProjects/Touch3D/app/src/main/cpp/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/mecha/AndroidStudioProjects/Touch3D/app/src/main/cpp/cmake-build-debug/CMakeFiles/rebuild_cache.dir
