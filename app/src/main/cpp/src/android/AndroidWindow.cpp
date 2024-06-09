@@ -1,15 +1,10 @@
-#include <PlatformDefs.hpp>
-
-#ifdef T3D_ANDROID
-
 #include <Window.hpp>
 
 Window::Window(IOBuffer& io_buffer) : m_io_buffer(io_buffer) {
-
+    m_io_buffer.on_touch_moved.reserve(1);
 }
 
 Window::~Window() {
-    ANativeWindow_release(m_window);
 }
 
 void Window::Update() {
@@ -18,5 +13,3 @@ void Window::Update() {
 bool Window::IsOpen() const {
     return true;
 }
-
-#endif // T3D_ANDROID

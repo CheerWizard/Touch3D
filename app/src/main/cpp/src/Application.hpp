@@ -10,7 +10,7 @@
 #include <pthread.h>
 #include <sched.h>
 
-#include <android/MainActivity.hpp>
+#include "src/android/T3DActivity.hpp"
 #include <android/configuration.h>
 #include <android/looper.h>
 #include <android/native_activity.h>
@@ -23,7 +23,11 @@ public:
 
 #if defined(T3D_ANDROID)
 
-    Application(MainActivity* main_activity);
+    Application(T3DActivity* main_activity);
+
+#elif defined(T3D_WINDOWS)
+
+    Application(HINSTANCE instance, int cmd_show);
 
 #else
 
@@ -66,7 +70,7 @@ protected:
     IOBuffer m_io_buffer;
 
 #if defined(T3D_ANDROID)
-    MainActivity* m_main_activity;
+    T3DActivity* m_main_activity;
     ALooper* m_looper;
     AConfiguration* m_config;
     pthread_mutex_t m_mutex;

@@ -1,15 +1,10 @@
-#include <PlatformDefs.hpp>
-
-#ifdef T3D_ANDROID
-
 #include <Application.hpp>
 #include <Log.hpp>
-
-#include <android/MainActivity.hpp>
+#include <T3DActivity.hpp>
 
 static Application* s_app = nullptr;
 
-Application::Application(MainActivity* main_activity)
+Application::Application(T3DActivity* main_activity)
 : m_main_activity(main_activity) {
     m_window = new Window(m_io_buffer);
 }
@@ -66,11 +61,11 @@ void Application::OnRestoreInstanceState(const MainActivitySavedState& saved_sta
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-    return MainActivity::Load(vm);
+    return T3DActivity::Load(vm);
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved) {
-    MainActivity::Unload(vm);
+    T3DActivity::Unload(vm);
 }
 
 extern "C"
@@ -78,7 +73,7 @@ JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_MainActivity_nativeOnCreate(
         JNIEnv* env, jobject thiz
 ) {
-    s_app = new Application(new MainActivity(thiz));
+    s_app = new Application(new T3DActivity(thiz));
     s_app->OnCreate();
     s_app->RunLoop();
 }
@@ -243,5 +238,3 @@ Java_com_cheerwizard_touch3d_MainActivity_nativeOnContentRectChanged(
 ) {
     s_app->OnContentRectChanged(x, y, w, h);
 }
-
-#endif // T3D_ANDROID

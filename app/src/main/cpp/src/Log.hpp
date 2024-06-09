@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Types.hpp>
-#include <PlatformDefs.hpp>
+#include <DebugBreak.hpp>
 
 #include <cstdio>
 #include <cstring>

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <PlatformDefs.hpp>
 #include <IOBuffer.hpp>
 
 #if defined(T3D_WINDOWS)
@@ -65,14 +64,14 @@ private:
 
 #elif defined(T3D_ANDROID)
 
-    ANativeWindow* m_window;
-    ANativeWindow* m_pending_window;
-
-    AInputQueue* m_input_queue;
-    AInputQueue* m_pending_input_queue;
-
-    ARect m_content_rect;
-    ARect m_pending_content_rect;
+//    ANativeWindow* m_window;
+//    ANativeWindow* m_pending_window;
+//
+//    AInputQueue* m_input_queue;
+//    AInputQueue* m_pending_input_queue;
+//
+//    ARect m_content_rect;
+//    ARect m_pending_content_rect;
 
 #endif
 

@@ -1,8 +1,7 @@
-#include <android/MainActivity.hpp>
-
+#include <T3DActivity.hpp>
 #include <Log.hpp>
 
-jint MainActivity::Load(JavaVM *vm) {
+jint T3DActivity::Load(JavaVM *vm) {
     JNIEnv* env = GetEnv();
 
     jclass class_local_ref = env->FindClass("com/cheerwizard/touch3d/MainActivity");
@@ -17,41 +16,41 @@ jint MainActivity::Load(JavaVM *vm) {
     return JNI_VERSION_1_6;
 }
 
-void MainActivity::Unload(JavaVM *vm) {
+void T3DActivity::Unload(JavaVM *vm) {
     GetEnv()->DeleteGlobalRef(s_class);
 }
 
-MainActivity::MainActivity(jobject thiz) {
+T3DActivity::T3DActivity(jobject thiz) {
     JNIEnv* env = GetEnv();
     m_this = env->NewGlobalRef(thiz);
     env->DeleteLocalRef(thiz);
 }
 
-MainActivity::~MainActivity() {
+T3DActivity::~T3DActivity() {
     GetEnv()->DeleteGlobalRef(m_this);
 }
 
-bool MainActivity::IsOpen() const {
+bool T3DActivity::IsOpen() const {
     return lifecycle != T3D_LIFECYCLE_DESTROY;
 }
 
-void MainActivity::SetWindowFlags(int flags, int mask) {
+void T3DActivity::SetWindowFlags(int flags, int mask) {
     GetEnv()->CallVoidMethod(m_this, s_set_window_flags, flags, mask);
 }
 
-void MainActivity::SetWindowFormat(int format) {
+void T3DActivity::SetWindowFormat(int format) {
     GetEnv()->CallVoidMethod(m_this, s_set_window_format, format);
 }
 
-void MainActivity::ShowInput(int mode) {
+void T3DActivity::ShowInput(int mode) {
     GetEnv()->CallVoidMethod(m_this, s_show_input, mode);
 }
 
-void MainActivity::HideInput(int mode) {
+void T3DActivity::HideInput(int mode) {
     GetEnv()->CallVoidMethod(m_this, s_hide_input, mode);
 }
 
-JNIEnv* MainActivity::GetEnv() {
+JNIEnv* T3DActivity::GetEnv() {
     JNIEnv* env;
     if (s_vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         LogAssert(false, "Failed to get JNIEnv!", "");

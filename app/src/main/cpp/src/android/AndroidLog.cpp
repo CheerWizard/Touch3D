@@ -1,7 +1,3 @@
-#include <PlatformDefs.hpp>
-
-#ifdef T3D_ANDROID
-
 #include <Log.hpp>
 #include <android/log.h>
 
@@ -46,5 +42,3 @@ void __PrintLog(LogLevel logLevel, char* log) {
 
     }
 }
-
-#endif // T3D_ANDROID

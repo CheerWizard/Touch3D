@@ -1,21 +1,17 @@
-#include <PlatformDefs.hpp>
-
-#ifdef T3D_WINDOWS
-
 #include <Window.hpp>
 #include <Log.hpp>
 
 static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM l_param) {
-    IOBuffer& event_buffer;
+    IOBuffer* io_buffer;
 
     if (msg == WM_CREATE) {
         CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT*>(l_param);
-        event_buffer = *reinterpret_cast<IOBuffer*>(pCreate->lpCreateParams);
-        SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) &event_buffer);
+        io_buffer = reinterpret_cast<IOBuffer*>(pCreate->lpCreateParams);
+        SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) &io_buffer);
     }
     else {
         LONG_PTR ptr = GetWindowLongPtr(handle, GWLP_USERDATA);
-        event_buffer = *reinterpret_cast<IOBuffer*>(ptr);
+        io_buffer = reinterpret_cast<IOBuffer*>(ptr);
     }
 
     switch (msg) {
@@ -31,7 +27,7 @@ static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM
         case WM_SIZE:
         {
             int2 size = { LOWORD(l_param), HIWORD(l_param) };
-            for (OnWindowResized on_window_resized : event_buffer.on_window_resized) {
+            for (OnWindowResized on_window_resized : io_buffer->on_window_resized) {
                 on_window_resized(size);
             }
             break;
@@ -109,5 +105,3 @@ bool Window::IsWindowed() {
 bool Window::IsFullscreen() {
     return false;
 }
-
-#endif // T3D_WINDOWS

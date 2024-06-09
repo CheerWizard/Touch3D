@@ -1,7 +1,3 @@
-#include <PlatformDefs.hpp>
-
-#ifdef T3D_WINDOWS
-
 #include <Log.hpp>
 #include <Windows.h>
 
@@ -46,5 +42,3 @@ void __PrintLog(LogLevel logLevel, char* log) {
 
     }
 }
-
-#endif // T3D_WINDOWS

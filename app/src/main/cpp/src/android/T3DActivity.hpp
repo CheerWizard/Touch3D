@@ -18,7 +18,7 @@ enum Lifecycle {
     T3D_LIFECYCLE_DESTROY,
 };
 
-class MainActivity final {
+class T3DActivity final {
 
 public:
 
@@ -29,8 +29,8 @@ public:
     MainActivitySavedState saved_state;
     void* user_data;
 
-    MainActivity(jobject thiz);
-    ~MainActivity();
+    T3DActivity(jobject thiz);
+    ~T3DActivity();
 
     bool IsOpen() const;
 
