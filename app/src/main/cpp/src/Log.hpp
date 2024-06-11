@@ -22,7 +22,7 @@
 {                                \
     if (!(x)) {                  \
         __LogAssert(__FILENAME__, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__); \
-        DebugBreak(); \
+        T3D_DEBUGBREAK(); \
     }\
 }
 

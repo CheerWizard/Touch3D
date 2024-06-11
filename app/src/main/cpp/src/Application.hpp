@@ -10,7 +10,7 @@
 #include <pthread.h>
 #include <sched.h>
 
-#include "src/android/T3DActivity.hpp"
+#include <android/Activity.hpp>
 #include <android/configuration.h>
 #include <android/looper.h>
 #include <android/native_activity.h>
@@ -39,31 +39,28 @@ public:
 
     void RunLoop();
 
-    virtual void OnCreate();
-    virtual void OnStart();
-    virtual void OnResume();
-    virtual void OnPause();
-    virtual void OnStop();
-    virtual void OnDestroy();
+    void OnCreate();
+    void OnStart();
+    void OnResume();
+    void OnPause();
+    void OnStop();
+    void OnDestroy();
 
-    virtual MainActivitySavedState OnSaveInstanceState();
-    virtual void OnRestoreInstanceState(const MainActivitySavedState& saved_state);
+    void OnConfigurationChanged();
 
-    virtual void OnConfigurationChanged();
+    void OnLowMemory();
 
-    virtual void OnLowMemory();
+    void OnWindowFocusChanged();
 
-    virtual void OnWindowFocusChanged();
+    void OnSurfaceCreated(void* surface);
+    void OnSurfaceChanged(void* surface, int format, int w, int h);
+    void OnSurfaceRedrawNeeded(void* surface);
+    void OnSurfaceDestroyed();
 
-    virtual void OnSurfaceCreated(void* surface);
-    virtual void OnSurfaceChanged(void* surface, int format, int w, int h);
-    virtual void OnSurfaceRedrawNeeded(void* surface);
-    virtual void OnSurfaceDestroyed();
+    void OnInputQueueCreated(void* input_queue);
+    void OnInputQueueDestroyed(void* input_queue);
 
-    virtual void OnInputQueueCreated(void* input_queue);
-    virtual void OnInputQueueDestroyed(void* input_queue);
-
-    virtual void OnContentRectChanged(int x, int y, int w, int h);
+    void OnContentRectChanged(int x, int y, int w, int h);
 
 protected:
     Window* m_window;

@@ -2,7 +2,7 @@
 
 #ifdef _MSC_VER
 
-#define DebugBreak() __debugbreak
+#define T3D_DEBUGBREAK() __debugbreak
 
 #else
 
@@ -114,26 +114,26 @@ __inline__ static void trap_instruction()
 #error "Debugbreak is not supported on this target"
 #elif DEBUG_BREAK_IMPL == DEBUG_BREAK_USE_TRAP_INSTRUCTION
 __attribute__((always_inline))
-__inline__ static void DebugBreak()
+__inline__ static void T3D_DEBUGBREAK()
 {
     trap_instruction();
 }
 #elif DEBUG_BREAK_IMPL == DEBUG_BREAK_USE_BULTIN_DEBUGTRAP
 __attribute__((always_inline))
-__inline__ static void DebugBreak()
+__inline__ static void T3D_DEBUGBREAK()
 {
 	__builtin_debugtrap();
 }
 #elif DEBUG_BREAK_IMPL == DEBUG_BREAK_USE_BUILTIN_TRAP
 __attribute__((always_inline))
-__inline__ static void DebugBreak()
+__inline__ static void T3D_DEBUGBREAK()
 {
 	__builtin_trap();
 }
 #elif DEBUG_BREAK_IMPL == DEBUG_BREAK_USE_SIGTRAP
 #include <signal.h>
 __attribute__((always_inline))
-__inline__ static void DebugBreak()
+__inline__ static void T3D_DEBUGBREAK()
 {
 	raise(SIGTRAP);
 }

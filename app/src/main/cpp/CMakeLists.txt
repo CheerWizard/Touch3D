@@ -2,41 +2,45 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project(T3D)
 
+option(T3D_TEST_MATH "Tests for Math" ON)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
+
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DT3D_DEBUG)
 endif ()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+include_directories(src)
+file(GLOB_RECURSE SRC src/*.cpp)
+
+macro(build_windows)
     add_definitions(-DT3D_WINDOWS)
     add_definitions(-DT3D_DESKTOP)
-    file(GLOB_RECURSE SOURCES src/windows/*.cpp)
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_definitions(-DT3D_LINUX)
-    add_definitions(-DT3D_DESKTOP)
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    add_definitions(-DT3D_MACOS)
-    add_definitions(-DT3D_DESKTOP)
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    file(GLOB_RECURSE WINDOWS_SRC windows/*.cpp)
+    if (T3D_TEST_MATH)
+        add_executable(${PROJECT_NAME} ${SRC} ${WINDOWS_SRC} TestMath.cpp)
+#        target_link_libraries(${PROJECT_NAME} vulkan)
+    else ()
+        add_executable(${PROJECT_NAME} WIN32 ${SRC} ${WINDOWS_SRC} WindowsMain.cpp)
+        target_link_libraries(${PROJECT_NAME} vulkan)
+    endif ()
+endmacro()
+
+macro(build_android)
     add_definitions(-DT3D_ANDROID)
     add_definitions(-DT3D_PHONE)
-    file(GLOB_RECURSE SOURCES src/android/*.cpp)
-endif ()
-
-include_directories(src)
-include_directories(vendor)
-
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
-
-if (T3D_BUILD_WINDOWS)
-    target_link_libraries(${PROJECT_NAME}
-            vulkan
-    )
-elseif (T3D_BUILD_ANDROID)
+    file(GLOB_RECURSE ANDROID_SRC android/*.cpp)
+    add_library(${PROJECT_NAME} SHARED ${SRC} ${ANDROID_SRC} AndroidMain.cpp)
     target_link_libraries(${PROJECT_NAME}
             android
             log
-            EGL
-            GLESv1_CM
             vulkan
     )
+endmacro()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    build_windows()
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    build_android()
 endif ()

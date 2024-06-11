@@ -1,6 +1,5 @@
 #include <Application.hpp>
 #include <Log.hpp>
-#include <T3DActivity.hpp>
 
 static Application* s_app = nullptr;
 
@@ -61,11 +60,25 @@ void Application::OnRestoreInstanceState(const MainActivitySavedState& saved_sta
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-    return T3DActivity::Load(vm);
+    Jni::vm = vm;
+
+    JNIEnv* env = Jni::Get();
+
+    jclass class_local_ref = env->FindClass("com/cheerwizard/touch3d/MainActivity");
+    Activity::clazz = (jclass) env->NewGlobalRef(class_local_ref);
+    env->DeleteLocalRef(class_local_ref);
+
+    Activity::mid_set_window_flags = env->GetMethodID(Activity::clazz, "setWindowFlags", "(II)V");
+    Activity::mid_set_window_format = env->GetMethodID(Activity::clazz, "setWindowFormat", "(I)V");
+    Activity::mid_show_input = env->GetMethodID(Activity::clazz, "showInput", "(I)V");
+    Activity::mid_hide_input = env->GetMethodID(Activity::clazz, "hideInput", "(I)V");
+
+    return JNI_VERSION_1_6;
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved) {
-    T3DActivity::Unload(vm);
+    JNIEnv* env = Jni::Get();
+    env->DeleteGlobalRef(Activity::clazz);
 }
 
 extern "C"
