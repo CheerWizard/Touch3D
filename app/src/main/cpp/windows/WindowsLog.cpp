@@ -1,7 +1,7 @@
 #include <Log.hpp>
 #include <Windows.h>
 
-void __PrintLog(LogLevel logLevel, char* log) {
+void __PrintLog(T3D_LOG_LEVEL logLevel, char* log) {
     switch (logLevel) {
 
         case T3D_LOG_VERBOSE: {
