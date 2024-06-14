@@ -7,7 +7,7 @@ static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM
     if (msg == WM_CREATE) {
         CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT*>(l_param);
         io_buffer = reinterpret_cast<IOBuffer*>(pCreate->lpCreateParams);
-        SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) &io_buffer);
+        SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) io_buffer);
     }
     else {
         LONG_PTR ptr = GetWindowLongPtr(handle, GWLP_USERDATA);

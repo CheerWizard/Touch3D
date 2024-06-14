@@ -17,13 +17,10 @@ Application::~Application() {
 }
 
 void Application::RunLoop() {
-    m_state = T3D_APP_STARTED;
-    while (m_state != T3D_APP_DESTROYED) {
+    m_running = true;
+    while (m_running) {
         m_window->Update();
 
-        if (!m_window->IsOpen()) {
-            m_state = T3D_APP_DESTROYED;
-            break;
-        }
+        m_running = m_window->IsOpen();
     }
 }

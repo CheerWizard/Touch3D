@@ -1,8 +1,8 @@
 #include <Log.hpp>
 #include <android/log.h>
 
-void __PrintLog(LogLevel logLevel, char* log) {
-    switch (logLevel) {
+void __PrintLog(T3D_LOG_LEVEL log_level, T3D_LOG_COLOR log_color, char* log) {
+    switch (log_level) {
 
         case T3D_LOG_VERBOSE:
         {

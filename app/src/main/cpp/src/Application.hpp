@@ -39,6 +39,8 @@ public:
 
     void RunLoop();
 
+#if defined(T3D_ANDROID)
+
     void OnCreate();
     void OnStart();
     void OnResume();
@@ -62,9 +64,12 @@ public:
 
     void OnContentRectChanged(int x, int y, int w, int h);
 
+#endif
+
 protected:
     Window* m_window;
     IOBuffer m_io_buffer;
+    bool m_running;
 
 #if defined(T3D_ANDROID)
     T3DActivity* m_main_activity;
