@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Types.hpp>
-
 #include <DebugBreak.hpp>
 
 #include <cstdio>
@@ -92,8 +91,8 @@ void __PrintLog(T3D_LOG_LEVEL log_level, T3D_LOG_COLOR log_color, char* log);
 
 template<typename... Args>
 void __LogVerbose(const char* msg, Args... args) {
-    char fmt_buffer[1024] = {};
-    char text_buffer[1024] = {};
+    char fmt_buffer[256] = {};
+    char text_buffer[256] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_LEVEL_VERBOSE, T3D_LOG_COLOR_LIGHT_GREEN, text_buffer);
@@ -101,8 +100,8 @@ void __LogVerbose(const char* msg, Args... args) {
 
 template<typename... Args>
 void __LogInfo(const char* msg, Args... args) {
-    char fmt_buffer[1024] = {};
-    char text_buffer[1024] = {};
+    char fmt_buffer[256] = {};
+    char text_buffer[256] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_LEVEL_INFO, T3D_LOG_COLOR_GREEN, text_buffer);
@@ -110,8 +109,8 @@ void __LogInfo(const char* msg, Args... args) {
 
 template<typename... Args>
 void __LogDebug(const char* msg, Args... args) {
-    char fmt_buffer[1024] = {};
-    char text_buffer[1024] = {};
+    char fmt_buffer[256] = {};
+    char text_buffer[256] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_LEVEL_DEBUG, T3D_LOG_COLOR_WHITE, text_buffer);
@@ -119,8 +118,8 @@ void __LogDebug(const char* msg, Args... args) {
 
 template<typename... Args>
 void __LogWarning(const char* msg, Args... args) {
-    char fmt_buffer[1024] = {};
-    char text_buffer[1024] = {};
+    char fmt_buffer[256] = {};
+    char text_buffer[256] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_LEVEL_WARNING, T3D_LOG_COLOR_YELLOW, text_buffer);
@@ -128,8 +127,8 @@ void __LogWarning(const char* msg, Args... args) {
 
 template<typename... Args>
 void __LogError(const char* filename, const char* function, int line, const char* msg, Args... args) {
-    char fmt_buffer[1024] = {};
-    char text_buffer[1024] = {};
+    char fmt_buffer[256] = {};
+    char text_buffer[256] = {};
     sprintf(fmt_buffer, "Error in %s -> %s(%i line):\n%s", filename, function, line, msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_LEVEL_ERROR, T3D_LOG_COLOR_RED, text_buffer);
@@ -137,8 +136,8 @@ void __LogError(const char* filename, const char* function, int line, const char
 
 template<typename... Args>
 void __LogAssert(const char* filename, const char* function, int line, const char* msg, Args... args) {
-    char fmt_buffer[1024] = {};
-    char text_buffer[1024] = {};
+    char fmt_buffer[256] = {};
+    char text_buffer[256] = {};
     sprintf(fmt_buffer, "Assertion Failed in %s -> %s(%i line):\n%s", filename, function, line, msg);
     sprintf(text_buffer, fmt_buffer, args...);
     __PrintLog(T3D_LOG_LEVEL_ASSERTION, T3D_LOG_COLOR_RED, text_buffer);
