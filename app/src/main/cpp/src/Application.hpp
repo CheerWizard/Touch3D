@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Window.hpp>
+#include <ThreadPool.hpp>
 
 #if defined(T3D_WINDOWS)
 
@@ -10,7 +11,7 @@
 #include <pthread.h>
 #include <sched.h>
 
-#include <android/Activity.hpp>
+#include <Activity.hpp>
 #include <android/configuration.h>
 #include <android/looper.h>
 #include <android/native_activity.h>
@@ -23,7 +24,7 @@ public:
 
 #if defined(T3D_ANDROID)
 
-    Application(T3DActivity* main_activity);
+    Application(Activity* activity);
 
 #elif defined(T3D_WINDOWS)
 
@@ -72,7 +73,7 @@ protected:
     bool m_running;
 
 #if defined(T3D_ANDROID)
-    T3DActivity* m_main_activity;
+    Activity* m_activity;
     ALooper* m_looper;
     AConfiguration* m_config;
     pthread_mutex_t m_mutex;

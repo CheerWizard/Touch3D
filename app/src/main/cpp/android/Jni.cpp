@@ -1,4 +1,4 @@
-#include <android/Jni.hpp>
+#include <Jni.hpp>
 #include <Log.hpp>
 
 JavaVM* Jni::vm = nullptr;

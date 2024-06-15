@@ -15,6 +15,8 @@
 
 #ifdef T3D_DEBUG
 
+#if defined(T3D_WINDOWS)
+
 #define LogVerbose(msg, ...) __LogVerbose(msg, ##__VA_ARGS__)
 #define LogInfo(msg, ...) __LogInfo(msg, ##__VA_ARGS__)
 #define LogDebug(msg, ...) __LogDebug(msg, ##__VA_ARGS__)
@@ -27,6 +29,23 @@
         T3D_DEBUGBREAK(); \
     }\
 }
+
+#else
+
+#define LogVerbose(msg, ...) __LogVerbose(msg, 0, ##__VA_ARGS__)
+#define LogInfo(msg, ...) __LogInfo(msg, 0, ##__VA_ARGS__)
+#define LogDebug(msg, ...) __LogDebug(msg, 0, ##__VA_ARGS__)
+#define LogWarning(msg, ...) __LogWarning(msg, 0, ##__VA_ARGS__)
+#define LogError(msg, ...) __LogError(__FILENAME__, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__)
+#define LogAssert(x, msg, ...) \
+{                                \
+    if (!(x)) {                  \
+        __LogAssert(__FILENAME__, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__); \
+        T3D_DEBUGBREAK(); \
+    }\
+}
+
+#endif
 
 #else
 
@@ -77,7 +96,7 @@ void __LogVerbose(const char* msg, Args... args) {
     char text_buffer[1024] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
-    __PrintLog(T3D_LOG_LEVEL_VERBOSE, T3D_LOG_COLOR_WHITE, text_buffer);
+    __PrintLog(T3D_LOG_LEVEL_VERBOSE, T3D_LOG_COLOR_LIGHT_GREEN, text_buffer);
 }
 
 template<typename... Args>
@@ -95,7 +114,7 @@ void __LogDebug(const char* msg, Args... args) {
     char text_buffer[1024] = {};
     sprintf(fmt_buffer, "%s", msg);
     sprintf(text_buffer, fmt_buffer, args...);
-    __PrintLog(T3D_LOG_LEVEL_DEBUG, T3D_LOG_COLOR_LIGHT_GREEN, text_buffer);
+    __PrintLog(T3D_LOG_LEVEL_DEBUG, T3D_LOG_COLOR_WHITE, text_buffer);
 }
 
 template<typename... Args>

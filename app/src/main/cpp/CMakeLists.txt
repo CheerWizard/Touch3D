@@ -6,6 +6,7 @@ option(T3D_TEST_MATH "Tests for Math" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DT3D_DEBUG)
@@ -31,13 +32,14 @@ endmacro()
 macro(build_android)
     add_definitions(-DT3D_ANDROID)
     add_definitions(-DT3D_PHONE)
+    add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR=1)
     file(GLOB_RECURSE ANDROID_SRC android/*.cpp)
     include_directories(android)
     add_library(${PROJECT_NAME} SHARED ${SRC} ${ANDROID_SRC} AndroidMain.cpp)
     target_link_libraries(${PROJECT_NAME}
             android
             log
-            vulkan
+#            vulkan
     )
 endmacro()
 

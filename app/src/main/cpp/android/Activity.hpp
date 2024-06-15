@@ -2,18 +2,19 @@
 
 #include <Types.hpp>
 
-#include <android/Jni.hpp>
+#include <Jni.hpp>
 
-enum Lifecycle {
-    T3D_LIFECYCLE_CREATE,
-    T3D_LIFECYCLE_START,
-    T3D_LIFECYCLE_RESUME,
-    T3D_LIFECYCLE_PAUSE,
-    T3D_LIFECYCLE_STOP,
-    T3D_LIFECYCLE_DESTROY,
+class Activity {
+
+public:
+    Activity(jobject thiz);
+    ~Activity();
+
+protected:
+    jobject m_this;
 };
 
-class Activity final {
+class MainActivity : public Activity {
 
 public:
     static jclass clazz;
@@ -23,12 +24,7 @@ public:
     static jmethodID mid_hide_input;
 
 public:
-    Lifecycle lifecycle;
-
-    Activity(jobject thiz);
-    ~Activity();
-
-    bool IsOpen() const;
+    MainActivity(jobject thiz) : Activity(thiz) {}
 
     void SetWindowFlags(int flags, int mask);
     void SetWindowFormat(int format);
@@ -36,6 +32,4 @@ public:
     void ShowInput(int mode);
     void HideInput(int mode);
 
-private:
-    jobject m_this;
 };

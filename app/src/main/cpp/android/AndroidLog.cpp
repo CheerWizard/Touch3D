@@ -4,37 +4,37 @@
 void __PrintLog(T3D_LOG_LEVEL log_level, T3D_LOG_COLOR log_color, char* log) {
     switch (log_level) {
 
-        case T3D_LOG_VERBOSE:
+        case T3D_LOG_LEVEL_VERBOSE:
         {
             __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_VERBOSE, "T3D", log);
             break;
         }
 
-        case T3D_LOG_INFO:
+        case T3D_LOG_LEVEL_INFO:
         {
             __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_INFO, "T3D", log);
             break;
         }
 
-        case T3D_LOG_DEBUG:
+        case T3D_LOG_LEVEL_DEBUG:
         {
             __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_DEBUG, "T3D", log);
             break;
         }
 
-        case T3D_LOG_WARNING:
+        case T3D_LOG_LEVEL_WARNING:
         {
             __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_WARN, "T3D", log);
             break;
         }
 
-        case T3D_LOG_ERROR:
+        case T3D_LOG_LEVEL_ERROR:
         {
             __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_ERROR, "T3D", log);
             break;
         }
 
-        case T3D_LOG_ASSERTION:
+        case T3D_LOG_LEVEL_ASSERTION:
         {
             __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_FATAL, "T3D", log);
             break;

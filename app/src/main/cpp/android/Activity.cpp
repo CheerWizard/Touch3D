@@ -1,4 +1,4 @@
-#include <android/Activity.hpp>
+#include <Activity.hpp>
 #include <Log.hpp>
 
 Activity::Activity(jobject thiz) {
@@ -11,22 +11,24 @@ Activity::~Activity() {
     Jni::Get()->DeleteGlobalRef(m_this);
 }
 
-bool Activity::IsOpen() const {
-    return lifecycle != T3D_LIFECYCLE_DESTROY;
+jclass MainActivity::clazz;
+jmethodID MainActivity::mid_set_window_flags;
+jmethodID MainActivity::mid_set_window_format;
+jmethodID MainActivity::mid_show_input;
+jmethodID MainActivity::mid_hide_input;
+
+void MainActivity::SetWindowFlags(int flags, int mask) {
+    Jni::Get()->CallVoidMethod(m_this, mid_set_window_flags, flags, mask);
 }
 
-void Activity::SetWindowFlags(int flags, int mask) {
-    Jni::Get()->CallVoidMethod(m_this, s_set_window_flags, flags, mask);
+void MainActivity::SetWindowFormat(int format) {
+    Jni::Get()->CallVoidMethod(m_this, mid_set_window_format, format);
 }
 
-void Activity::SetWindowFormat(int format) {
-    Jni::Get()->CallVoidMethod(m_this, s_set_window_format, format);
+void MainActivity::ShowInput(int mode) {
+    Jni::Get()->CallVoidMethod(m_this, mid_show_input, mode);
 }
 
-void Activity::ShowInput(int mode) {
-    Jni::Get()->CallVoidMethod(m_this, s_show_input, mode);
-}
-
-void Activity::HideInput(int mode) {
-    Jni::Get()->CallVoidMethod(m_this, s_hide_input, mode);
+void MainActivity::HideInput(int mode) {
+    Jni::Get()->CallVoidMethod(m_this, mid_hide_input, mode);
 }

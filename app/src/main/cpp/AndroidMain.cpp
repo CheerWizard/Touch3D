@@ -3,60 +3,89 @@
 
 static Application* s_app = nullptr;
 
-Application::Application(T3DActivity* main_activity)
-: m_main_activity(main_activity) {
+Application::Application(Activity* activity)
+: m_activity(activity) {
     m_window = new Window(m_io_buffer);
 }
 
 Application::~Application() {
-    delete m_main_activity;
+    delete m_activity;
     delete m_window;
 }
 
 void Application::RunLoop() {
-    while (m_main_activity->IsOpen()) {
+    m_running = true;
+    while (m_running) {
         m_window->Update();
     }
 }
 
 void Application::OnCreate() {
-    LogDebug("OnCreate()", "");
-    m_main_activity->lifecycle = T3D_LIFECYCLE_CREATE;
+    LogDebug("OnCreate()");
+    // TODO(cheerwizard): consider how to simplify the code
+    ThreadPool::Get().SubmitTask([this]() {
+         // do something
+    });
 }
 
 void Application::OnStart() {
-    LogDebug("OnStart()", "");
-    m_main_activity->lifecycle = T3D_LIFECYCLE_START;
+    LogDebug("OnStart()");
 }
 
 void Application::OnResume() {
-    LogDebug("OnResume()", "");
-    m_main_activity->lifecycle = T3D_LIFECYCLE_RESUME;
+    LogDebug("OnResume()");
 }
 
 void Application::OnPause() {
-    LogDebug("OnPause()", "");
-    m_main_activity->lifecycle = T3D_LIFECYCLE_PAUSE;
+    LogDebug("OnPause()");
 }
 
 void Application::OnStop() {
-    LogDebug("OnStop()", "");
-    m_main_activity->lifecycle = T3D_LIFECYCLE_STOP;
+    LogDebug("OnStop()");
 }
 
 void Application::OnDestroy() {
-    LogDebug("OnDestroy()", "");
-    m_main_activity->lifecycle = T3D_LIFECYCLE_DESTROY;
+    LogDebug("OnDestroy()");
 }
 
-MainActivitySavedState Application::OnSaveInstanceState() {
-    LogDebug("OnSaveInstanceState()", "");
-    return m_main_activity->saved_state;
+void Application::OnConfigurationChanged() {
+
 }
 
-void Application::OnRestoreInstanceState(const MainActivitySavedState& saved_state) {
-    LogDebug("OnRestoreInstanceState()", "");
-    m_main_activity->saved_state = saved_state;
+void Application::OnLowMemory() {
+
+}
+
+void Application::OnWindowFocusChanged() {
+
+}
+
+void Application::OnSurfaceCreated(void *surface) {
+
+}
+
+void Application::OnSurfaceChanged(void *surface, int format, int w, int h) {
+
+}
+
+void Application::OnSurfaceRedrawNeeded(void *surface) {
+
+}
+
+void Application::OnSurfaceDestroyed() {
+
+}
+
+void Application::OnInputQueueCreated(void *input_queue) {
+
+}
+
+void Application::OnInputQueueDestroyed(void *input_queue) {
+
+}
+
+void Application::OnContentRectChanged(int x, int y, int w, int h) {
+
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
@@ -65,20 +94,19 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     JNIEnv* env = Jni::Get();
 
     jclass class_local_ref = env->FindClass("com/cheerwizard/touch3d/MainActivity");
-    Activity::clazz = (jclass) env->NewGlobalRef(class_local_ref);
+    MainActivity::clazz = (jclass) env->NewGlobalRef(class_local_ref);
     env->DeleteLocalRef(class_local_ref);
 
-    Activity::mid_set_window_flags = env->GetMethodID(Activity::clazz, "setWindowFlags", "(II)V");
-    Activity::mid_set_window_format = env->GetMethodID(Activity::clazz, "setWindowFormat", "(I)V");
-    Activity::mid_show_input = env->GetMethodID(Activity::clazz, "showInput", "(I)V");
-    Activity::mid_hide_input = env->GetMethodID(Activity::clazz, "hideInput", "(I)V");
+    MainActivity::mid_set_window_flags = env->GetMethodID(MainActivity::clazz, "setWindowFlags", "(II)V");
+    MainActivity::mid_set_window_format = env->GetMethodID(MainActivity::clazz, "setWindowFormat", "(I)V");
+    MainActivity::mid_show_input = env->GetMethodID(MainActivity::clazz, "showInput", "(I)V");
+    MainActivity::mid_hide_input = env->GetMethodID(MainActivity::clazz, "hideInput", "(I)V");
 
     return JNI_VERSION_1_6;
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved) {
-    JNIEnv* env = Jni::Get();
-    env->DeleteGlobalRef(Activity::clazz);
+    Jni::Get()->DeleteGlobalRef(MainActivity::clazz);
 }
 
 extern "C"
@@ -86,7 +114,7 @@ JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_MainActivity_nativeOnCreate(
         JNIEnv* env, jobject thiz
 ) {
-    s_app = new Application(new T3DActivity(thiz));
+    s_app = new Application(new MainActivity(thiz));
     s_app->OnCreate();
     s_app->RunLoop();
 }
@@ -138,29 +166,6 @@ Java_com_cheerwizard_touch3d_MainActivity_nativeOnStop(
         JNIEnv *env, jobject thiz
 ) {
     s_app->OnStop();
-}
-
-extern "C"
-JNIEXPORT jbyteArray JNICALL
-Java_com_cheerwizard_touch3d_MainActivity_nativeOnSaveInstanceState(
-        JNIEnv *env, jobject thiz
-) {
-    MainActivitySavedState saved_state = s_app->OnSaveInstanceState();
-    jbyteArray state = env->NewByteArray(saved_state.size);
-    memcpy(state, saved_state.state, saved_state.size);
-    return state;
-}
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_cheerwizard_touch3d_MainActivity_nativeOnRestoreInstanceState(
-        JNIEnv *env, jobject thiz,
-        jbyteArray state
-) {
-    MainActivitySavedState saved_state;
-    saved_state.state = state;
-    saved_state.size = 0;
-    s_app->OnRestoreInstanceState(saved_state);
 }
 
 extern "C"

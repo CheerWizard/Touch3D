@@ -33,12 +33,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
     var lastContentW: Int = 0
     var lastContentH: Int = 0
 
-    private lateinit var _contentView: View
-    private lateinit var _inputManager: InputMethodManager
+    private lateinit var mView: View
+    private lateinit var mInputManager: InputMethodManager
 
-    private var _currentSurfaceHolder: SurfaceHolder? = null
-    private var _currentInputQueue: InputQueue? = null
-    private var _destroyed = false
+    private var mCurrentSurfaceHolder: SurfaceHolder? = null
+    private var mCurrentInputQueue: InputQueue? = null
+    private var mDestroyed = false
 
     private external fun nativeGetError(): String
 
@@ -66,9 +66,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
     @CriticalNative
     private external fun nativeOnLowMemory()
 
-    private external fun nativeOnSaveInstanceState(): ByteArray?
-    private external fun nativeOnRestoreInstanceState(state: ByteArray?)
-
     private external fun nativeOnWindowFocusChanged(focused: Boolean)
 
     private external fun nativeOnSurfaceCreated(surface: Surface)
@@ -87,7 +84,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            _inputManager = getSystemService(InputMethodManager::class.java)
+            mInputManager = getSystemService(InputMethodManager::class.java)
         } else {
             // TODO(cheerwizard): whole input and app won't work, so need workaround for lower SDK
             throw RuntimeException("getSystemService is not supported on SDK=${Build.VERSION.CODENAME}")
@@ -101,15 +98,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
             or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
         )
 
-        _contentView = View(this)
-        setContentView(_contentView)
-        _contentView.requestFocus()
-        _contentView.viewTreeObserver.addOnGlobalLayoutListener(this)
+        mView = View(this)
+        setContentView(mView)
+        mView.requestFocus()
+        mView.viewTreeObserver.addOnGlobalLayoutListener(this)
 
         val nativeSavedState = savedInstanceState?.getByteArray(K_SAVED_STATE)
 
         nativeOnCreate()
-        nativeOnRestoreInstanceState(nativeSavedState)
+//        nativeOnRestoreInstanceState(nativeSavedState)
 
         super.onCreate(savedInstanceState)
     }
@@ -119,16 +116,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
     }
 
     override fun onDestroy() {
-        _destroyed = true
+        mDestroyed = true
 
-        if (_currentSurfaceHolder != null) {
+        if (mCurrentSurfaceHolder != null) {
             nativeOnSurfaceDestroyed()
-            _currentSurfaceHolder = null
+            mCurrentSurfaceHolder = null
         }
 
-        if (_currentInputQueue != null) {
-            nativeOnInputQueueDestroyed(_currentInputQueue.getNativePtr())
-            _currentInputQueue = null
+        if (mCurrentInputQueue != null) {
+            nativeOnInputQueueDestroyed(mCurrentInputQueue.getNativePtr())
+            mCurrentInputQueue = null
         }
 
         nativeOnDestroy()
@@ -148,18 +145,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        val state = nativeOnSaveInstanceState()
-        if (state != null) {
-            outState.putByteArray(K_SAVED_STATE, state)
-        }
+//        val state = nativeOnSaveInstanceState()
+//        if (state != null) {
+//            outState.putByteArray(K_SAVED_STATE, state)
+//        }
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        val state = savedInstanceState.getByteArray(K_SAVED_STATE)
-        if (state != null) {
-            nativeOnRestoreInstanceState(state)
-        }
+//        val state = savedInstanceState.getByteArray(K_SAVED_STATE)
+//        if (state != null) {
+//            nativeOnRestoreInstanceState(state)
+//        }
     }
 
     override fun onStart() {
@@ -174,71 +171,71 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        if (!_destroyed) {
+        if (!mDestroyed) {
             nativeOnConfigurationChanged()
         }
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
-        if (!_destroyed) {
+        if (!mDestroyed) {
             nativeOnLowMemory()
         }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (!_destroyed) {
+        if (!mDestroyed) {
             nativeOnWindowFocusChanged(hasFocus)
         }
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        if (!_destroyed) {
-            _currentSurfaceHolder = holder
+        if (!mDestroyed) {
+            mCurrentSurfaceHolder = holder
             nativeOnSurfaceCreated(holder.surface)
         }
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        if (!_destroyed) {
-            _currentSurfaceHolder = holder
+        if (!mDestroyed) {
+            mCurrentSurfaceHolder = holder
             nativeOnSurfaceChanged(holder.surface, format, width, height)
         }
     }
 
     override fun surfaceRedrawNeeded(holder: SurfaceHolder) {
-        if (!_destroyed) {
-            _currentSurfaceHolder = holder
+        if (!mDestroyed) {
+            mCurrentSurfaceHolder = holder
             nativeOnSurfaceRedrawNeeded(holder.surface)
         }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
-        _currentSurfaceHolder = null
-        if (!_destroyed) {
+        mCurrentSurfaceHolder = null
+        if (!mDestroyed) {
             nativeOnSurfaceDestroyed()
         }
     }
 
     override fun onInputQueueCreated(queue: InputQueue) {
-        if (!_destroyed) {
-            _currentInputQueue = queue
+        if (!mDestroyed) {
+            mCurrentInputQueue = queue
             nativeOnInputQueueDestroyed(queue.getNativePtr())
         }
     }
 
     override fun onInputQueueDestroyed(queue: InputQueue) {
-        if (!_destroyed) {
+        if (!mDestroyed) {
             nativeOnInputQueueDestroyed(queue.getNativePtr())
-            _currentInputQueue = null
+            mCurrentInputQueue = null
         }
     }
 
     override fun onGlobalLayout() {
-        _contentView.getLocationInWindow(location)
-        val w = _contentView.width
-        val h = _contentView.height
+        mView.getLocationInWindow(location)
+        val w = mView.width
+        val h = mView.height
         if ((location[0] != lastContentX)
             || (location[1] != lastContentY)
             || (w != lastContentW)
@@ -249,7 +246,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
             lastContentW = w
             lastContentH = h
 
-            if (!_destroyed) {
+            if (!mDestroyed) {
                 nativeOnContentRectChanged(
                     lastContentX, lastContentY,
                     lastContentW, lastContentH
@@ -267,11 +264,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
     }
 
     fun showInput(mode: Int) {
-        _inputManager.showSoftInput(_contentView, mode)
+        mInputManager.showSoftInput(mView, mode)
     }
 
     fun hideInput(mode: Int) {
-        _inputManager.hideSoftInputFromWindow(_contentView.windowToken, mode)
+        mInputManager.hideSoftInputFromWindow(mView.windowToken, mode)
     }
 }
 
