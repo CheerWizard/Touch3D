@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project(T3D)
 
-option(T3D_TEST_MATH "Tests for Math" OFF)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -18,28 +16,33 @@ file(GLOB_RECURSE SRC src/*.cpp)
 macro(build_windows)
     add_definitions(-DT3D_WINDOWS)
     add_definitions(-DT3D_DESKTOP)
-    file(GLOB_RECURSE WINDOWS_SRC windows/*.cpp)
+    file(GLOB_RECURSE SRC_WINDOWS windows/*.cpp)
+    file(GLOB_RECURSE SRC_TEST tests/*.cpp)
     include_directories(windows)
-    if (T3D_TEST_MATH)
-        add_executable(${PROJECT_NAME} ${SRC} ${WINDOWS_SRC} TestMath.cpp)
-#        target_link_libraries(${PROJECT_NAME} vulkan)
-    else ()
-        add_executable(${PROJECT_NAME} WIN32 ${SRC} ${WINDOWS_SRC} WindowsMain.cpp)
-#        target_link_libraries(${PROJECT_NAME} vulkan)
-    endif ()
+    add_executable("T3D_TESTS_WINDOWS" ${SRC} ${SRC_WINDOWS} ${SRC_TEST})
+    #target_link_libraries("T3D_TESTS_WINDOWS" vulkan)
+    add_executable(${PROJECT_NAME} WIN32 ${SRC} ${SRC_WINDOWS} WindowsMain.cpp)
+    #target_link_libraries(${PROJECT_NAME} vulkan)
 endmacro()
 
 macro(build_android)
     add_definitions(-DT3D_ANDROID)
     add_definitions(-DT3D_PHONE)
     add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR=1)
-    file(GLOB_RECURSE ANDROID_SRC android/*.cpp)
+    file(GLOB_RECURSE SRC_ANDROID android/*.cpp)
+    file(GLOB_RECURSE SRC_TEST tests/*.cpp)
     include_directories(android)
-    add_library(${PROJECT_NAME} SHARED ${SRC} ${ANDROID_SRC} AndroidMain.cpp)
+    add_library("T3D_TESTS_ANDROID" SHARED ${SRC} ${SRC_ANDROID} ${SRC_TEST})
+    target_link_libraries("T3D_TESTS_ANDROID"
+            android
+            log
+            #vulkan
+    )
+    add_library(${PROJECT_NAME} SHARED ${SRC} ${SRC_ANDROID} AndroidMain.cpp)
     target_link_libraries(${PROJECT_NAME}
             android
             log
-#            vulkan
+            #vulkan
     )
 endmacro()
 

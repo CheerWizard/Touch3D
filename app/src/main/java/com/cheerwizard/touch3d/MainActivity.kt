@@ -12,20 +12,10 @@ import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
-import dalvik.annotation.optimization.CriticalNative
 
 import java.io.File
 
 class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, OnGlobalLayoutListener {
-
-    companion object {
-        const val K_LIB_NAME: String = "T3D"
-        const val K_SAVED_STATE: String = "T3D_saved_state"
-
-        init {
-            System.loadLibrary(K_LIB_NAME)
-        }
-    }
 
     val location: IntArray = IntArray(2)
     var lastContentX: Int = 0
@@ -40,47 +30,37 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
     private var mCurrentInputQueue: InputQueue? = null
     private var mDestroyed = false
 
-    private external fun nativeGetError(): String
+    external fun nativeOnCreate()
 
-    @CriticalNative
-    private external fun nativeOnCreate()
+    external fun nativeOnStart()
 
-    @CriticalNative
-    private external fun nativeOnStart()
+    external fun nativeOnResume()
 
-    @CriticalNative
-    private external fun nativeOnResume()
+    external fun nativeOnPause()
 
-    @CriticalNative
-    private external fun nativeOnPause()
+    external fun nativeOnStop()
 
-    @CriticalNative
-    private external fun nativeOnStop()
+    external fun nativeOnDestroy()
 
-    @CriticalNative
-    private external fun nativeOnDestroy()
+    external fun nativeOnConfigurationChanged()
 
-    @CriticalNative
-    private external fun nativeOnConfigurationChanged()
+    external fun nativeOnLowMemory()
 
-    @CriticalNative
-    private external fun nativeOnLowMemory()
+    external fun nativeOnWindowFocusChanged(focused: Boolean)
 
-    private external fun nativeOnWindowFocusChanged(focused: Boolean)
-
-    private external fun nativeOnSurfaceCreated(surface: Surface)
-    private external fun nativeOnSurfaceChanged(
+    external fun nativeOnSurfaceCreated(surface: Surface)
+    external fun nativeOnSurfaceChanged(
         surface: Surface,
         format: Int,
         width: Int, height: Int
     )
-    private external fun nativeOnSurfaceRedrawNeeded(surface: Surface)
-    private external fun nativeOnSurfaceDestroyed()
+    external fun nativeOnSurfaceRedrawNeeded(surface: Surface)
+    external fun nativeOnSurfaceDestroyed()
 
-    private external fun nativeOnInputQueueCreated(queuePtr: Long)
-    private external fun nativeOnInputQueueDestroyed(queuePtr: Long)
+    external fun nativeOnInputQueueCreated(queuePtr: Long)
+    external fun nativeOnInputQueueDestroyed(queuePtr: Long)
 
-    private external fun nativeOnContentRectChanged(x: Int, y: Int, w: Int, h: Int)
+    external fun nativeOnContentRectChanged(x: Int, y: Int, w: Int, h: Int)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -102,8 +82,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
         setContentView(mView)
         mView.requestFocus()
         mView.viewTreeObserver.addOnGlobalLayoutListener(this)
-
-        val nativeSavedState = savedInstanceState?.getByteArray(K_SAVED_STATE)
 
         nativeOnCreate()
 //        nativeOnRestoreInstanceState(nativeSavedState)

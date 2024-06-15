@@ -2,6 +2,7 @@
 #include <Log.hpp>
 
 static Application* s_app = nullptr;
+static ThreadPool* s_thread_pool = nullptr;
 
 Application::Application(Activity* activity)
 : m_activity(activity) {
@@ -102,10 +103,14 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     MainActivity::mid_show_input = env->GetMethodID(MainActivity::clazz, "showInput", "(I)V");
     MainActivity::mid_hide_input = env->GetMethodID(MainActivity::clazz, "hideInput", "(I)V");
 
+    s_thread_pool = new ThreadPool(4, 100, "Native", T3D_THREAD_PRIORITY_NORMAL);
+
     return JNI_VERSION_1_6;
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved) {
+    delete s_app;
+    delete s_thread_pool;
     Jni::Get()->DeleteGlobalRef(MainActivity::clazz);
 }
 
@@ -114,9 +119,13 @@ JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_MainActivity_nativeOnCreate(
         JNIEnv* env, jobject thiz
 ) {
-    s_app = new Application(new MainActivity(thiz));
-    s_app->OnCreate();
-    s_app->RunLoop();
+    ThreadPool::Get().SubmitTask([thiz]() {
+        if (s_app == nullptr) {
+            s_app = new Application(new MainActivity(thiz));
+            s_app->OnCreate();
+            s_app->RunLoop();
+        }
+    });
 }
 
 extern "C"
@@ -125,15 +134,6 @@ Java_com_cheerwizard_touch3d_MainActivity_nativeOnDestroy(
         JNIEnv *env, jobject thiz
 ) {
     s_app->OnDestroy();
-    delete s_app;
-}
-
-extern "C"
-JNIEXPORT jstring JNICALL
-Java_com_cheerwizard_touch3d_MainActivity_nativeGetError(
-        JNIEnv *env, jobject thiz
-) {
-    return nullptr;
 }
 
 extern "C"

@@ -10,7 +10,7 @@
 class ThreadPool final {
 
 public:
-    ThreadPool(u32 thread_count, usize task_count, const char* name, T3D_THREAD_PRIORITY priority);
+    ThreadPool(u32 thread_count, usize reserved_task_count, const char* name, T3D_THREAD_PRIORITY priority);
     ~ThreadPool();
 
 public:

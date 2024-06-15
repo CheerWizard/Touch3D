@@ -2,13 +2,13 @@
 
 ThreadPool* ThreadPool::s_instance = nullptr;
 
-ThreadPool::ThreadPool(u32 thread_count, usize task_count, const char *name, T3D_THREAD_PRIORITY priority)
+ThreadPool::ThreadPool(u32 thread_count, usize reserved_task_count, const char *name, T3D_THREAD_PRIORITY priority)
 {
     s_instance = this;
     m_todo_task_count = 0;
     m_done_task_count.store(0);
     m_thread_count = thread_count;
-    m_task_buffer.Resize(task_count);
+    m_task_buffer.Reserve(reserved_task_count);
     m_running = true;
     for (int i = 0; i < thread_count ; i++)
     {
