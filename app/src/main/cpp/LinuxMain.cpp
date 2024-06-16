@@ -1,15 +1,12 @@
-#include <Log.hpp>
-
-#include <X11/Xlib.h>
-#include <err.h>
+#include <Application.hpp>
 
 static Display* display;
 static int screen;
 static Window window_root;
 
 int main() {
-    display = XOpenDisplay(NULL);
-    if (display == NULL) {
+    display = XOpenDisplay(nullptr);
+    if (display == nullptr) {
         LogAssert(false, "Unable to open X11 display for Linux!");
     }
 

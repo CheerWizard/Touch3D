@@ -4,6 +4,7 @@
 static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM l_param) {
     IOBuffer* io_buffer;
 
+    // only called when window is created first time
     if (msg == WM_CREATE) {
         CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT*>(l_param);
         io_buffer = reinterpret_cast<IOBuffer*>(pCreate->lpCreateParams);
@@ -27,8 +28,10 @@ static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM
         case WM_SIZE:
         {
             int2 size = { LOWORD(l_param), HIWORD(l_param) };
-            for (OnWindowResized on_window_resized : io_buffer->on_window_resized) {
-                on_window_resized(size);
+            if (io_buffer != nullptr) {
+                for (OnWindowResized on_window_resized : io_buffer->on_window_resized) {
+                    on_window_resized(size);
+                }
             }
             break;
         }
@@ -43,8 +46,7 @@ static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM
     return DefWindowProc(handle, msg, w_param, l_param);
 }
 
-Window::Window(HINSTANCE instance, int cmd_show, IOBuffer& event_buffer, const char* title, int2 position, int2 size)
-: m_io_buffer(event_buffer) {
+Window::Window(HINSTANCE instance, int cmd_show, const char* title, int2 position, int2 size) {
     WNDCLASS window_class = {};
     window_class.hInstance = instance;
     window_class.lpszClassName = "Win32_Window";
@@ -67,7 +69,7 @@ Window::Window(HINSTANCE instance, int cmd_show, IOBuffer& event_buffer, const c
             nullptr,
             nullptr,
             instance,
-            &m_io_buffer
+            nullptr
     );
 
     if (m_window == nullptr) {
@@ -84,6 +86,14 @@ Window::Window(HINSTANCE instance, int cmd_show, IOBuffer& event_buffer, const c
 Window::~Window() {
     DestroyWindow(m_window);
     m_window = nullptr;
+}
+
+void Window::SetIOBuffer(IOBuffer* io_buffer) {
+    SetWindowLongPtr(m_handle, GWLP_USERDATA, (LONG_PTR) io_buffer);
+}
+
+IOBuffer* Window::GetIOBuffer() {
+    return reinterpret_cast<IOBuffer*>(GetWindowLongPtr(handle, GWLP_USERDATA));
 }
 
 void Window::Update() {
