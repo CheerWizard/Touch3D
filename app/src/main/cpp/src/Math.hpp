@@ -7,6 +7,31 @@
 
 #define T3D_PI 3.14159265359f
 #define T3D_RADIANS(degree) (degree * T3D_PI / 180.0f)
+#define T3D_E 2.71828f
+
+using namespace std;
+
+template<typename T>
+inline T clamp(const T& a, const T& b, const T& x) {
+    return min(max(x, b), a);
+}
+
+template<typename T>
+inline T lerp(const T& a, const T& b, const T& x) {
+    return x * (b - a) + a;
+}
+
+template<typename T>
+inline T step(const T& a, const T& x) {
+    return clamp(0, 1, x - a);
+}
+
+template<typename T>
+inline T smoothstep(const T& a, const T& b, const T& x) {
+    T t = clamp(0, 1, (x - a) / (b - a));
+    T y = -2 * t * t * t + 3 * t * t;
+    return y;
+}
 
 struct degree final {
     float a;
@@ -39,64 +64,64 @@ struct vec2 {
         return *(&x + i);
     }
 
-    friend vec2 operator +(const vec2& v1, const vec2& v2) {
+    inline friend vec2 operator +(const vec2& v1, const vec2& v2) {
         return { v1.x + v2.x, v1.y + v2.y };
     }
 
-    friend vec2 operator -(const vec2& v1, const vec2& v2) {
+    inline friend vec2 operator -(const vec2& v1, const vec2& v2) {
         return { v1.x - v2.x, v1.y - v2.y };
     }
 
-    friend vec2 operator *(const vec2& v1, const vec2& v2) {
+    inline friend vec2 operator *(const vec2& v1, const vec2& v2) {
         return { v1.x * v2.x, v1.y * v2.y };
     }
 
-    friend vec2 operator /(const vec2& v1, const vec2& v2) {
+    inline friend vec2 operator /(const vec2& v1, const vec2& v2) {
         return { v1.x / v2.x, v1.y / v2.y };
     }
 
-    friend vec2 operator +(const vec2& v1, const T& s) {
+    inline friend vec2 operator +(const vec2& v1, const T& s) {
         return { v1.x + s, v1.y + s };
     }
 
-    friend vec2 operator -(const vec2& v1, const T& s) {
+    inline friend vec2 operator -(const vec2& v1, const T& s) {
         return { v1.x - s, v1.y - s };
     }
 
-    friend vec2 operator *(const vec2& v1, const T& s) {
+    inline friend vec2 operator *(const vec2& v1, const T& s) {
         return { v1.x * s, v1.y * s };
     }
 
-    friend vec2 operator /(const vec2& v1, const T& s) {
+    inline friend vec2 operator /(const vec2& v1, const T& s) {
         return { v1.x / s, v1.y / s };
     }
 
-    friend vec2 operator +(const T& s, const vec2& v2) {
+    inline friend vec2 operator +(const T& s, const vec2& v2) {
         return { s + v2.x, s + v2.y };
     }
 
-    friend vec2 operator -(const T& s, const vec2& v2) {
+    inline friend vec2 operator -(const T& s, const vec2& v2) {
         return { s - v2.x, s - v2.y };
     }
 
-    friend vec2 operator *(const T& s, const vec2& v2) {
+    inline friend vec2 operator *(const T& s, const vec2& v2) {
         return { s * v2.x, s * v2.y };
     }
 
-    friend vec2 operator /(const T& s, const vec2& v2) {
+    inline friend vec2 operator /(const T& s, const vec2& v2) {
         return { s / v2.x, s / v2.y };
     }
 
-    friend vec2 operator ^(const vec2& v, const T& p) {
+    inline friend vec2 operator ^(const vec2& v, const T& p) {
         return { pow(v.x, p), pow(v.y, p) };
     }
 
-    friend vec2 operator -(const vec2& v) {
+    inline friend vec2 operator -(const vec2& v) {
         return { -v.x, -v.y };
     }
 
     inline T length() const {
-        return std::sqrt(x * x + y * y);
+        return sqrt(x * x + y * y);
     }
 
     inline vec2 normalize() const {
@@ -129,59 +154,59 @@ struct vec3 {
         return *(&x + i);
     }
 
-    friend vec3 operator +(const vec3& v1, const vec3& v2) {
+    inline friend vec3 operator +(const vec3& v1, const vec3& v2) {
         return { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
     }
 
-    friend vec3 operator -(const vec3& v1, const vec3& v2) {
+    inline friend vec3 operator -(const vec3& v1, const vec3& v2) {
         return { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
     }
 
-    friend vec3 operator *(const vec3& v1, const vec3& v2) {
+    inline friend vec3 operator *(const vec3& v1, const vec3& v2) {
         return { v1.x * v2.x, v1.y * v2.y, v1.z * v2.z };
     }
 
-    friend vec3 operator /(const vec3& v1, const vec3& v2) {
+    inline friend vec3 operator /(const vec3& v1, const vec3& v2) {
         return { v1.x / v2.x, v1.y / v2.y, v1.z / v2.z };
     }
 
-    friend vec3 operator +(const vec3& v1, const T& s) {
+    inline friend vec3 operator +(const vec3& v1, const T& s) {
         return { v1.x + s, v1.y + s, v1.z + s };
     }
 
-    friend vec3 operator -(const vec3& v1, const T& s) {
+    inline friend vec3 operator -(const vec3& v1, const T& s) {
         return { v1.x - s, v1.y - s, v1.z - s };
     }
 
-    friend vec3 operator *(const vec3& v1, const T& s) {
+    inline friend vec3 operator *(const vec3& v1, const T& s) {
         return { v1.x * s, v1.y * s, v1.z * s };
     }
 
-    friend vec3 operator /(const vec3& v1, const T& s) {
+    inline friend vec3 operator /(const vec3& v1, const T& s) {
         return { v1.x / s, v1.y / s, v1.z / s };
     }
 
-    friend vec3 operator +(const T& s, const vec3& v2) {
+    inline friend vec3 operator +(const T& s, const vec3& v2) {
         return { s + v2.x, s + v2.y, s + v2.z };
     }
 
-    friend vec3 operator -(const T& s, const vec3& v2) {
+    inline friend vec3 operator -(const T& s, const vec3& v2) {
         return { s - v2.x, s - v2.y, s - v2.z };
     }
 
-    friend vec3 operator *(const T& s, const vec3& v2) {
+    inline friend vec3 operator *(const T& s, const vec3& v2) {
         return { s * v2.x, s * v2.y, s * v2.z };
     }
 
-    friend vec3 operator /(const T& s, const vec3& v2) {
+    inline friend vec3 operator /(const T& s, const vec3& v2) {
         return { s / v2.x, s / v2.y, s / v2.z };
     }
 
-    friend vec3 operator ^(const vec3& v, const T& p) {
+    inline friend vec3 operator ^(const vec3& v, const T& p) {
         return { pow(v.x, p), pow(v.y, p), pow(v.z, p) };
     }
 
-    friend vec3 operator -(const vec3& v) {
+    inline friend vec3 operator -(const vec3& v) {
         return { -v.x, -v.y, -v.z };
     }
 
@@ -190,7 +215,7 @@ struct vec3 {
     }
 
     inline T length() const {
-        return std::sqrt(x * x + y * y + z * z);
+        return sqrt(x * x + y * y + z * z);
     }
 
     inline vec3 normalize() const {
@@ -229,59 +254,59 @@ struct vec4 {
         return *(&x + i);
     }
 
-    friend vec4 operator +(const vec4& v1, const vec4& v2) {
+    inline friend vec4 operator +(const vec4& v1, const vec4& v2) {
         return { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z, v1.w + v2.w };
     }
 
-    friend vec4 operator -(const vec4 v1, const vec4& v2) {
+    inline friend vec4 operator -(const vec4 v1, const vec4& v2) {
         return { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z, v1.w - v2.w };
     }
 
-    friend vec4 operator *(const vec4& v1, const vec4& v2) {
+    inline friend vec4 operator *(const vec4& v1, const vec4& v2) {
         return { v1.x * v2.x, v1.y * v2.y, v1.z * v2.z, v1.w * v2.w };
     }
 
-    friend vec4 operator /(const vec4& v1, const vec4& v2) {
+    inline friend vec4 operator /(const vec4& v1, const vec4& v2) {
         return { v1.x / v2.x, v1.y / v2.y, v1.z / v2.z, v1.w / v2.w };
     }
 
-    friend vec4 operator +(const vec4& v1, const T& s) {
+    inline friend vec4 operator +(const vec4& v1, const T& s) {
         return { v1.x + s, v1.y + s, v1.z + s, v1.w + s };
     }
 
-    friend vec4 operator -(const vec4& v1, const T& s) {
+    inline friend vec4 operator -(const vec4& v1, const T& s) {
         return { v1.x - s, v1.y - s, v1.z - s, v1.w - s };
     }
 
-    friend vec4 operator *(const vec4& v1, const T& s) {
+    inline friend vec4 operator *(const vec4& v1, const T& s) {
         return { v1.x * s, v1.y * s, v1.z * s, v1.w * s };
     }
 
-    friend vec4 operator /(const vec4& v1, const T& s) {
+    inline friend vec4 operator /(const vec4& v1, const T& s) {
         return { v1.x / s, v1.y / s, v1.z / s, v1.w / s };
     }
 
-    friend vec4 operator +(const T& s, const vec4& v2) {
+    inline friend vec4 operator +(const T& s, const vec4& v2) {
         return { s + v2.x, s + v2.y, s + v2.z, s + v2.w };
     }
 
-    friend vec4 operator -(const T& s, const vec4& v2) {
+    inline friend vec4 operator -(const T& s, const vec4& v2) {
         return { s - v2.x, s - v2.y, s - v2.z, s - v2.w };
     }
 
-    friend vec4 operator *(const T& s, const vec4& v2) {
+    inline friend vec4 operator *(const T& s, const vec4& v2) {
         return { s * v2.x, s * v2.y, s * v2.z, s * v2.w };
     }
 
-    friend vec4 operator /(const T& s, const vec4& v2) {
+    inline friend vec4 operator /(const T& s, const vec4& v2) {
         return { s / v2.x, s / v2.y, s / v2.z, s / v2.w };
     }
 
-    friend vec4 operator ^(const vec4& v, const T& p) {
+    inline friend vec4 operator ^(const vec4& v, const T& p) {
         return { pow(v.x, p), pow(v.y, p), pow(v.z, p), pow(v.w, p) };
     }
 
-    friend vec4 operator -(const vec4& v) {
+    inline friend vec4 operator -(const vec4& v) {
         return { -v.x, -v.y, -v.z, -v.w };
     }
 
@@ -294,7 +319,7 @@ struct vec4 {
     }
 
     inline T length() const {
-        return std::sqrt(x * x + y * y + z * z + w * w);
+        return sqrt(x * x + y * y + z * z + w * w);
     }
 
     inline vec4 normalize() const {
@@ -324,15 +349,15 @@ struct quat {
     quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
 
     quat(float nx, float ny, float nz, const radians& r = radians(0)) {
-        x = nx * std::sin(r * 0.5f);
-        y = ny * std::sin(r * 0.5f);
-        z = nz * std::sin(r * 0.5f);
-        w = std::cos(r * 0.5f);
+        x = nx * sin(r * 0.5f);
+        y = ny * sin(r * 0.5f);
+        z = nz * sin(r * 0.5f);
+        w = cos(r * 0.5f);
     }
 
     quat(const vec3<float>& n, const radians& r = radians(0)) : quat(n.x, n.y, n.z , r) {}
 
-    friend quat operator *(const quat& q1, const quat& q2) {
+    inline friend quat operator *(const quat& q1, const quat& q2) {
         quat q3;
         q3.x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
         q3.y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
@@ -341,7 +366,7 @@ struct quat {
         return q3;
     }
 
-    friend quat operator-(const quat& q) {
+    inline friend quat operator-(const quat& q) {
         return { -q.x, -q.y, -q.z, q.w };
     }
 
@@ -354,7 +379,7 @@ struct quat {
     }
 
     inline float length() const {
-        return std::sqrt(x * x + y * y + z * z);
+        return sqrt(x * x + y * y + z * z);
     }
 
     inline quat normalize() {
@@ -374,14 +399,14 @@ struct quat {
 
         t /= 2.0;
 
-        theta = std::acos(dot);
+        theta = acos(dot);
         if (theta < 0.0) {
             theta=-theta;
         }
 
-        st = std::sin(theta);
-        sut = std::sin(t*theta);
-        sout = std::sin((1-t)*theta);
+        st = sin(theta);
+        sut = sin(t*theta);
+        sout = sin((1-t)*theta);
         coeff1 = sout/st;
         coeff2 = sut/st;
 
@@ -411,7 +436,7 @@ struct mat2 {
         return m[i];
     }
 
-    friend mat2 operator *(const mat2& m1, const mat2& m2) {
+    inline friend mat2 operator *(const mat2& m1, const mat2& m2) {
         mat2 m3;
         for (int r = 0 ; r < 2 ; r++) {
             for (int c = 0 ; c < 2 ; c++) {
@@ -436,11 +461,11 @@ struct mat2 {
     inline mat2 transpose() const {
         mat2 t = *this;
 
-        // std::swap(t[0][0], t[0][0]);
-        std::swap(t[0][1], t[1][0]);
+        // swap(t[0][0], t[0][0]);
+        swap(t[0][1], t[1][0]);
 
-        // std::swap(t[1][0], t[0][1]);
-        // std::swap(t[1][1], t[1][1]);
+        // swap(t[1][0], t[0][1]);
+        // swap(t[1][1], t[1][1]);
 
         return t;
     }
@@ -478,7 +503,7 @@ struct mat3 {
         return m[i];
     }
 
-    friend mat3 operator *(const mat3& m1, const mat3& m2) {
+    inline friend mat3 operator *(const mat3& m1, const mat3& m2) {
         mat3 m3;
         for (int r = 0; r < 3; r++) {
             for (int c = 0; c < 3; c++) {
@@ -503,17 +528,17 @@ struct mat3 {
     inline mat3 transpose() const {
         mat3 t = *this;
 
-        // std::swap(t[0][0], t[0][0]);
-        std::swap(t[0][1], t[1][0]);
-        std::swap(t[0][2], t[2][0]);
+        // swap(t[0][0], t[0][0]);
+        swap(t[0][1], t[1][0]);
+        swap(t[0][2], t[2][0]);
 
-        // std::swap(t[1][0], t[0][1]);
-        // std::swap(t[1][1], t[1][1]);
-        std::swap(t[1][2], t[2][1]);
+        // swap(t[1][0], t[0][1]);
+        // swap(t[1][1], t[1][1]);
+        swap(t[1][2], t[2][1]);
 
-        // std::swap(t[2][0], t[0][2]);
-        // std::swap(t[2][1], t[1][2]);
-        // std::swap(t[2][2], t[2][2]);
+        // swap(t[2][0], t[0][2]);
+        // swap(t[2][1], t[1][2]);
+        // swap(t[2][2], t[2][2]);
 
         return t;
     }
@@ -639,7 +664,7 @@ struct mat4 {
         return m[i];
     }
 
-    friend mat4 operator *(const mat4& m1, const mat4& m2) {
+    inline friend mat4 operator *(const mat4& m1, const mat4& m2) {
         mat4 m3;
         for (int r = 0; r < 4; r++) {
             for (int c = 0; c < 4; c++) {
@@ -661,28 +686,28 @@ struct mat4 {
         return n;
     }
 
-    mat4 transpose() const {
+    inline mat4 transpose() const {
         mat4 t = *this;
 
-        // std::swap(t[0][0], t[0][0]);
-        std::swap(t[0][1], t[1][0]);
-        std::swap(t[0][2], t[2][0]);
-        std::swap(t[0][3], t[3][0]);
+        // swap(t[0][0], t[0][0]);
+        swap(t[0][1], t[1][0]);
+        swap(t[0][2], t[2][0]);
+        swap(t[0][3], t[3][0]);
 
-        // std::swap(t[1][0], t[0][1]);
-        // std::swap(t[1][1], t[1][1]);
-        std::swap(t[1][2], t[2][1]);
-        std::swap(t[1][3], t[3][1]);
+        // swap(t[1][0], t[0][1]);
+        // swap(t[1][1], t[1][1]);
+        swap(t[1][2], t[2][1]);
+        swap(t[1][3], t[3][1]);
 
-        // std::swap(t[2][0], t[0][2]);
-        // std::swap(t[2][1], t[1][2]);
-        // std::swap(t[2][2], t[2][2]);
-        std::swap(t[2][3], t[3][2]);
+        // swap(t[2][0], t[0][2]);
+        // swap(t[2][1], t[1][2]);
+        // swap(t[2][2], t[2][2]);
+        swap(t[2][3], t[3][2]);
 
-        // std::swap(t[3][0], t[0][3]);
-        // std::swap(t[3][1], t[1][3]);
-        // std::swap(t[3][2], t[2][3]);
-        // std::swap(t[3][3], t[3][3]);
+        // swap(t[3][0], t[0][3]);
+        // swap(t[3][1], t[1][3]);
+        // swap(t[3][2], t[2][3]);
+        // swap(t[3][3], t[3][3]);
 
         return t;
     }
@@ -807,86 +832,82 @@ struct mat4 {
         return {};
     }
 
-    static mat4 translation(const vec3<T>& t) {
-        mat4 m;
-        m[0][3] = t.x;
-        m[1][3] = t.y;
-        m[2][3] = t.z;
-        return m;
+    void translate(const vec3<T>& translation) {
+        m[0][3] += translation.x;
+        m[1][3] += translation.y;
+        m[2][3] += translation.z;
     }
 
-    static mat4 scale(const vec3<T>& s) {
-        mat4 m;
-        m[0][0] = s.x;
-        m[1][1] = s.y;
-        m[2][2] = s.z;
-        return m;
+    void scale(const vec3<T>& scalar) {
+        m[0][0] *= scalar.x;
+        m[1][1] *= scalar.y;
+        m[2][2] *= scalar.z;
     }
 
-    static mat4 rotation(const vec3<radians>& r, const vec3<float>& axis) {
+    void rotate(const vec3<radians>& r, const vec3<float>& axis) {
         mat4 rx;
         {
-            float sin = std::sin(r.x);
-            float cos = std::cos(r.x);
-            rx[1][1] = cos;
-            rx[1][2] = -sin;
-            rx[2][1] = sin;
-            rx[2][2] = cos;
+            float sinx = sin(r.x);
+            float cosx = cos(r.x);
+            rx[1][1] = cosx;
+            rx[1][2] = -sinx;
+            rx[2][1] = sinx;
+            rx[2][2] = cosx;
             rx[0][0] = axis.x;
         }
 
         mat4 ry;
         {
-            float sin = std::sin(r.y);
-            float cos = std::cos(r.y);
-            ry[0][0] = cos;
-            ry[0][2] = sin;
-            ry[2][0] = -sin;
-            ry[2][2] = cos;
+            float siny = sin(r.y);
+            float cosy = cos(r.y);
+            ry[0][0] = cosy;
+            ry[0][2] = siny;
+            ry[2][0] = -siny;
+            ry[2][2] = cosy;
             ry[1][1] = axis.y;
         }
 
         mat4 rz;
         {
-            float sin = std::sin(r.z);
-            float cos = std::cos(r.z);
-            rz[0][0] = cos;
-            rz[0][1] = -sin;
-            rz[1][0] = sin;
-            rz[1][1] = cos;
+            float sinz = sin(r.z);
+            float cosz = cos(r.z);
+            rz[0][0] = cosz;
+            rz[0][1] = -sinz;
+            rz[1][0] = sinz;
+            rz[1][1] = cosz;
             rz[2][2] = axis.z;
         }
 
-        return rz * ry * rx;
+        *this = *this * rz * ry * rx;
     }
 
-    static mat4 model(const vec3<float>& t, const vec3<radians>& r, const vec3<float>& s) {
+    static mat4 model(const vec3<float>& translation, const vec3<radians>& rotation, const vec3<float>& scalar) {
         mat4 m;
-        m = translation(t);
-        m = m * rotation(r, { 1, 1, 1 });
-        m = m * scale(s);
+        m.translate(translation);
+        m.rotate(rotation, { 1, 1, 1 });
+        m.scale(scalar);
         return m;
     }
 
-    static mat4 model(const vec3<float>& t, const quat& r, const vec3<float>& s) {
+    static mat4 model(const vec3<float>& translation, const quat& rotation, const vec3<float>& scalar) {
         mat4 m;
-        m = translation(t);
-        m = m * mat4(r);
-        m = m * scale(s);
+        m.translate(translation);
+        m = m * mat4(rotation);
+        m.scale(scalar);
         return m;
     }
 
-    static mat4 rigid(const vec3<float>& t, const vec3<radians>& r) {
+    static mat4 rigid(const vec3<float>& translation, const vec3<radians>& rotation) {
         mat4 m;
-        m = translation(t);
-        m = m * rotation(r, { 1, 1, 1 });
+        m.translate(translation);
+        m.rotate(rotation, { 1, 1, 1 });
         return m;
     }
 
-    static mat4 rigid(const vec3<float>& t, const quat& r) {
+    static mat4 rigid(const vec3<float>& translation, const quat& rotation) {
         mat4 m;
-        m = translation(t);
-        m = m * mat4(r);
+        m.translate(translation);
+        m = m * mat4(rotation);
         return m;
     }
 
@@ -910,7 +931,7 @@ struct mat4 {
     }
 
     static mat4<float> perspective(float aspect, degree fov, float z_near, float z_far) {
-        float f = 1.0f / std::tan(radians(0.5f * fov));
+        float f = 1.0f / tan(radians(0.5f * fov));
         return mat4<float> {
                 { f / aspect, 0.0f, 0.0f, 0.0f },
                 { 0.0f, -f, 0.0f, 0.0f },
@@ -919,7 +940,7 @@ struct mat4 {
         };
     }
 
-    static mat4<T> normal(const mat4& model) {
+    static mat4<float> normal(const mat4<float>& model) {
         return model.inverse_fast().transpose();
     }
 
@@ -951,35 +972,3 @@ typedef vec4<double> double4;
 using double2x2 = mat2<double>;
 using double3x3 = mat3<double>;
 using double4x4 = mat4<double>;
-
-template<typename T>
-T min(const T& min1, const T& min2) {
-    return std::min(min1, min2);
-}
-
-template<typename T>
-T max(const T& max1, const T& max2) {
-    return std::min(max1, max2);
-}
-
-template<typename T>
-T clamp(const T& a, const T& b, const T& x) {
-    return min(max(x, b), a);
-}
-
-template<typename T>
-T lerp(const T& a, const T& b, const T& x) {
-    return x * (b - a) + a;
-}
-
-template<typename T>
-T step(const T& a, const T& x) {
-    return clamp(0, 1, x - a);
-}
-
-template<typename T>
-T smoothstep(const T& a, const T& b, const T& x) {
-    T t = clamp(0, 1, (x - a) / (b - a));
-    T y = -2 * t * t * t + 3 * t * t;
-    return y;
-}

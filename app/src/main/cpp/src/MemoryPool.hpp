@@ -1,15 +1,15 @@
 #pragma once
 
+#include <Types.hpp>
+
 class MemoryPool final {
 
 public:
-    MemoryPool();
+    MemoryPool(usize size);
     ~MemoryPool();
 
-public:
-    static MemoryPool& Get();
-
 private:
-    static MemoryPool* s_instance;
+    void* m_memory = nullptr;
+    usize m_size = 0;
 
 };

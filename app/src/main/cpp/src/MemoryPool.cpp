@@ -1,15 +1,10 @@
 #include <MemoryPool.hpp>
+#include <Log.hpp>
 
-MemoryPool* MemoryPool::s_instance = nullptr;
+#include <malloc.h>
 
-MemoryPool::MemoryPool() {
-    s_instance = this;
+MemoryPool::MemoryPool(usize size) {
 }
 
 MemoryPool::~MemoryPool() {
-    s_instance = nullptr;
-}
-
-MemoryPool& MemoryPool::Get() {
-    return *s_instance;
 }
