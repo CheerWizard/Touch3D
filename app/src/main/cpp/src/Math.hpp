@@ -96,7 +96,7 @@ struct vec2 {
     }
 
     inline T length() const {
-        return sqrt(x * x + y * y);
+        return std::sqrt(x * x + y * y);
     }
 
     inline vec2 normalize() const {
@@ -190,7 +190,7 @@ struct vec3 {
     }
 
     inline T length() const {
-        return sqrt(x * x + y * y + z * z);
+        return std::sqrt(x * x + y * y + z * z);
     }
 
     inline vec3 normalize() const {
@@ -294,7 +294,7 @@ struct vec4 {
     }
 
     inline T length() const {
-        return sqrt(x * x + y * y + z * z + w * w);
+        return std::sqrt(x * x + y * y + z * z + w * w);
     }
 
     inline vec4 normalize() const {
@@ -324,10 +324,10 @@ struct quat {
     quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
 
     quat(float nx, float ny, float nz, const radians& r = radians(0)) {
-        x = nx * sinf(r * 0.5f);
-        y = ny * sinf(r * 0.5f);
-        z = nz * sinf(r * 0.5f);
-        w = cosf(r * 0.5f);
+        x = nx * std::sin(r * 0.5f);
+        y = ny * std::sin(r * 0.5f);
+        z = nz * std::sin(r * 0.5f);
+        w = std::cos(r * 0.5f);
     }
 
     quat(const vec3<float>& n, const radians& r = radians(0)) : quat(n.x, n.y, n.z , r) {}
@@ -354,7 +354,7 @@ struct quat {
     }
 
     inline float length() const {
-        return sqrtf(x * x + y * y + z * z);
+        return std::sqrt(x * x + y * y + z * z);
     }
 
     inline quat normalize() {

@@ -18,6 +18,10 @@ float Camera::GetZoomSpeed() const {
 
 void Camera::Pan(double2 pan) {
     float2 pan_speed = GetPanSpeed();
+    float4 v;
+    float l = v.length();
+    l = 2;
+    float4 a = v * l;
     quat rotation = { -pitch, -yaw, roll, 0 };
     float3 right = rotation.rotate({ 1.0f, 0.0f, 0.0f }).xyz();
     float3 up = rotation.rotate({ 0.0f, 1.0f, 0.0f }).xyz();
