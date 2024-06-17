@@ -1,6 +1,12 @@
 #include <Activity.hpp>
 #include <Log.hpp>
 
+jclass Activity::clazz;
+jmethodID Activity::mid_set_window_flags;
+jmethodID Activity::mid_set_window_format;
+jmethodID Activity::mid_show_input;
+jmethodID Activity::mid_hide_input;
+
 Activity::Activity(jobject thiz) {
     JNIEnv* env = Jni::Get();
     m_this = env->NewGlobalRef(thiz);
@@ -11,24 +17,18 @@ Activity::~Activity() {
     Jni::Get()->DeleteGlobalRef(m_this);
 }
 
-jclass MainActivity::clazz;
-jmethodID MainActivity::mid_set_window_flags;
-jmethodID MainActivity::mid_set_window_format;
-jmethodID MainActivity::mid_show_input;
-jmethodID MainActivity::mid_hide_input;
-
-void MainActivity::SetWindowFlags(int flags, int mask) {
+void Activity::SetWindowFlags(int flags, int mask) {
     Jni::Get()->CallVoidMethod(m_this, mid_set_window_flags, flags, mask);
 }
 
-void MainActivity::SetWindowFormat(int format) {
+void Activity::SetWindowFormat(int format) {
     Jni::Get()->CallVoidMethod(m_this, mid_set_window_format, format);
 }
 
-void MainActivity::ShowInput(int mode) {
+void Activity::ShowInput(int mode) {
     Jni::Get()->CallVoidMethod(m_this, mid_show_input, mode);
 }
 
-void MainActivity::HideInput(int mode) {
+void Activity::HideInput(int mode) {
     Jni::Get()->CallVoidMethod(m_this, mid_hide_input, mode);
 }

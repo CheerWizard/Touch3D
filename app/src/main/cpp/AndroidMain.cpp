@@ -1,93 +1,8 @@
-#include <Application.hpp>
+#include <AndroidApp.hpp>
 #include <Log.hpp>
 
-static Application* s_app = nullptr;
-static ThreadPool* s_thread_pool = nullptr;
-
-Application::Application(Activity* activity)
-: m_activity(activity) {
-    m_window = new Window(m_io_buffer);
-}
-
-Application::~Application() {
-    delete m_activity;
-    delete m_window;
-}
-
-void Application::RunLoop() {
-    m_running = true;
-    while (m_running) {
-        m_window->Update();
-    }
-}
-
-void Application::OnCreate() {
-    LogDebug("OnCreate()");
-    // TODO(cheerwizard): consider how to simplify the code
-    ThreadPool::Get().SubmitTask([this]() {
-         // do something
-    });
-}
-
-void Application::OnStart() {
-    LogDebug("OnStart()");
-}
-
-void Application::OnResume() {
-    LogDebug("OnResume()");
-}
-
-void Application::OnPause() {
-    LogDebug("OnPause()");
-}
-
-void Application::OnStop() {
-    LogDebug("OnStop()");
-}
-
-void Application::OnDestroy() {
-    LogDebug("OnDestroy()");
-}
-
-void Application::OnConfigurationChanged() {
-
-}
-
-void Application::OnLowMemory() {
-
-}
-
-void Application::OnWindowFocusChanged() {
-
-}
-
-void Application::OnSurfaceCreated(void *surface) {
-
-}
-
-void Application::OnSurfaceChanged(void *surface, int format, int w, int h) {
-
-}
-
-void Application::OnSurfaceRedrawNeeded(void *surface) {
-
-}
-
-void Application::OnSurfaceDestroyed() {
-
-}
-
-void Application::OnInputQueueCreated(void *input_queue) {
-
-}
-
-void Application::OnInputQueueDestroyed(void *input_queue) {
-
-}
-
-void Application::OnContentRectChanged(int x, int y, int w, int h) {
-
-}
+static AndroidApp* s_app = nullptr;
+static ThreadPool* s_jni_thread_pool = nullptr;
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     Jni::vm = vm;
@@ -95,23 +10,23 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     JNIEnv* env = Jni::Get();
 
     jclass class_local_ref = env->FindClass("com/cheerwizard/touch3d/MainActivity");
-    MainActivity::clazz = (jclass) env->NewGlobalRef(class_local_ref);
+    Activity::clazz = (jclass) env->NewGlobalRef(class_local_ref);
     env->DeleteLocalRef(class_local_ref);
 
-    MainActivity::mid_set_window_flags = env->GetMethodID(MainActivity::clazz, "setWindowFlags", "(II)V");
-    MainActivity::mid_set_window_format = env->GetMethodID(MainActivity::clazz, "setWindowFormat", "(I)V");
-    MainActivity::mid_show_input = env->GetMethodID(MainActivity::clazz, "showInput", "(I)V");
-    MainActivity::mid_hide_input = env->GetMethodID(MainActivity::clazz, "hideInput", "(I)V");
+    Activity::mid_set_window_flags = env->GetMethodID(Activity::clazz, "setWindowFlags", "(II)V");
+    Activity::mid_set_window_format = env->GetMethodID(Activity::clazz, "setWindowFormat", "(I)V");
+    Activity::mid_show_input = env->GetMethodID(Activity::clazz, "showInput", "(I)V");
+    Activity::mid_hide_input = env->GetMethodID(Activity::clazz, "hideInput", "(I)V");
 
-    s_thread_pool = new ThreadPool(4, 100, "Native", T3D_THREAD_PRIORITY_NORMAL);
+    s_jni_thread_pool = new ThreadPool(1, 1, "JNI", T3D_THREAD_PRIORITY_HIGHEST);
 
     return JNI_VERSION_1_6;
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved) {
     delete s_app;
-    delete s_thread_pool;
-    Jni::Get()->DeleteGlobalRef(MainActivity::clazz);
+    delete s_jni_thread_pool;
+    Jni::Get()->DeleteGlobalRef(Activity::clazz);
 }
 
 extern "C"
@@ -119,11 +34,11 @@ JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_MainActivity_nativeOnCreate(
         JNIEnv* env, jobject thiz
 ) {
-    ThreadPool::Get().SubmitTask([thiz]() {
+    s_jni_thread_pool->Add([thiz]() {
         if (s_app == nullptr) {
-            s_app = new Application(new MainActivity(thiz));
+            s_app = new AndroidApp(thiz);
             s_app->OnCreate();
-            s_app->RunLoop();
+            s_app->Run();
         }
     });
 }

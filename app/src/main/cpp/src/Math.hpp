@@ -12,23 +12,23 @@
 using namespace std;
 
 template<typename T>
-inline T clamp(const T& a, const T& b, const T& x) {
+inline T Clamp(const T& a, const T& b, const T& x) {
     return min(max(x, b), a);
 }
 
 template<typename T>
-inline T lerp(const T& a, const T& b, const T& x) {
+inline T Lerp(const T& a, const T& b, const T& x) {
     return x * (b - a) + a;
 }
 
 template<typename T>
-inline T step(const T& a, const T& x) {
-    return clamp(0, 1, x - a);
+inline T Step(const T& a, const T& x) {
+    return Clamp(0, 1, x - a);
 }
 
 template<typename T>
-inline T smoothstep(const T& a, const T& b, const T& x) {
-    T t = clamp(0, 1, (x - a) / (b - a));
+inline T Smoothstep(const T& a, const T& b, const T& x) {
+    T t = Clamp(0, 1, (x - a) / (b - a));
     T y = -2 * t * t * t + 3 * t * t;
     return y;
 }
@@ -120,20 +120,20 @@ struct vec2 {
         return { -v.x, -v.y };
     }
 
-    inline T length() const {
+    inline T Length() const {
         return sqrt(x * x + y * y);
     }
 
-    inline vec2 normalize() const {
-        T l = length();
+    inline vec2 Normalize() const {
+        T l = Length();
         return { x / l, y / l };
     }
 
-    inline T dot(const vec2& v2) const {
+    inline T Dot(const vec2& v2) const {
         return x * v2.x + y * v2.y;
     }
 
-    inline T cross(const vec2& v2) const {
+    inline T Cross(const vec2& v2) const {
         return x * v2.y - y * v2.x;
     }
 };
@@ -214,20 +214,20 @@ struct vec3 {
         return { x, y };
     }
 
-    inline T length() const {
+    inline T Length() const {
         return sqrt(x * x + y * y + z * z);
     }
 
-    inline vec3 normalize() const {
-        T l = length();
+    inline vec3 Normalize() const {
+        T l = Length();
         return { x / l, y / l, z / l };
     }
 
-    inline T dot(const vec3& v2) const {
+    inline T Dot(const vec3& v2) const {
         return x * v2.x + y * v2.y + z * v2.z;
     }
 
-    inline vec3 cross(const vec3& v2) const {
+    inline vec3 Cross(const vec3& v2) const {
         return {
                 y * v2.z - z * v2.y,
                 z * v2.x - x * v2.z,
@@ -318,21 +318,21 @@ struct vec4 {
         return { x, y, z };
     }
 
-    inline T length() const {
+    inline T Length() const {
         return sqrt(x * x + y * y + z * z + w * w);
     }
 
-    inline vec4 normalize() const {
-        T l = length();
+    inline vec4 Normalize() const {
+        T l = Length();
         return { x / l, y / l, z / l, w / l };
     }
 
-    inline T dot(const vec4& v2) const {
+    inline T Dot(const vec4& v2) const {
         return x * v2.x + y * v2.y + z * v2.z + w * v2.w;
     }
 
     // TODO(cheerwizard): do I really need a wedged/geometry products?
-    inline vec4 cross(const vec4& v2) const {
+    inline vec4 Cross(const vec4& v2) const {
         // TODO(cheerwizard): not implemented!
         return {};
     }
@@ -378,20 +378,20 @@ struct quat {
         return { x, y, z };
     }
 
-    inline float length() const {
+    inline float Length() const {
         return sqrt(x * x + y * y + z * z);
     }
 
-    inline quat normalize() {
-        float l = length();
+    inline quat Normalize() {
+        float l = Length();
         return { x / l, y / l, z / l, w };
     }
 
-    inline quat rotate(const vec3<float>& n) const {
+    inline quat Rotate(const vec3<float>& n) const {
         return *this * quat(n) * -*this;
     }
 
-    inline quat slerp(const quat& q2, float t) {
+    inline quat Slerp(const quat& q2, float t) {
         quat& q1 = *this;
         quat q3;
         float dot = q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w;
@@ -415,7 +415,7 @@ struct quat {
         q3.z = coeff1*q1.z + coeff2*q2.z;
         q3.w = coeff1*q1.w + coeff2*q2.w;
 
-        q3 = q3.normalize();
+        q3 = q3.Normalize();
 
         return q3;
     }
@@ -458,7 +458,7 @@ struct mat2 {
         return n;
     }
 
-    inline mat2 transpose() const {
+    inline mat2 Transpose() const {
         mat2 t = *this;
 
         // swap(t[0][0], t[0][0]);
@@ -470,14 +470,14 @@ struct mat2 {
         return t;
     }
 
-    inline T det() const {
+    inline T Det() const {
         T d = m[0][0] * m[1][1] - m[1][0] * m[0][1];
         return d;
     }
 
-    mat2 inverse() const {
+    mat2 Inverse() const {
         mat2 c;
-        T d = det();
+        T d = Det();
         c[0][0] = m[1][1];
         c[0][1] =-m[1][0];
         c[1][0] =-m[0][1];
@@ -525,7 +525,7 @@ struct mat3 {
         return n;
     }
 
-    inline mat3 transpose() const {
+    inline mat3 Transpose() const {
         mat3 t = *this;
 
         // swap(t[0][0], t[0][0]);
@@ -543,7 +543,7 @@ struct mat3 {
         return t;
     }
 
-    inline T det() const {
+    inline T Det() const {
         T d = m[0][0] * m[1][1] * m[2][2]
               + m[0][1] * m[1][2] * m[2][0]
               + m[0][2] * m[1][0] * m[2][1]
@@ -553,54 +553,55 @@ struct mat3 {
         return d;
     }
 
-    mat3 inverse() const {
-        T d = det();
+    mat3 Inverse() const {
+        T d = Det();
+
         mat3 c;
 
         c[0][0] = (mat2<T> {
                 m[1][1], m[1][2],
                 m[2][1], m[2][2]
-        }).det();
+        }).Det();
 
         c[0][1] = -(mat2<T> {
                 m[1][0], m[1][2],
                 m[2][0], m[2][2]
-        }).det();
+        }).Det();
 
         c[0][2] = (mat2<T> {
                 m[1][0], m[1][1],
                 m[2][0], m[2][1]
-        }).det();
+        }).Det();
 
         c[1][0] = -(mat2<T> {
                 m[0][0], m[0][1],
                 m[2][0], m[2][1]
-        }).det();
+        }).Det();
 
         c[1][1] = (mat2<T> {
                 m[0][0], m[0][2],
                 m[2][0], m[2][2]
-        }).det();
+        }).Det();
 
         c[1][2] = -(mat2<T> {
                 m[0][0], m[0][1],
                 m[2][0], m[2][1]
-        }).det();
+        }).Det();
 
         c[2][0] = (mat2<T> {
                 m[0][1], m[0][2],
                 m[1][1], m[1][2]
-        }).det();
+        }).Det();
 
         c[2][1] = -(mat2<T> {
                 m[0][0], m[0][2],
                 m[1][0], m[1][2]
-        }).det();
+        }).Det();
 
         c[2][2] = (mat2<T> {
                 m[0][0], m[0][1],
                 m[1][0], m[1][1]
-        }).det();
+        }).Det();
 
         c /= d;
 
@@ -686,7 +687,7 @@ struct mat4 {
         return n;
     }
 
-    inline mat4 transpose() const {
+    inline mat4 Transpose() const {
         mat4 t = *this;
 
         // swap(t[0][0], t[0][0]);
@@ -712,7 +713,7 @@ struct mat4 {
         return t;
     }
 
-    inline T det() const {
+    inline T Det() const {
         T d = m[0][0] * m[1][1] * m[2][2] * m[3][3]
               + m[0][1] * m[1][2] * m[2][3] * m[3][0]
               + m[0][2] * m[1][3] * m[2][0] * m[3][1]
@@ -723,128 +724,129 @@ struct mat4 {
     }
 
     mat4 inverse() const {
-        T d = det();
+        T d = Det();
+
         mat4 c;
 
         c[0][0] = (mat3<T> {
                 m[1][1], m[1][2], m[1][3],
                 m[2][1], m[2][2], m[2][3],
                 m[3][1], m[3][2], m[3][3]
-        }).det();
+        }).Det();
 
         c[0][1] = -(mat3<T> {
                 m[1][0], m[1][2], m[1][3],
                 m[2][0], m[2][2], m[2][3],
                 m[3][0], m[3][2], m[3][3]
-        }).det();
+        }).Det();
 
         c[0][2] = (mat3<T> {
                 m[1][0], m[1][1], m[1][3],
                 m[2][0], m[2][1], m[2][3],
                 m[3][0], m[3][1], m[3][3]
-        }).det();
+        }).Det();
 
         c[0][3] = -(mat3<T> {
                 m[1][0], m[1][1], m[1][2],
                 m[2][0], m[2][1], m[2][2],
                 m[3][0], m[3][1], m[3][2]
-        }).det();
+        }).Det();
 
         c[1][0] = -(mat3<T> {
                 m[0][1], m[0][2], m[0][3],
                 m[2][1], m[2][2], m[2][3],
                 m[3][1], m[3][2], m[3][3]
-        }).det();
+        }).Det();
 
         c[1][1] = (mat3<T> {
                 m[0][0], m[0][2], m[0][3],
                 m[2][0], m[2][2], m[2][3],
                 m[3][0], m[3][2], m[3][3]
-        }).det();
+        }).Det();
 
         c[1][2] = -(mat3<T> {
                 m[0][0], m[0][1], m[0][3],
                 m[2][0], m[2][1], m[2][3],
                 m[3][0], m[3][1], m[3][3]
-        }).det();
+        }).Det();
 
         c[1][3] = (mat3<T> {
                 m[0][0], m[0][1], m[0][2],
                 m[2][0], m[2][1], m[2][2],
                 m[3][0], m[3][1], m[3][2]
-        }).det();
+        }).Det();
 
         c[2][0] = (mat3<T> {
                 m[0][1], m[0][2], m[0][3],
                 m[1][1], m[1][2], m[1][3],
                 m[3][1], m[3][2], m[3][3]
-        }).det();
+        }).Det();
 
         c[2][1] = -(mat3<T> {
                 m[0][0], m[0][2], m[0][3],
                 m[1][0], m[1][2], m[1][3],
                 m[3][0], m[3][2], m[3][3]
-        }).det();
+        }).Det();
 
         c[2][2] = (mat3<T> {
                 m[0][0], m[0][1], m[0][3],
                 m[1][0], m[1][1], m[1][3],
                 m[3][0], m[3][1], m[3][3]
-        }).det();
+        }).Det();
 
         c[2][3] = -(mat3<T> {
                 m[0][0], m[0][1], m[0][2],
                 m[1][0], m[1][1], m[1][2],
                 m[3][0], m[3][1], m[3][2]
-        }).det();
+        }).Det();
 
         c[3][0] = -(mat3<T> {
                 m[0][1], m[0][2], m[0][3],
                 m[1][1], m[1][2], m[1][3],
                 m[2][1], m[2][2], m[2][3]
-        }).det();
+        }).Det();
 
         c[3][1] = (mat3<T> {
                 m[0][0], m[0][2], m[0][3],
                 m[1][0], m[1][2], m[1][3],
                 m[2][0], m[2][2], m[2][3]
-        }).det();
+        }).Det();
 
         c[3][2] = -(mat3<T> {
                 m[0][0], m[0][1], m[0][3],
                 m[1][0], m[1][1], m[1][3],
                 m[2][0], m[2][1], m[2][3]
-        }).det();
+        }).Det();
 
         c[3][3] = (mat3<T> {
                 m[0][0], m[0][1], m[0][2],
                 m[1][0], m[1][1], m[1][2],
                 m[2][0], m[2][1], m[2][2]
-        }).det();
+        }).Det();
 
         c /= d;
 
         return c;
     }
 
-    mat4 inverse_fast() const {
+    mat4 InverseFast() const {
         // TODO(cheerwizard): not implemented!
         return {};
     }
 
-    void translate(const vec3<T>& translation) {
+    void Translate(const vec3<T>& translation) {
         m[0][3] += translation.x;
         m[1][3] += translation.y;
         m[2][3] += translation.z;
     }
 
-    void scale(const vec3<T>& scalar) {
+    void Scale(const vec3<T>& scalar) {
         m[0][0] *= scalar.x;
         m[1][1] *= scalar.y;
         m[2][2] *= scalar.z;
     }
 
-    void rotate(const vec3<radians>& r, const vec3<float>& axis) {
+    void Rotate(const vec3<radians>& r, const vec3<float>& axis) {
         mat4 rx;
         {
             float sinx = sin(r.x);
@@ -881,47 +883,47 @@ struct mat4 {
         *this = *this * rz * ry * rx;
     }
 
-    static mat4 model(const vec3<float>& translation, const vec3<radians>& rotation, const vec3<float>& scalar) {
+    static mat4 Model(const vec3<float>& translation, const vec3<radians>& rotation, const vec3<float>& scalar) {
         mat4 m;
-        m.translate(translation);
-        m.rotate(rotation, { 1, 1, 1 });
-        m.scale(scalar);
+        m.Translate(translation);
+        m.Rotate(rotation, { 1, 1, 1 });
+        m.Scale(scalar);
         return m;
     }
 
-    static mat4 model(const vec3<float>& translation, const quat& rotation, const vec3<float>& scalar) {
+    static mat4 Model(const vec3<float>& translation, const quat& rotation, const vec3<float>& scalar) {
         mat4 m;
-        m.translate(translation);
+        m.Translate(translation);
         m = m * mat4(rotation);
-        m.scale(scalar);
+        m.Scale(scalar);
         return m;
     }
 
-    static mat4 rigid(const vec3<float>& translation, const vec3<radians>& rotation) {
+    static mat4 Rigid(const vec3<float>& translation, const vec3<radians>& rotation) {
         mat4 m;
-        m.translate(translation);
-        m.rotate(rotation, { 1, 1, 1 });
+        m.Translate(translation);
+        m.Rotate(rotation, { 1, 1, 1 });
         return m;
     }
 
-    static mat4 rigid(const vec3<float>& translation, const quat& rotation) {
+    static mat4 Rigid(const vec3<float>& translation, const quat& rotation) {
         mat4 m;
-        m.translate(translation);
+        m.Translate(translation);
         m = m * mat4(rotation);
         return m;
     }
 
-    static mat4<float> view(const vec3<float>& position, const vec3<float>& front, const vec3<float>& up) {
-        vec3<float> right = front.cross(up).normalize();
+    static mat4<float> View(const vec3<float>& position, const vec3<float>& front, const vec3<float>& up) {
+        vec3<float> right = front.Cross(up).Normalize();
         return mat4<float>(
                 right,
-                right.cross(front),
+                right.Cross(front),
                 -front,
                 position
-        ).transpose().inverse_fast();
+        ).Transpose().InverseFast();
     }
 
-    static mat4<float> ortho(float left, float right, float bottom, float top, float z_near, float z_far) {
+    static mat4<float> Ortho(float left, float right, float bottom, float top, float z_near, float z_far) {
         return mat4<float> {
                 { 2.0f / (right - left), 0.0f, 0.0f, 0.0f },
                 { 0.0f, 2.0f / (bottom - top), 0.0f, 0.0f },
@@ -930,7 +932,7 @@ struct mat4 {
         };
     }
 
-    static mat4<float> perspective(float aspect, degree fov, float z_near, float z_far) {
+    static mat4<float> Perspective(float aspect, degree fov, float z_near, float z_far) {
         float f = 1.0f / tan(radians(0.5f * fov));
         return mat4<float> {
                 { f / aspect, 0.0f, 0.0f, 0.0f },
@@ -940,8 +942,8 @@ struct mat4 {
         };
     }
 
-    static mat4<float> normal(const mat4<float>& model) {
-        return model.inverse_fast().transpose();
+    static mat4<float> Normal(const mat4<float>& model) {
+        return model.InverseFast().Transpose();
     }
 
 };

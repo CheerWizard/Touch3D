@@ -18,13 +18,9 @@ float Camera::GetZoomSpeed() const {
 
 void Camera::Pan(double2 pan) {
     float2 pan_speed = GetPanSpeed();
-    float4 v;
-    float l = v.length();
-    l = 2;
-    float4 a = v * l;
     quat rotation = { -pitch, -yaw, roll, 0 };
-    float3 right = rotation.rotate({ 1.0f, 0.0f, 0.0f }).xyz();
-    float3 up = rotation.rotate({ 0.0f, 1.0f, 0.0f }).xyz();
+    float3 right = rotation.Rotate({ 1.0f, 0.0f, 0.0f }).xyz();
+    float3 up = rotation.Rotate({ 0.0f, 1.0f, 0.0f }).xyz();
     m_focal_point = m_focal_point + -right * static_cast<float>(pan.x) * pan_speed.x * move_speed;
     m_focal_point = m_focal_point + up * static_cast<float>(pan.y) * pan_speed.y * move_speed;
     UpdateView(m_focal_point);
@@ -41,36 +37,36 @@ void Camera::MoveBackward() {
 }
 
 void Camera::MoveLeft() {
-    position = position - front.cross(up) * move_speed;
+    position = position - front.Cross(up) * move_speed;
     UpdateView(position);
 }
 
 void Camera::MoveRight() {
-    position = position + front.cross(up) * move_speed;
+    position = position + front.Cross(up) * move_speed;
     UpdateView(position);
 }
 
 void Camera::ZoomIn() {
     fov -= GetZoomSpeed();
-    fov = clamp(min_fov, max_fov, fov);
+    fov = Clamp(min_fov, max_fov, fov);
     UpdatePerspective();
 }
 
 void Camera::ZoomOut() {
     fov += GetZoomSpeed();
-    clamp(min_fov, max_fov, fov);
+    Clamp(min_fov, max_fov, fov);
     UpdatePerspective();
 }
 
 void Camera::OnScrollChanged(double2 scroll) {
     fov -= static_cast<float>(scroll.y) * GetZoomSpeed();
-    clamp(min_fov, max_fov, fov);
+    Clamp(min_fov, max_fov, fov);
     UpdatePerspective();
 }
 
 void Camera::Look(double2 look, T3D_CAMERA_MODE camera_mode) {
     quat rotation = { -pitch, -yaw, roll, 0 };
-    float3 up = rotation.rotate({ 0.0f, 1.0f, 0.0f }).xyz();
+    float3 up = rotation.Rotate({ 0.0f, 1.0f, 0.0f }).xyz();
     float look_sign = static_cast<float>(camera_mode);
     float yaw_sign = up.y < 0 ? -1.0f : 1.0f;
     yaw += static_cast<float>(look.x) * yaw_sign * horizontal_sens * look_sign;
@@ -89,19 +85,19 @@ void Camera::OnWindowRatioChanged(float ratio) {
 }
 
 void Camera::UpdatePerspective() {
-    perspective = float4x4::perspective(aspect_ratio, degree(fov), z_near, z_far);
+    perspective = float4x4::Perspective(aspect_ratio, degree(fov), z_near, z_far);
 }
 
 void Camera::UpdateOrtho() {
-    ortho = float4x4::ortho(left, right, bottom, top, z_near, z_far);
+    ortho = float4x4::Ortho(left, right, bottom, top, z_near, z_far);
 }
 
 void Camera::UpdateView(const float3& position) {
     // yaw = pitch = 0.0f; // Lock the camera's rotation
     quat rotation = quat(-pitch, -yaw, roll, 1);
-    front = rotation.rotate(front).xyz();
-    up = rotation.rotate(up).xyz();
-    view = float4x4::view(position, front, up);
+    front = rotation.Rotate(front).xyz();
+    up = rotation.Rotate(up).xyz();
+    view = float4x4::View(position, front, up);
     m_focal_point = position;
     this->position = position;
 }

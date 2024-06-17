@@ -34,7 +34,7 @@ private:
 
 protected:
     bool m_running;
-    IOBuffer m_io_buffer;
+    EventBuffer m_event_buffer;
     ThreadPool* m_thread_pool;
     LinuxWindow m_window;
 };

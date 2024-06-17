@@ -89,7 +89,7 @@ __inline__ static void trap_instruction()
 
 	/* Known problem:
 	 * After a breakpoint hit, can't 'stepi', 'step', or 'continue' in GDB.
-	 * 'step' stuck on the same instruction ("twge r2,r2").
+	 * 'Step' stuck on the same instruction ("twge r2,r2").
 	 *
 	 * The workaround is the same as ARM Thumb mode: use debugbreak-gdb.py
 	 * or manually jump over the instruction. */

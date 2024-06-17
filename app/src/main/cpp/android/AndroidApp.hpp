@@ -1,8 +1,9 @@
 #pragma once
 
-#if defined(T3D_ANDROID)
-
+#include <ThreadPool.hpp>
+#include <EventBuffer.hpp>
 #include <Activity.hpp>
+
 #include <android/native_window.h>
 #include <android/input.h>
 #include <android/rect.h>
@@ -10,25 +11,13 @@
 #include <android/looper.h>
 #include <android/native_activity.h>
 
-#endif
-
-class Window final {
+class AndroidApp final {
 
 public:
+    AndroidApp(jobject activity);
+    ~AndroidApp();
 
-#if defined(T3D_ANDROID)
-
-    Window(Activity* activity);
-
-#else
-
-    Window();
-
-#endif
-
-    ~Window();
-
-#if defined(T3D_ANDROID)
+    void Run();
 
     void OnCreate();
     void OnStart();
@@ -53,20 +42,18 @@ public:
 
     void OnContentRectChanged(int x, int y, int w, int h);
 
-#endif
+private:
+    void UpdateWindow();
+    void UpdateEvents();
 
 private:
-
-#if defined(T3D_ANDROID)
+    bool m_running;
+    EventBuffer m_event_buffer;
+    ThreadPool* m_thread_pool;
 
     Activity* m_activity;
     ALooper* m_looper;
     AConfiguration* m_config;
-    pthread_mutex_t m_mutex;
-    pthread_cond_t m_cond;
-    pthread_t m_thread;
-    int m_msg_read;
-    int m_msg_write;
 
     ANativeWindow* m_window;
     ANativeWindow* m_pending_window;
@@ -77,5 +64,4 @@ private:
     ARect m_content_rect;
     ARect m_pending_content_rect;
 
-#endif
 };
