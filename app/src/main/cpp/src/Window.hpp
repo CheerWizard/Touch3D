@@ -1,7 +1,5 @@
 #pragma once
 
-#include <IOBuffer.hpp>
-
 #if defined(T3D_WINDOWS)
 
 #include <Windows.h>
@@ -15,11 +13,6 @@
 #include <android/configuration.h>
 #include <android/looper.h>
 #include <android/native_activity.h>
-
-#elif defined(T3D_LINUX)
-
-#include <X11/Xlib.h>
-#include <err.h>
 
 #endif
 
@@ -43,24 +36,7 @@ public:
 
     ~Window();
 
-    void SetIOBuffer(IOBuffer* ioBuffer);
-    IOBuffer* GetIOBuffer();
-
-    void Update();
-    bool IsOpen() const;
-
 #if defined(T3D_DESKTOP)
-
-    bool IsWindowed();
-    bool IsFullscreen();
-
-    [[nodiscard]] inline int2 GetSize() const {
-        return m_size;
-    }
-
-    [[nodiscard]] inline u32 GetRefreshRate() const {
-        return m_refresh_rate;
-    }
 
 #endif
 
@@ -125,12 +101,6 @@ private:
 
     ARect m_content_rect;
     ARect m_pending_content_rect;
-
-#elif defined(T3D_LINUX)
-
-    Display* m_display;
-    Window m_root;
-    int m_screen;
 
 #endif
 };

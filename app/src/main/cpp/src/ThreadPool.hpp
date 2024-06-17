@@ -14,10 +14,7 @@ public:
     ~ThreadPool();
 
 public:
-    static ThreadPool& Get();
-
-public:
-    void SubmitTask(const std::function<void()>& task);
+    void Add(const std::function<void()>& task);
 
     inline bool IsBusy();
 
@@ -28,11 +25,9 @@ protected:
     // allows caller-thread to be rescheduled by OS
     inline void Poll();
 
-    virtual void CreateThread(u32 id, const char* name, T3D_THREAD_PRIORITY priority);
+    virtual void CreateThread(const char* name, T3D_THREAD_PRIORITY priority);
 
 private:
-    static ThreadPool* s_instance;
-
     RingBuffer<std::function<void()>> m_task_buffer;
     std::condition_variable m_wake_condition;
     std::mutex m_wake_mutex;

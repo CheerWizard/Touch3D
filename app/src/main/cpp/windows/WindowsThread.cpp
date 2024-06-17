@@ -42,20 +42,20 @@ static const int T3D_THREAD_PRIORITY_CODE[T3D_THREAD_PRIORITY_COUNT] = {
         THREAD_PRIORITY_HIGHEST,
 };
 
-void Thread::SetFormat(const char* name, T3D_THREAD_PRIORITY priority)
+void Thread::SetFormat()
 {
-    HANDLE handle = (HANDLE) m_thread.native_handle();
+    HANDLE handle = (HANDLE) m_handle;
 
     // set affinity mask
-    DWORD_PTR affinityMask = 1ull << m_id;
+    DWORD_PTR affinityMask = 1ull << m_handle;
     DWORD_PTR affinity_result = SetThreadAffinityMask(handle, affinityMask);
     LogAssert(affinity_result > 0, "Failed to set thread affinity mask on Windows!")
 
     // set priority
-    BOOL priority_result = SetThreadPriority(handle, T3D_THREAD_PRIORITY_CODE[priority]);
+    BOOL priority_result = SetThreadPriority(handle, T3D_THREAD_PRIORITY_CODE[m_priority]);
     LogAssert(priority_result != 0, "Failed to set thread priority on Windows!");
 
     // set name
-    HRESULT hr = SetThreadName(m_id, name);
+    HRESULT hr = SetThreadName(m_handle, m_name);
     LogAssert(SUCCEEDED(hr), "Failed to set thread name on Windows!");
 }

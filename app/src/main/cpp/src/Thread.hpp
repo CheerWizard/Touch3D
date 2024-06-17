@@ -3,6 +3,7 @@
 #include <Types.hpp>
 
 #include <thread>
+#include <functional>
 
 enum T3D_THREAD_PRIORITY {
     T3D_THREAD_PRIORITY_LOWEST,
@@ -15,16 +16,21 @@ enum T3D_THREAD_PRIORITY {
 class Thread final {
 
 public:
-    Thread(u32 id, std::thread& thread) : m_id(id), m_thread(thread) {}
+    Thread(const char* name, T3D_THREAD_PRIORITY priority) : m_name(name), m_priority(priority) {}
 
 public:
     static void CurrentSleep(u32 millis);
     static u32 GetCurrentID();
 
 public:
-    void SetFormat(const char* name, T3D_THREAD_PRIORITY priority);
+    void Run(const std::function<void()>& runnable);
 
 private:
-    u32 m_id;
-    std::thread& m_thread;
+    void SetFormat();
+
+private:
+    std::thread::native_handle_type m_handle;
+    const char* m_name;
+    T3D_THREAD_PRIORITY m_priority;
+
 };
