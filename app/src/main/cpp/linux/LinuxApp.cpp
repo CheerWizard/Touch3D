@@ -6,6 +6,8 @@ static ulong RGB(u8 r, u8 g, u8 b) {
 }
 
 LinuxApp::LinuxApp() {
+    LogOpen("T3D_Linux.log");
+
     m_display = XOpenDisplay(nullptr);
     if (m_display == nullptr) {
         LogAssert(false, "Unable to open X11 display for Linux!");
@@ -60,6 +62,7 @@ LinuxApp::~LinuxApp() {
     XFreeGC(m_display, m_gc);
     XDestroyWindow(m_display, m_window);
     XCloseDisplay(m_display);
+    LogClose();
 }
 
 void LinuxApp::Run() {
@@ -71,6 +74,7 @@ void LinuxApp::Run() {
 }
 
 void LinuxApp::UpdateWindow() {
+    LogInfo("UpdateWindow()");
 }
 
 void LinuxApp::UpdateEvents() {

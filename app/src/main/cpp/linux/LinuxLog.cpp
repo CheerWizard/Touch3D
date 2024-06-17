@@ -19,8 +19,46 @@ static const char* T3D_LOG_COLOR_CODE[T3D_LOG_COLOR_COUNT] {
         "\x1b[97m", // T3D_LOG_COLOR_LIGHT_WHITE
 };
 
-void __PrintLog(T3D_LOG_LEVEL log_level, T3D_LOG_COLOR log_color, char* log) {
+void Log::PrintVerbose(T3D_LOG_COLOR log_color, char* log) {
     char fmt_buffer[256] = {};
     sprintf(fmt_buffer, "%s %s \033[0m", T3D_LOG_COLOR_CODE[log_color], log);
     puts(fmt_buffer);
+}
+
+void Log::PrintInfo(T3D_LOG_COLOR log_color, char* log) {
+    char fmt_buffer[256] = {};
+    sprintf(fmt_buffer, "%s %s \033[0m", T3D_LOG_COLOR_CODE[log_color], log);
+    puts(fmt_buffer);
+}
+
+void Log::PrintDebug(T3D_LOG_COLOR log_color, char* log) {
+    char fmt_buffer[256] = {};
+    sprintf(fmt_buffer, "%s %s \033[0m", T3D_LOG_COLOR_CODE[log_color], log);
+    puts(fmt_buffer);
+}
+
+void Log::PrintWarning(T3D_LOG_COLOR log_color, char* log) {
+    char fmt_buffer[256] = {};
+    sprintf(fmt_buffer, "%s %s \033[0m", T3D_LOG_COLOR_CODE[log_color], log);
+    puts(fmt_buffer);
+}
+
+void Log::PrintError(T3D_LOG_COLOR log_color, char* log) {
+    char fmt_buffer[256] = {};
+    sprintf(fmt_buffer, "%s %s \033[0m", T3D_LOG_COLOR_CODE[log_color], log);
+    puts(fmt_buffer);
+}
+
+void Log::PrintAssert(T3D_LOG_COLOR log_color, char* log) {
+    char fmt_buffer[256] = {};
+    sprintf(fmt_buffer, "%s %s \033[0m", T3D_LOG_COLOR_CODE[log_color], log);
+    puts(fmt_buffer);
+}
+
+void Log::PrintFile(char *log, usize size) {
+    s_mutex.lock();
+    if (s_file != nullptr) {
+        fwrite(log, sizeof(char), size, s_file);
+    }
+    s_mutex.unlock();
 }

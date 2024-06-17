@@ -37,7 +37,8 @@ template<typename T>
 bool RingBuffer<T>::Push(const T &item)
 {
     bool pushed = false;
-    std::lock_guard<std::mutex> lock(m_mutex);
+    m_mutex.lock();
+
     usize next = (m_head + 1) % m_vector.size();
     if (next != m_tail)
     {
@@ -45,6 +46,8 @@ bool RingBuffer<T>::Push(const T &item)
         m_head = next;
         pushed = true;
     }
+
+    m_mutex.unlock();
     return pushed;
 }
 
@@ -52,12 +55,15 @@ template<typename T>
 bool RingBuffer<T>::Pop(T &item)
 {
     bool popped = false;
-    std::lock_guard<std::mutex> lock(m_mutex);
+    m_mutex.lock();
+
     if (m_tail != m_head)
     {
         item = m_vector[m_tail];
         m_tail = (m_tail + 1) % m_vector.size();
         popped = true;
     }
+
+    m_mutex.unlock();
     return popped;
 }

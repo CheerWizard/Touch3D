@@ -96,6 +96,7 @@ void WindowsApp::Run() {
 }
 
 void WindowsApp::UpdateWindow() {
+    LogInfo("UpdateWindow()");
     MSG msg = {};
     if (GetMessage(&msg, nullptr, 0, 0) > 0) {
         TranslateMessage(&msg);

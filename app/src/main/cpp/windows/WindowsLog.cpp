@@ -20,7 +20,32 @@ static const int T3D_LOG_COLOR_CODE[T3D_LOG_COLOR_COUNT] {
     0x0F, // T3D_LOG_COLOR_LIGHT_WHITE
 };
 
-void __PrintLog(T3D_LOG_LEVEL log_level, T3D_LOG_COLOR log_color, char* log) {
+void Log::PrintVerbose(T3D_LOG_COLOR log_color, char* log) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), T3D_LOG_COLOR_CODE[log_color]);
+    puts(log);
+}
+
+void Log::PrintInfo(T3D_LOG_COLOR log_color, char* log) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), T3D_LOG_COLOR_CODE[log_color]);
+    puts(log);
+}
+
+void Log::PrintDebug(T3D_LOG_COLOR log_color, char* log) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), T3D_LOG_COLOR_CODE[log_color]);
+    puts(log);
+}
+
+void Log::PrintWarning(T3D_LOG_COLOR log_color, char* log) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), T3D_LOG_COLOR_CODE[log_color]);
+    puts(log);
+}
+
+void Log::PrintError(T3D_LOG_COLOR log_color, char* log) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), T3D_LOG_COLOR_CODE[log_color]);
+    puts(log);
+}
+
+void Log::PrintAssert(T3D_LOG_COLOR log_color, char* log) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), T3D_LOG_COLOR_CODE[log_color]);
     puts(log);
 }

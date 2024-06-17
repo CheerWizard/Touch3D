@@ -1,44 +1,26 @@
 #include <Log.hpp>
 #include <android/log.h>
 
-void __PrintLog(T3D_LOG_LEVEL log_level, T3D_LOG_COLOR log_color, char* log) {
-    switch (log_level) {
+void Log::PrintVerbose(T3D_LOG_COLOR log_color, char *log) {
+    __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_VERBOSE, "T3D", log);
+}
 
-        case T3D_LOG_LEVEL_VERBOSE:
-        {
-            __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_VERBOSE, "T3D", log);
-            break;
-        }
+void Log::PrintInfo(T3D_LOG_COLOR log_color, char *log) {
+    __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_INFO, "T3D", log);
+}
 
-        case T3D_LOG_LEVEL_INFO:
-        {
-            __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_INFO, "T3D", log);
-            break;
-        }
+void Log::PrintDebug(T3D_LOG_COLOR log_color, char *log) {
+    __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_DEBUG, "T3D", log);
+}
 
-        case T3D_LOG_LEVEL_DEBUG:
-        {
-            __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_DEBUG, "T3D", log);
-            break;
-        }
+void Log::PrintWarning(T3D_LOG_COLOR log_color, char *log) {
+    __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_WARN, "T3D", log);
+}
 
-        case T3D_LOG_LEVEL_WARNING:
-        {
-            __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_WARN, "T3D", log);
-            break;
-        }
+void Log::PrintError(T3D_LOG_COLOR log_color, char *log) {
+    __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_ERROR, "T3D", log);
+}
 
-        case T3D_LOG_LEVEL_ERROR:
-        {
-            __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_ERROR, "T3D", log);
-            break;
-        }
-
-        case T3D_LOG_LEVEL_ASSERTION:
-        {
-            __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_FATAL, "T3D", log);
-            break;
-        }
-
-    }
+void Log::PrintAssert(T3D_LOG_COLOR log_color, char *log) {
+    __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_FATAL, "T3D", log);
 }

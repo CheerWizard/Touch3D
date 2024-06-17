@@ -2,44 +2,49 @@
 
 #include <Types.hpp>
 #include <DebugBreak.hpp>
+#include <Time.hpp>
 
 #include <cstdio>
 #include <cstring>
+#include <mutex>
 
-#ifdef T3D_WINDOWS
+#if defined(T3D_WINDOWS)
 #define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 #else
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
 
-#ifdef T3D_DEBUG
+#if defined(T3D_DEBUG)
 
-#if defined(T3D_WINDOWS)
+#define LogOpen(filepath) Log::Open(filepath)
+#define LogClose() Log::Close()
 
-#define LogVerbose(msg, ...) __LogVerbose(msg, ##__VA_ARGS__)
-#define LogInfo(msg, ...) __LogInfo(msg, ##__VA_ARGS__)
-#define LogDebug(msg, ...) __LogDebug(msg, ##__VA_ARGS__)
-#define LogWarning(msg, ...) __LogWarning(msg, ##__VA_ARGS__)
-#define LogError(msg, ...) __LogError(__FILENAME__, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__)
+#if defined(T3D_WINDOWS) || defined(T3D_LINUX)
+
+#define LogVerbose(msg, ...) Log::Verbose(msg, ##__VA_ARGS__)
+#define LogInfo(msg, ...) Log::Info(msg, ##__VA_ARGS__)
+#define LogDebug(msg, ...) Log::Debug(msg, ##__VA_ARGS__)
+#define LogWarning(msg, ...) Log::Warning(msg, ##__VA_ARGS__)
+#define LogError(msg, ...) Log::Error(__FILENAME__, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__)
 #define LogAssert(x, msg, ...) \
 {                                \
     if (!(x)) {                  \
-        __LogAssert(__FILENAME__, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__); \
+        Log::Assert(__FILENAME__, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__); \
         T3D_DEBUGBREAK(); \
     }\
 }
 
 #else
 
-#define LogVerbose(msg, ...) __LogVerbose(msg, 0, ##__VA_ARGS__)
-#define LogInfo(msg, ...) __LogInfo(msg, 0, ##__VA_ARGS__)
-#define LogDebug(msg, ...) __LogDebug(msg, 0, ##__VA_ARGS__)
-#define LogWarning(msg, ...) __LogWarning(msg, 0, ##__VA_ARGS__)
-#define LogError(msg, ...) __LogError(__FILENAME__, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__)
+#define LogVerbose(msg, ...) Log::Verbose(msg, 0, ##__VA_ARGS__)
+#define LogInfo(msg, ...) Log::Info(msg, 0, ##__VA_ARGS__)
+#define LogDebug(msg, ...) Log::Debug(msg, 0, ##__VA_ARGS__)
+#define LogWarning(msg, ...) Log::Warning(msg, 0, ##__VA_ARGS__)
+#define LogError(msg, ...) Log::Error(__FILENAME__, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__)
 #define LogAssert(x, msg, ...) \
 {                                \
     if (!(x)) {                  \
-        __LogAssert(__FILENAME__, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__); \
+        Log::Assert(__FILENAME__, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__); \
         T3D_DEBUGBREAK(); \
     }\
 }
@@ -47,6 +52,9 @@
 #endif
 
 #else
+
+#define LogOpen(filepath)
+#define LogClose()
 
 #define LogVerbose(msg, ...)
 #define LogInfo(msg, ...)
@@ -78,67 +86,124 @@ enum T3D_LOG_COLOR {
     T3D_LOG_COLOR_COUNT
 };
 
-enum T3D_LOG_LEVEL {
-    T3D_LOG_LEVEL_VERBOSE,
-    T3D_LOG_LEVEL_INFO,
-    T3D_LOG_LEVEL_DEBUG,
-    T3D_LOG_LEVEL_WARNING,
-    T3D_LOG_LEVEL_ERROR,
-    T3D_LOG_LEVEL_ASSERTION,
+class Log final {
+
+public:
+
+    static void Open(const char* filepath);
+    static void Close();
+
+    template<typename... Args>
+    static void Verbose(const char* msg, Args... args) {
+        char fmt_buffer[256] = {};
+        char text_buffer[256] = {};
+        ClockTime time = Clock::GetCurrentTime();
+        sprintf(
+                fmt_buffer,
+                "\n[%d.%d.%d][%d:%d:%d.%d] %s\0",
+                time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                msg
+        );
+        sprintf(text_buffer, fmt_buffer, args...);
+        PrintVerbose(T3D_LOG_COLOR_LIGHT_GREEN, text_buffer);
+        PrintFile(text_buffer, 256);
+    }
+
+    template<typename... Args>
+    static void Info(const char* msg, Args... args) {
+        char fmt_buffer[256] = {};
+        char text_buffer[256] = {};
+        ClockTime time = Clock::GetCurrentTime();
+        sprintf(
+                fmt_buffer,
+                "\n[%d.%d.%d][%d:%d:%d.%d] %s\0",
+                time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                msg
+        );
+        sprintf(text_buffer, fmt_buffer, args...);
+        PrintInfo(T3D_LOG_COLOR_GREEN, text_buffer);
+        PrintFile(text_buffer, 256);
+    }
+
+    template<typename... Args>
+    static void Debug(const char* msg, Args... args) {
+        char fmt_buffer[256] = {};
+        char text_buffer[256] = {};
+        ClockTime time = Clock::GetCurrentTime();
+        sprintf(
+                fmt_buffer,
+                "\n[%d.%d.%d][%d:%d:%d.%d] %s\0",
+                time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                msg
+        );
+        sprintf(text_buffer, fmt_buffer, args...);
+        PrintDebug(T3D_LOG_COLOR_WHITE, text_buffer);
+        PrintFile(text_buffer, 256);
+    }
+
+    template<typename... Args>
+    static void Warning(const char* msg, Args... args) {
+        char fmt_buffer[256] = {};
+        char text_buffer[256] = {};
+        ClockTime time = Clock::GetCurrentTime();
+        sprintf(
+                fmt_buffer,
+                "\n[%d.%d.%d][%d:%d:%d.%d] %s\0",
+                time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                msg
+        );
+        sprintf(text_buffer, fmt_buffer, args...);
+        PrintWarning(T3D_LOG_COLOR_YELLOW, text_buffer);
+        PrintFile(text_buffer, 256);
+    }
+
+    template<typename... Args>
+    static void Error(const char* filename, const char* function, int line, const char* msg, Args... args) {
+        char fmt_buffer[256] = {};
+        char text_buffer[256] = {};
+        ClockTime time = Clock::GetCurrentTime();
+        sprintf(
+                fmt_buffer,
+                "\n[%d.%d.%d][%d:%d:%d.%d] Error in %s -> %s(%i line):\n%s\0",
+                time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                filename, function, line,
+                msg
+        );
+        sprintf(text_buffer, fmt_buffer, args...);
+        PrintError(T3D_LOG_COLOR_RED, text_buffer);
+        PrintFile(text_buffer, 256);
+    }
+
+    template<typename... Args>
+    static void Assert(const char* filename, const char* function, int line, const char* msg, Args... args) {
+        char fmt_buffer[256] = {};
+        char text_buffer[256] = {};
+        ClockTime time = Clock::GetCurrentTime();
+        sprintf(
+                fmt_buffer,
+                "\n[%d.%d.%d][%d:%d:%d.%d] Assertion Failed in %s -> %s(%i line):\n%s\0",
+                time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                filename, function, line,
+                msg
+        );
+        sprintf(text_buffer, fmt_buffer, args...);
+        PrintAssert(T3D_LOG_COLOR_RED, text_buffer);
+        PrintFile(text_buffer, 256);
+    }
+
+private:
+    static void PrintVerbose(T3D_LOG_COLOR log_color, char* log);
+    static void PrintInfo(T3D_LOG_COLOR log_color, char* log);
+    static void PrintDebug(T3D_LOG_COLOR log_color, char* log);
+    static void PrintWarning(T3D_LOG_COLOR log_color, char* log);
+    static void PrintError(T3D_LOG_COLOR log_color, char* log);
+    static void PrintAssert(T3D_LOG_COLOR log_color, char* log);
+
+    static void PrintFile(char* log, usize size);
+
+private:
+    static FILE* s_file;
+    static std::mutex s_mutex;
+    static char s_buffer[256];
+
 };
-
-void __PrintLog(T3D_LOG_LEVEL log_level, T3D_LOG_COLOR log_color, char* log);
-
-template<typename... Args>
-void __LogVerbose(const char* msg, Args... args) {
-    char fmt_buffer[256] = {};
-    char text_buffer[256] = {};
-    sprintf(fmt_buffer, "%s", msg);
-    sprintf(text_buffer, fmt_buffer, args...);
-    __PrintLog(T3D_LOG_LEVEL_VERBOSE, T3D_LOG_COLOR_LIGHT_GREEN, text_buffer);
-}
-
-template<typename... Args>
-void __LogInfo(const char* msg, Args... args) {
-    char fmt_buffer[256] = {};
-    char text_buffer[256] = {};
-    sprintf(fmt_buffer, "%s", msg);
-    sprintf(text_buffer, fmt_buffer, args...);
-    __PrintLog(T3D_LOG_LEVEL_INFO, T3D_LOG_COLOR_GREEN, text_buffer);
-}
-
-template<typename... Args>
-void __LogDebug(const char* msg, Args... args) {
-    char fmt_buffer[256] = {};
-    char text_buffer[256] = {};
-    sprintf(fmt_buffer, "%s", msg);
-    sprintf(text_buffer, fmt_buffer, args...);
-    __PrintLog(T3D_LOG_LEVEL_DEBUG, T3D_LOG_COLOR_WHITE, text_buffer);
-}
-
-template<typename... Args>
-void __LogWarning(const char* msg, Args... args) {
-    char fmt_buffer[256] = {};
-    char text_buffer[256] = {};
-    sprintf(fmt_buffer, "%s", msg);
-    sprintf(text_buffer, fmt_buffer, args...);
-    __PrintLog(T3D_LOG_LEVEL_WARNING, T3D_LOG_COLOR_YELLOW, text_buffer);
-}
-
-template<typename... Args>
-void __LogError(const char* filename, const char* function, int line, const char* msg, Args... args) {
-    char fmt_buffer[256] = {};
-    char text_buffer[256] = {};
-    sprintf(fmt_buffer, "Error in %s -> %s(%i line):\n%s", filename, function, line, msg);
-    sprintf(text_buffer, fmt_buffer, args...);
-    __PrintLog(T3D_LOG_LEVEL_ERROR, T3D_LOG_COLOR_RED, text_buffer);
-}
-
-template<typename... Args>
-void __LogAssert(const char* filename, const char* function, int line, const char* msg, Args... args) {
-    char fmt_buffer[256] = {};
-    char text_buffer[256] = {};
-    sprintf(fmt_buffer, "Assertion Failed in %s -> %s(%i line):\n%s", filename, function, line, msg);
-    sprintf(text_buffer, fmt_buffer, args...);
-    __PrintLog(T3D_LOG_LEVEL_ASSERTION, T3D_LOG_COLOR_RED, text_buffer);
-}
