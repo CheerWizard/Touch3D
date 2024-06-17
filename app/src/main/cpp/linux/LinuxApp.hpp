@@ -22,7 +22,7 @@ private:
 protected:
     bool m_running;
     EventBuffer m_event_buffer;
-    ThreadPool* m_thread_pool;
+    ThreadPool<10>* m_thread_pool;
 
     const char* m_title;
     ulong m_color_black;

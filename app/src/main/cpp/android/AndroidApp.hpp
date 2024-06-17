@@ -49,7 +49,7 @@ private:
 private:
     bool m_running;
     EventBuffer m_event_buffer;
-    ThreadPool* m_thread_pool;
+    ThreadPool<10>* m_thread_pool;
 
     Activity* m_activity;
     ALooper* m_looper;

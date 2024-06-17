@@ -1,6 +1,6 @@
 #include <Time.hpp>
 
-ClockTime Clock::GetCurrentTime() {
+ClockTime Clock::GetTime() {
     system_clock::time_point current_time = system_clock::now();
     current_time += 1h;
     auto current_ms = time_point_cast<milliseconds>(current_time);
@@ -36,7 +36,6 @@ ClockTime Clock::GetCurrentTime() {
     seconds s = duration_cast<seconds>(ms);
     ms -= s;
 
-    // Return Time
     ClockTime time = {};
     time.y = y;
     time.m = m;

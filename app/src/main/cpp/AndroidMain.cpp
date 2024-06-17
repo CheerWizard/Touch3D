@@ -2,7 +2,7 @@
 #include <Log.hpp>
 
 static AndroidApp* s_app = nullptr;
-static ThreadPool* s_jni_thread_pool = nullptr;
+static ThreadPool<5>* s_jni_thread_pool = nullptr;
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     Jni::vm = vm;

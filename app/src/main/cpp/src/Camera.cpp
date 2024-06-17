@@ -1,10 +1,10 @@
 #include <Camera.hpp>
 
 float2 Camera::GetPanSpeed() const {
-    float x = min(static_cast<float>(frame_size.x) / 1000.0f, 2.4f);
+    float x = Min(static_cast<float>(frame_size.x) / 1000.0f, 2.4f);
     float x_factor = 0.0366f * (x * x) - 0.1778f * x + 0.3021f;
 
-    float y = min(static_cast<float>(frame_size.y) / 1000.0f, 2.4f);
+    float y = Min(static_cast<float>(frame_size.y) / 1000.0f, 2.4f);
     float y_factor = 0.0366f * (y * y) - 0.1778f * y + 0.3021f;
 
     return { x_factor * pan_acceleration, y_factor * pan_acceleration };
@@ -12,7 +12,7 @@ float2 Camera::GetPanSpeed() const {
 
 float Camera::GetZoomSpeed() const {
     float zoom_speed = move_speed * zoom_acceleration;
-    zoom_speed = max(zoom_speed, 0.0f);
+    zoom_speed = Max(zoom_speed, 0.0f);
     return zoom_speed * zoom_speed;
 }
 

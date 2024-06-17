@@ -47,44 +47,43 @@ static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM
 }
 
 WindowsApp::WindowsApp(HINSTANCE instance, int cmd_show) {
+    LogOpen("T3D_Windows.log");
+
     WNDCLASS window_class = {};
     window_class.hInstance = instance;
     window_class.lpszClassName = "T3D_Window";
     window_class.lpfnWndProc = WindowProc;
     RegisterClass(&window_class);
 
-    m_window.title = "T3D Windows";
-    m_window.position = { 400, 300 };
-    m_window.size = { 800, 600 };
+    m_title = "T3D Windows";
 
-    m_window.handle = CreateWindowEx(
+    m_window = CreateWindowEx(
             0,
             window_class.lpszClassName,
-            m_window.title,
+            m_title,
             WS_OVERLAPPEDWINDOW,
-            m_window.position.x,
-            m_window.position.y,
-            m_window.size.x,
-            m_window.size.y,
+            400, 300,
+            800, 600,
             nullptr,
             nullptr,
             instance,
             &m_event_buffer
     );
 
-    if (m_window.handle == nullptr) {
+    if (m_window == nullptr) {
         LogAssert(false, "Failed to create window for Windows!");
     }
 
-    ShowWindow(m_window.handle, cmd_show);
+    ShowWindow(m_window, cmd_show);
 
     DEVMODE devmode;
     EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devmode);
-    m_window.refresh_rate = devmode.dmDisplayFrequency;
+    m_refresh_rate = devmode.dmDisplayFrequency;
 }
 
 WindowsApp::~WindowsApp() {
-    DestroyWindow(m_window.handle);
+    DestroyWindow(m_window);
+    LogClose();
 }
 
 void WindowsApp::Run() {
@@ -105,5 +104,5 @@ void WindowsApp::UpdateWindow() {
 }
 
 void WindowsApp::UpdateEvents() {
-    m_running = IsWindow(m_window.handle);
+    m_running = IsWindow(m_window);
 }

@@ -5,14 +5,6 @@
 
 #include <Windows.h>
 
-struct WindowsWindow final {
-    const char* title;
-    int2 position;
-    int2 size;
-    u32 refresh_rate;
-    HWND handle;
-};
-
 class WindowsApp final {
 
 public:
@@ -27,8 +19,9 @@ private:
 
 protected:
     bool m_running;
-    ThreadPool* m_thread_pool;
+    ThreadPool<10>* m_thread_pool;
     EventBuffer m_event_buffer;
-    WindowsWindow m_window;
-
+    HWND m_window;
+    const char* m_title;
+    u32 m_refresh_rate;
 };

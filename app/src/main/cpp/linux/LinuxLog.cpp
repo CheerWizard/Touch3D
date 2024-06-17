@@ -54,11 +54,3 @@ void Log::PrintAssert(T3D_LOG_COLOR log_color, char* log) {
     sprintf(fmt_buffer, "%s %s \033[0m", T3D_LOG_COLOR_CODE[log_color], log);
     puts(fmt_buffer);
 }
-
-void Log::PrintFile(char *log, usize size) {
-    s_mutex.lock();
-    if (s_file != nullptr) {
-        fwrite(log, sizeof(char), size, s_file);
-    }
-    s_mutex.unlock();
-}

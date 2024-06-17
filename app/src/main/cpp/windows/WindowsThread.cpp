@@ -1,10 +1,8 @@
 #include <Thread.hpp>
 #include <Log.hpp>
 
-#define NOMINMAX
 #include <Windows.h>
 #include <processthreadsapi.h>
-#include <pthread.h>
 
 #include <sstream>
 
@@ -47,15 +45,15 @@ void Thread::SetFormat()
     HANDLE handle = (HANDLE) m_handle;
 
     // set affinity mask
-    DWORD_PTR affinityMask = 1ull << m_handle;
+    DWORD_PTR affinityMask = 1ull << 0;
     DWORD_PTR affinity_result = SetThreadAffinityMask(handle, affinityMask);
-    LogAssert(affinity_result > 0, "Failed to set thread affinity mask on Windows!")
+//    LogAssert(affinity_result > 0, "Failed to set thread affinity mask on Windows!")
 
     // set priority
     BOOL priority_result = SetThreadPriority(handle, T3D_THREAD_PRIORITY_CODE[m_priority]);
-    LogAssert(priority_result != 0, "Failed to set thread priority on Windows!");
+//    LogAssert(priority_result != 0, "Failed to set thread priority on Windows!");
 
     // set name
     HRESULT hr = SetThreadName(m_handle, m_name);
-    LogAssert(SUCCEEDED(hr), "Failed to set thread name on Windows!");
+//    LogAssert(SUCCEEDED(hr), "Failed to set thread name on Windows!");
 }

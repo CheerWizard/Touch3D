@@ -9,11 +9,69 @@
 #define T3D_RADIANS(degree) (degree * T3D_PI / 180.0f)
 #define T3D_E 2.71828f
 
-using namespace std;
+template<typename T>
+inline void Swap(T& a, T& b) {
+    std::swap(a, b);
+}
+
+template<typename T>
+inline T Min(const T& a, const T& b) {
+    return std::min(a, b);
+}
+
+template<typename T>
+inline T Max(const T& a, const T& b) {
+    return std::max(a, b);
+}
+
+template<typename T>
+inline T Sqrt(const T& x) {
+    return std::sqrt(x);
+}
+
+template<typename T>
+inline T Pow(const T& x, const T& p) {
+    return std::pow(x, p);
+}
+
+template<typename T>
+inline T Exp(const T& x) {
+    return std::exp(x);
+}
+
+template<typename T>
+inline T Sin(const T& x) {
+    return std::sin(x);
+}
+
+template<typename T>
+inline T Cos(const T& x) {
+    return std::sin(x);
+}
+
+template<typename T>
+inline T Tan(const T& x) {
+    return std::sin(x);
+}
+
+template<typename T>
+inline T ASin(const T& x) {
+    return std::asin(x);
+}
+
+template<typename T>
+inline T ACos(const T& x) {
+    return std::acos(x);
+}
+
+template<typename T>
+inline T ATan(const T& x) {
+    return std::atan(x);
+}
 
 template<typename T>
 inline T Clamp(const T& a, const T& b, const T& x) {
-    return min(max(x, b), a);
+    return std::min(std::max(x, b), a);
 }
 
 template<typename T>
@@ -113,7 +171,7 @@ struct vec2 {
     }
 
     inline friend vec2 operator ^(const vec2& v, const T& p) {
-        return { pow(v.x, p), pow(v.y, p) };
+        return { Pow(v.x, p), Pow(v.y, p) };
     }
 
     inline friend vec2 operator -(const vec2& v) {
@@ -121,7 +179,7 @@ struct vec2 {
     }
 
     inline T Length() const {
-        return sqrt(x * x + y * y);
+        return Sqrt(x * x + y * y);
     }
 
     inline vec2 Normalize() const {
@@ -203,7 +261,7 @@ struct vec3 {
     }
 
     inline friend vec3 operator ^(const vec3& v, const T& p) {
-        return { pow(v.x, p), pow(v.y, p), pow(v.z, p) };
+        return { Pow(v.x, p), Pow(v.y, p), Pow(v.z, p) };
     }
 
     inline friend vec3 operator -(const vec3& v) {
@@ -215,7 +273,7 @@ struct vec3 {
     }
 
     inline T Length() const {
-        return sqrt(x * x + y * y + z * z);
+        return Sqrt(x * x + y * y + z * z);
     }
 
     inline vec3 Normalize() const {
@@ -303,7 +361,7 @@ struct vec4 {
     }
 
     inline friend vec4 operator ^(const vec4& v, const T& p) {
-        return { pow(v.x, p), pow(v.y, p), pow(v.z, p), pow(v.w, p) };
+        return { Pow(v.x, p), Pow(v.y, p), Pow(v.z, p), Pow(v.w, p) };
     }
 
     inline friend vec4 operator -(const vec4& v) {
@@ -319,7 +377,7 @@ struct vec4 {
     }
 
     inline T Length() const {
-        return sqrt(x * x + y * y + z * z + w * w);
+        return Sqrt(x * x + y * y + z * z + w * w);
     }
 
     inline vec4 Normalize() const {
@@ -349,10 +407,10 @@ struct quat {
     quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
 
     quat(float nx, float ny, float nz, const radians& r = radians(0)) {
-        x = nx * sin(r * 0.5f);
-        y = ny * sin(r * 0.5f);
-        z = nz * sin(r * 0.5f);
-        w = cos(r * 0.5f);
+        x = nx * Sin(r * 0.5f);
+        y = ny * Sin(r * 0.5f);
+        z = nz * Sin(r * 0.5f);
+        w = Cos(r * 0.5f);
     }
 
     quat(const vec3<float>& n, const radians& r = radians(0)) : quat(n.x, n.y, n.z , r) {}
@@ -379,7 +437,7 @@ struct quat {
     }
 
     inline float Length() const {
-        return sqrt(x * x + y * y + z * z);
+        return Sqrt(x * x + y * y + z * z);
     }
 
     inline quat Normalize() {
@@ -399,14 +457,14 @@ struct quat {
 
         t /= 2.0;
 
-        theta = acos(dot);
+        theta = ACos(dot);
         if (theta < 0.0) {
             theta=-theta;
         }
 
-        st = sin(theta);
-        sut = sin(t*theta);
-        sout = sin((1-t)*theta);
+        st = Sin(theta);
+        sut = Sin(t*theta);
+        sout = Sin((1-t)*theta);
         coeff1 = sout/st;
         coeff2 = sut/st;
 
@@ -461,11 +519,11 @@ struct mat2 {
     inline mat2 Transpose() const {
         mat2 t = *this;
 
-        // swap(t[0][0], t[0][0]);
-        swap(t[0][1], t[1][0]);
+        // Swap(t[0][0], t[0][0]);
+        Swap(t[0][1], t[1][0]);
 
-        // swap(t[1][0], t[0][1]);
-        // swap(t[1][1], t[1][1]);
+        // Swap(t[1][0], t[0][1]);
+        // Swap(t[1][1], t[1][1]);
 
         return t;
     }
@@ -528,17 +586,17 @@ struct mat3 {
     inline mat3 Transpose() const {
         mat3 t = *this;
 
-        // swap(t[0][0], t[0][0]);
-        swap(t[0][1], t[1][0]);
-        swap(t[0][2], t[2][0]);
+        // Swap(t[0][0], t[0][0]);
+        Swap(t[0][1], t[1][0]);
+        Swap(t[0][2], t[2][0]);
 
-        // swap(t[1][0], t[0][1]);
-        // swap(t[1][1], t[1][1]);
-        swap(t[1][2], t[2][1]);
+        // Swap(t[1][0], t[0][1]);
+        // Swap(t[1][1], t[1][1]);
+        Swap(t[1][2], t[2][1]);
 
-        // swap(t[2][0], t[0][2]);
-        // swap(t[2][1], t[1][2]);
-        // swap(t[2][2], t[2][2]);
+        // Swap(t[2][0], t[0][2]);
+        // Swap(t[2][1], t[1][2]);
+        // Swap(t[2][2], t[2][2]);
 
         return t;
     }
@@ -690,25 +748,25 @@ struct mat4 {
     inline mat4 Transpose() const {
         mat4 t = *this;
 
-        // swap(t[0][0], t[0][0]);
-        swap(t[0][1], t[1][0]);
-        swap(t[0][2], t[2][0]);
-        swap(t[0][3], t[3][0]);
+        // Swap(t[0][0], t[0][0]);
+        Swap(t[0][1], t[1][0]);
+        Swap(t[0][2], t[2][0]);
+        Swap(t[0][3], t[3][0]);
 
-        // swap(t[1][0], t[0][1]);
-        // swap(t[1][1], t[1][1]);
-        swap(t[1][2], t[2][1]);
-        swap(t[1][3], t[3][1]);
+        // Swap(t[1][0], t[0][1]);
+        // Swap(t[1][1], t[1][1]);
+        Swap(t[1][2], t[2][1]);
+        Swap(t[1][3], t[3][1]);
 
-        // swap(t[2][0], t[0][2]);
-        // swap(t[2][1], t[1][2]);
-        // swap(t[2][2], t[2][2]);
-        swap(t[2][3], t[3][2]);
+        // Swap(t[2][0], t[0][2]);
+        // Swap(t[2][1], t[1][2]);
+        // Swap(t[2][2], t[2][2]);
+        Swap(t[2][3], t[3][2]);
 
-        // swap(t[3][0], t[0][3]);
-        // swap(t[3][1], t[1][3]);
-        // swap(t[3][2], t[2][3]);
-        // swap(t[3][3], t[3][3]);
+        // Swap(t[3][0], t[0][3]);
+        // Swap(t[3][1], t[1][3]);
+        // Swap(t[3][2], t[2][3]);
+        // Swap(t[3][3], t[3][3]);
 
         return t;
     }
@@ -849,8 +907,8 @@ struct mat4 {
     void Rotate(const vec3<radians>& r, const vec3<float>& axis) {
         mat4 rx;
         {
-            float sinx = sin(r.x);
-            float cosx = cos(r.x);
+            float sinx = Sin(r.x);
+            float cosx = Cos(r.x);
             rx[1][1] = cosx;
             rx[1][2] = -sinx;
             rx[2][1] = sinx;
@@ -860,8 +918,8 @@ struct mat4 {
 
         mat4 ry;
         {
-            float siny = sin(r.y);
-            float cosy = cos(r.y);
+            float siny = Sin(r.y);
+            float cosy = Cos(r.y);
             ry[0][0] = cosy;
             ry[0][2] = siny;
             ry[2][0] = -siny;
@@ -871,8 +929,8 @@ struct mat4 {
 
         mat4 rz;
         {
-            float sinz = sin(r.z);
-            float cosz = cos(r.z);
+            float sinz = Sin(r.z);
+            float cosz = Cos(r.z);
             rz[0][0] = cosz;
             rz[0][1] = -sinz;
             rz[1][0] = sinz;
