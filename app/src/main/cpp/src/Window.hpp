@@ -1,10 +1,6 @@
 #pragma once
 
-#if defined(T3D_WINDOWS)
-
-#include <Windows.h>
-
-#elif defined(T3D_ANDROID)
+#if defined(T3D_ANDROID)
 
 #include <Activity.hpp>
 #include <android/native_window.h>
@@ -20,11 +16,7 @@ class Window final {
 
 public:
 
-#if defined(T3D_WINDOWS)
-
-    Window(HINSTANCE handle, int cmd_show, const char* title, int2 position, int2 size);
-
-#elif defined(T3D_ANDROID)
+#if defined(T3D_ANDROID)
 
     Window(Activity* activity);
 
@@ -35,10 +27,6 @@ public:
 #endif
 
     ~Window();
-
-#if defined(T3D_DESKTOP)
-
-#endif
 
 #if defined(T3D_ANDROID)
 
@@ -69,20 +57,7 @@ public:
 
 private:
 
-#if defined(T3D_DESKTOP)
-
-    const char* m_title;
-    int2 m_position;
-    int2 m_size;
-    u32 m_refresh_rate;
-
-#endif
-
-#if defined(T3D_WINDOWS)
-
-    HWND m_window;
-
-#elif defined(T3D_ANDROID)
+#if defined(T3D_ANDROID)
 
     Activity* m_activity;
     ALooper* m_looper;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ThreadPool.hpp>
-#include <IOBuffer.hpp>
+#include <EventBuffer.hpp>
 
 #include <X11/Xlib.h>
 #include <err.h>

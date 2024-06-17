@@ -36,6 +36,7 @@ LinuxApp::~LinuxApp() {
 }
 
 void LinuxApp::Run() {
+    m_running = true;
     while (m_running) {
         UpdateWindow();
         UpdateEvents();

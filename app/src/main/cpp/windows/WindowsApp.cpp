@@ -1,18 +1,18 @@
-#include <Window.hpp>
+#include <WindowsApp.hpp>
 #include <Log.hpp>
 
 static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM l_param) {
-    IOBuffer* io_buffer;
+    EventBuffer* event_buffer;
 
     // only called when window is created first time
     if (msg == WM_CREATE) {
         CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT*>(l_param);
-        io_buffer = reinterpret_cast<IOBuffer*>(pCreate->lpCreateParams);
-        SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) io_buffer);
+        event_buffer = reinterpret_cast<EventBuffer*>(pCreate->lpCreateParams);
+        SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) event_buffer);
     }
     else {
         LONG_PTR ptr = GetWindowLongPtr(handle, GWLP_USERDATA);
-        io_buffer = reinterpret_cast<IOBuffer*>(ptr);
+        event_buffer = reinterpret_cast<EventBuffer*>(ptr);
     }
 
     switch (msg) {
@@ -28,8 +28,8 @@ static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM
         case WM_SIZE:
         {
             int2 size = { LOWORD(l_param), HIWORD(l_param) };
-            if (io_buffer != nullptr) {
-                for (OnWindowResized on_window_resized : io_buffer->on_window_resized) {
+            if (event_buffer != nullptr) {
+                for (OnWindowResized on_window_resized : event_buffer->on_window_resized) {
                     on_window_resized(size);
                 }
             }
@@ -46,57 +46,56 @@ static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM
     return DefWindowProc(handle, msg, w_param, l_param);
 }
 
-Window::Window(HINSTANCE instance, int cmd_show, const char* title, int2 position, int2 size) {
+WindowsApp::WindowsApp(HINSTANCE instance, int cmd_show) {
     WNDCLASS window_class = {};
     window_class.hInstance = instance;
-    window_class.lpszClassName = "Win32_Window";
+    window_class.lpszClassName = "T3D_Window";
     window_class.lpfnWndProc = WindowProc;
     RegisterClass(&window_class);
 
-    m_title = title;
-    m_position = position;
-    m_size = size;
+    m_window.title = "T3D Windows";
+    m_window.position = { 400, 300 };
+    m_window.size = { 800, 600 };
 
-    m_window = CreateWindowEx(
+    m_window.handle = CreateWindowEx(
             0,
             window_class.lpszClassName,
-            title,
+            m_window.title,
             WS_OVERLAPPEDWINDOW,
-            position.x,
-            position.y,
-            size.x,
-            size.y,
+            m_window.position.x,
+            m_window.position.y,
+            m_window.size.x,
+            m_window.size.y,
             nullptr,
             nullptr,
             instance,
-            nullptr
+            &m_event_buffer
     );
 
-    if (m_window == nullptr) {
-        LogError("Failed to create Win32 window!");
+    if (m_window.handle == nullptr) {
+        LogAssert(false, "Failed to create window for Windows!");
     }
 
-    ShowWindow(m_window, cmd_show);
+    ShowWindow(m_window.handle, cmd_show);
 
     DEVMODE devmode;
     EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devmode);
-    m_refresh_rate = devmode.dmDisplayFrequency;
+    m_window.refresh_rate = devmode.dmDisplayFrequency;
 }
 
-Window::~Window() {
-    DestroyWindow(m_window);
-    m_window = nullptr;
+WindowsApp::~WindowsApp() {
+    DestroyWindow(m_window.handle);
 }
 
-void Window::SetIOBuffer(IOBuffer* io_buffer) {
-    SetWindowLongPtr(m_handle, GWLP_USERDATA, (LONG_PTR) io_buffer);
+void WindowsApp::Run() {
+    m_running = true;
+    while (m_running) {
+        UpdateWindow();
+        UpdateEvents();
+    }
 }
 
-IOBuffer* Window::GetIOBuffer() {
-    return reinterpret_cast<IOBuffer*>(GetWindowLongPtr(handle, GWLP_USERDATA));
-}
-
-void Window::Update() {
+void WindowsApp::UpdateWindow() {
     MSG msg = {};
     if (GetMessage(&msg, nullptr, 0, 0) > 0) {
         TranslateMessage(&msg);
@@ -104,14 +103,6 @@ void Window::Update() {
     }
 }
 
-bool Window::IsOpen() const {
-    return IsWindow(m_window);
-}
-
-bool Window::IsWindowed() {
-    return true;
-}
-
-bool Window::IsFullscreen() {
-    return false;
+void WindowsApp::UpdateEvents() {
+    m_running = IsWindow(m_window.handle);
 }
