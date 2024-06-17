@@ -4,21 +4,8 @@
 #include <EventBuffer.hpp>
 
 #include <X11/Xlib.h>
-#include <err.h>
-
-struct LinuxWindow final {
-    const char* title;
-    int2 position;
-    int2 size;
-    int border_width;
-    ulong border_color;
-    ulong background_color;
-    u32 refresh_rate;
-    Display* display;
-    int screen;
-    Window root;
-    Window handle;
-};
+#include <X11/Xos.h>
+#include <X11/Xutil.h>
 
 class LinuxApp final {
 
@@ -36,5 +23,15 @@ protected:
     bool m_running;
     EventBuffer m_event_buffer;
     ThreadPool* m_thread_pool;
-    LinuxWindow m_window;
+
+    const char* m_title;
+    ulong m_color_black;
+    ulong m_color_white;
+    ulong m_color_red;
+    ulong m_color_blue;
+    u32 m_refresh_rate;
+    Display* m_display;
+    int m_screen;
+    Window m_window;
+    GC m_gc;
 };

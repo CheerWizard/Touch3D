@@ -1,38 +1,65 @@
 #include <LinuxApp.hpp>
 #include <Log.hpp>
 
+static ulong RGB(u8 r, u8 g, u8 b) {
+    return b + (g<<8) + (r<<16);
+}
+
 LinuxApp::LinuxApp() {
-    m_window.display = XOpenDisplay(nullptr);
-    if (m_window.display == nullptr) {
+    m_display = XOpenDisplay(nullptr);
+    if (m_display == nullptr) {
         LogAssert(false, "Unable to open X11 display for Linux!");
     }
 
-    m_window.title = "T3D Linux";
-    m_window.position = { 400, 300 };
-    m_window.size = { 800, 600 };
-    m_window.border_width = 15;
-    m_window.border_color = BlackPixel(m_window.display, m_window.screen);
-    m_window.background_color = WhitePixel(m_window.display, m_window.screen);
+    m_title = "T3D Linux";
+    m_color_black = BlackPixel(m_display, m_screen);
+    m_color_white = WhitePixel(m_display, m_screen);
+    m_color_red = RGB(255, 0, 0);
+    m_color_blue = RGB(0, 0, 255);
 
-    m_window.screen = DefaultScreen(m_window.display);
-    m_window.root = RootWindow(m_window.display, m_window.screen);
+    m_screen = DefaultScreen(m_display);
 
-    m_window.handle = XCreateSimpleWindow(
-            m_window.display, m_window.root,
-            m_window.position.x, m_window.position.y,
-            m_window.size.x, m_window.size.y,
-            m_window.border_width,
-            m_window.border_color,
-            m_window.background_color
+    m_window = XCreateSimpleWindow(
+            m_display,
+            DefaultRootWindow(m_display),
+            400, 300,
+            800, 600,
+            5,
+            m_color_black,
+            m_color_white
     );
 
-    XMapWindow(m_window.display, m_window.handle);
+    XSetStandardProperties(
+            m_display,
+            m_window,
+            m_title,
+            m_title,
+            None,
+            nullptr,
+            0,
+            nullptr
+    );
+
+    XSelectInput(
+            m_display,
+            m_window,
+            ExposureMask |
+            ButtonPressMask |
+            KeyPressMask
+    );
+
+    m_gc = XCreateGC(m_display, m_window, 0, 0);
+
+    XSetBackground(m_display, m_gc, m_color_white);
+    XSetForeground(m_display, m_gc, m_color_black);
+    XClearWindow(m_display, m_window);
+    XMapRaised(m_display, m_window);
 }
 
 LinuxApp::~LinuxApp() {
-    XUnmapWindow(m_window.display, m_window.handle);
-    XDestroyWindow(m_window.display, m_window.handle);
-    XCloseDisplay(m_window.display);
+    XFreeGC(m_display, m_gc);
+    XDestroyWindow(m_display, m_window);
+    XCloseDisplay(m_display);
 }
 
 void LinuxApp::Run() {
@@ -44,10 +71,12 @@ void LinuxApp::Run() {
 }
 
 void LinuxApp::UpdateWindow() {
-
 }
 
 void LinuxApp::UpdateEvents() {
     XEvent event;
-    m_running = XNextEvent(m_window.display, &event) == 0;
+    m_running = XNextEvent(m_display, &event) == 0;
+    if (event.type == Expose && event.xexpose.count == 0) {
+        XClearWindow(m_display, m_window);
+    }
 }
