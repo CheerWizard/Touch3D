@@ -2,7 +2,7 @@
 #include <Log.hpp>
 
 static AndroidApp* s_app = nullptr;
-static ThreadPool<5>* s_jni_thread_pool = nullptr;
+static ThreadPool<1, 5, T3D_THREAD_PRIORITY_HIGHEST>* s_jni_thread_pool = nullptr;
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     Jni::vm = vm;
@@ -18,7 +18,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     Activity::mid_show_input = env->GetMethodID(Activity::clazz, "showInput", "(I)V");
     Activity::mid_hide_input = env->GetMethodID(Activity::clazz, "hideInput", "(I)V");
 
-    s_jni_thread_pool = new ThreadPool(1, 1, "JNI", T3D_THREAD_PRIORITY_HIGHEST);
+    s_jni_thread_pool = new ThreadPool<1, 5, T3D_THREAD_PRIORITY_HIGHEST>("JNI");
 
     return JNI_VERSION_1_6;
 }
@@ -170,4 +170,34 @@ Java_com_cheerwizard_touch3d_MainActivity_nativeOnContentRectChanged(
         jint w, jint h
 ) {
     s_app->OnContentRectChanged(x, y, w, h);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cheerwizard_touch3d_NativeLog_v(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
+    LogVerbose("%s: %s", tag, log);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cheerwizard_touch3d_NativeLog_i(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
+    LogInfo("%s: %s", tag, log);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cheerwizard_touch3d_NativeLog_d(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
+    LogDebug("%s: %s", tag, log);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cheerwizard_touch3d_NativeLog_w(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
+    LogWarning("%s: %s", tag, log);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cheerwizard_touch3d_NativeLog_e(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
+    LogError("%s: %s", tag, log);
 }

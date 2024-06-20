@@ -6,11 +6,13 @@ static ulong RGB(u8 r, u8 g, u8 b) {
 }
 
 LinuxApp::LinuxApp() {
-    LogOpen("T3D_Linux.log");
+    T3D_LOG_OPEN("T3D_Linux.log");
+
+    m_thread_pool = new ThreadPool<1, 10, T3D_THREAD_PRIORITY_NORMAL>("LinuxApp");
 
     m_display = XOpenDisplay(nullptr);
     if (m_display == nullptr) {
-        LogAssert(false, "Unable to open X11 display for Linux!");
+        T3D_ASSERT(false, "Unable to open X11 display for Linux!");
     }
 
     m_title = "T3D Linux";
@@ -62,7 +64,8 @@ LinuxApp::~LinuxApp() {
     XFreeGC(m_display, m_gc);
     XDestroyWindow(m_display, m_window);
     XCloseDisplay(m_display);
-    LogClose();
+    delete m_thread_pool;
+    T3D_LOG_CLOSE();
 }
 
 void LinuxApp::Run() {
@@ -74,7 +77,7 @@ void LinuxApp::Run() {
 }
 
 void LinuxApp::UpdateWindow() {
-    LogInfo("UpdateWindow()");
+    T3D_LOG_INFO("UpdateWindow()");
 }
 
 void LinuxApp::UpdateEvents() {

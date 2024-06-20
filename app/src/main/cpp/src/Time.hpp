@@ -17,9 +17,4 @@ struct ClockTime final {
     i64 ms;  // millisecond
 };
 
-class Clock final {
-
-public:
-    static ClockTime GetTime();
-
-};
+ClockTime GetTime();

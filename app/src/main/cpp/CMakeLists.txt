@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# defines for build type
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DT3D_DEBUG)
 endif ()
@@ -58,6 +59,7 @@ macro(build_linux)
     target_link_libraries(${PROJECT_NAME} X11)
 endmacro()
 
+# defines for OS
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     build_windows()
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Android")
@@ -65,3 +67,22 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Android")
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     build_linux()
 endif ()
+
+# defines for CPU arch
+if (
+        ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ilp32"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ILP32"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ARM"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "I386"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ix86"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "IX86"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "X86"
+        OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "powerpc"
+)
+    add_definitions(-DT3D_32)
+else ()
+    add_definitions(-DT3D_64)
+endif()

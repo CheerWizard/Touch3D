@@ -3,50 +3,50 @@
 #include <Types.hpp>
 #include <DebugBreak.hpp>
 #include <Time.hpp>
-#include <ThreadPool.hpp>
+#include <Thread.hpp>
 
 #include <cstdio>
 #include <cstring>
 #include <mutex>
 
 #if defined(T3D_WINDOWS)
-#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+#define T3D_FILENAME (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 #else
-#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define T3D_FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
 
 #if defined(T3D_DEBUG)
 
-#define LogOpen(filepath) Log::Open(filepath)
-#define LogClose() Log::Close()
+#define T3D_LOG_OPEN(filepath) Log::Open(filepath)
+#define T3D_LOG_CLOSE() Log::Close()
 
 #if defined(T3D_ANDROID)
 
-#define LogVerbose(msg, ...) Log::Verbose(msg, 0, ##__VA_ARGS__)
-#define LogInfo(msg, ...) Log::Info(msg, 0, ##__VA_ARGS__)
-#define LogDebug(msg, ...) Log::Debug(msg, 0, ##__VA_ARGS__)
-#define LogWarning(msg, ...) Log::Warning(msg, 0, ##__VA_ARGS__)
-#define LogError(msg, ...) Log::Error(__FILENAME__, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__)
-#define LogAssert(x, msg, ...) \
+#define T3D_LOG_VERB(msg, ...) Log::Verbose(msg, 0, ##__VA_ARGS__)
+#define T3D_LOG_INFO(msg, ...) Log::Info(msg, 0, ##__VA_ARGS__)
+#define T3D_LOG_DBG(msg, ...) Log::Debug(msg, 0, ##__VA_ARGS__)
+#define T3D_LOG_WARN(msg, ...) Log::Warning(msg, 0, ##__VA_ARGS__)
+#define T3D_LOG_ERR(msg, ...) Log::Error(T3D_FILENAME, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__)
+#define T3D_ASSERT(x, msg, ...) \
 {                                \
     if (!(x)) {                  \
-        Log::Assert(__FILENAME__, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__); \
-        T3D_DEBUGBREAK(); \
+        Log::Assert(T3D_FILENAME, __FUNCTION__, __LINE__, msg, 0, ##__VA_ARGS__); \
+        T3D_DEBUG_BREAK(); \
     }\
 }
 
 #else
 
-#define LogVerbose(msg, ...) Log::Verbose(msg, ##__VA_ARGS__)
-#define LogInfo(msg, ...) Log::Info(msg, ##__VA_ARGS__)
-#define LogDebug(msg, ...) Log::Debug(msg, ##__VA_ARGS__)
-#define LogWarning(msg, ...) Log::Warning(msg, ##__VA_ARGS__)
-#define LogError(msg, ...) Log::Error(__FILENAME__, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__)
-#define LogAssert(x, msg, ...) \
+#define T3D_LOG_VERB(msg, ...) Log::Verbose(msg, ##__VA_ARGS__)
+#define T3D_LOG_INFO(msg, ...) Log::Info(msg, ##__VA_ARGS__)
+#define T3D_LOG_DBG(msg, ...) Log::Debug(msg, ##__VA_ARGS__)
+#define T3D_LOG_WARN(msg, ...) Log::Warning(msg, ##__VA_ARGS__)
+#define T3D_LOG_ERR(msg, ...) Log::Error(T3D_FILENAME, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__)
+#define T3D_ASSERT(x, msg, ...) \
 {                                \
     if (!(x)) {                  \
-        Log::Assert(__FILENAME__, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__); \
-        T3D_DEBUGBREAK(); \
+        Log::Assert(T3D_FILENAME, __FUNCTION__, __LINE__, msg, ##__VA_ARGS__); \
+        T3D_DEBUG_BREAK(); \
     }\
 }
 
@@ -54,15 +54,15 @@
 
 #else
 
-#define LogOpen(filepath)
-#define LogClose()
+#define T3D_LOG_OPEN(filepath)
+#define T3D_LOG_CLOSE()
 
-#define LogVerbose(msg, ...)
-#define LogInfo(msg, ...)
-#define LogDebug(msg, ...)
-#define LogWarning(msg, ...)
-#define LogError(msg, ...)
-#define LogAssert(x, msg, ...)
+#define T3D_LOG_VERB(msg, ...)
+#define T3D_LOG_INFO(msg, ...)
+#define T3D_LOG_DBG(msg, ...)
+#define T3D_LOG_WARN(msg, ...)
+#define T3D_LOG_ERR(msg, ...)
+#define T3D_ASSERT(x, msg, ...)
 
 #endif
 
@@ -99,10 +99,15 @@ public:
         s_thread_pool->Add([msg, args...]() {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            ClockTime time = Clock::GetTime();
+            ClockTime time = GetTime();
+#if defined(__LP64__)
+            const char* fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
+#else
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
+#endif
             sprintf(
                     fmt_buffer,
-                    "\n[%d.%d.%d][%d:%d:%d.%d] %s\0",
+                    fmt,
                     time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
                     msg
             );
@@ -117,10 +122,15 @@ public:
         s_thread_pool->Add([msg, args...]() {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            ClockTime time = Clock::GetTime();
+            ClockTime time = GetTime();
+#if defined(__LP64__)
+            const char* fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
+#else
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
+#endif
             sprintf(
                     fmt_buffer,
-                    "\n[%d.%d.%d][%d:%d:%d.%d] %s\0",
+                    fmt,
                     time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
                     msg
             );
@@ -135,10 +145,15 @@ public:
         s_thread_pool->Add([msg, args...]() {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            ClockTime time = Clock::GetTime();
+            ClockTime time = GetTime();
+#if defined(__LP64__)
+            const char* fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
+#else
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
+#endif
             sprintf(
                     fmt_buffer,
-                    "\n[%d.%d.%d][%d:%d:%d.%d] %s\0",
+                    fmt,
                     time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
                     msg
             );
@@ -153,10 +168,15 @@ public:
         s_thread_pool->Add([msg, args...]() {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            ClockTime time = Clock::GetTime();
+            ClockTime time = GetTime();
+#if defined(__LP64__)
+            const char* fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
+#else
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
+#endif
             sprintf(
                     fmt_buffer,
-                    "\n[%d.%d.%d][%d:%d:%d.%d] %s\0",
+                    fmt,
                     time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
                     msg
             );
@@ -171,10 +191,15 @@ public:
         s_thread_pool->Add([filename, function, line, msg, args...]() {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            ClockTime time = Clock::GetTime();
+            ClockTime time = GetTime();
+#if defined(__LP64__)
+            const char* fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] Error in %s -> %s(%i line):\n%s";
+#else
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] Error in %s -> %s(%i line):\n%s";
+#endif
             sprintf(
                     fmt_buffer,
-                    "\n[%d.%d.%d][%d:%d:%d.%d] Error in %s -> %s(%i line):\n%s\0",
+                    fmt,
                     time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
                     filename, function, line,
                     msg
@@ -190,10 +215,15 @@ public:
         s_thread_pool->Add([filename, function, line, msg, args...]() {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            ClockTime time = Clock::GetTime();
+            ClockTime time = GetTime();
+#if defined(__LP64__)
+            const char* fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] Assertion Failed in %s -> %s(%i line):\n%s";
+#else
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] Assertion Failed in %s -> %s(%i line):\n%s";
+#endif
             sprintf(
                     fmt_buffer,
-                    "\n[%d.%d.%d][%d:%d:%d.%d] Assertion Failed in %s -> %s(%i line):\n%s\0",
+                    fmt,
                     time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
                     filename, function, line,
                     msg
@@ -217,6 +247,6 @@ private:
 private:
     static FILE* s_file;
     static std::mutex s_mutex;
-    static ThreadPool<10>* s_thread_pool;
+    static ThreadPool<1, 10, T3D_THREAD_PRIORITY_HIGHEST>* s_thread_pool;
 
 };

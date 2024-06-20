@@ -11,13 +11,15 @@ static const int T3D_THREAD_PRIORITY_CODE[T3D_THREAD_PRIORITY_COUNT] = {
 
 void Thread::SetFormat()
 {
+    int result;
+
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     size_t cpusetsize = sizeof(cpuset);
-    CPU_SET(m_handle, &cpuset);
+    CPU_SET(m_tid, &cpuset);
 
     // Set affinity mask
-    int result = sched_setaffinity(m_handle, cpusetsize, &cpuset);
+    result = sched_setaffinity(m_pid, cpusetsize, &cpuset);
     LogAssert(result != 0, "Failed to set thread affinity mask on Android!");
 
     // Set priority

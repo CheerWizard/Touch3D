@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ThreadPool.hpp>
+#include <Thread.hpp>
 #include <EventBuffer.hpp>
 #include <Activity.hpp>
 
@@ -49,7 +49,7 @@ private:
 private:
     bool m_running;
     EventBuffer m_event_buffer;
-    ThreadPool<10>* m_thread_pool;
+    ThreadPool<1, 10, T3D_THREAD_PRIORITY_NORMAL>* m_thread_pool;
 
     Activity* m_activity;
     ALooper* m_looper;

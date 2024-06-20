@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ThreadPool.hpp>
+#include <Thread.hpp>
 #include <EventBuffer.hpp>
 
 #include <Windows.h>
