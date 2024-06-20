@@ -1,5 +1,6 @@
 #include <Thread.hpp>
 #include <Log.hpp>
+#include <unistd.h>
 
 Mutex::Mutex() {
     pthread_mutex_init(&m_handle, nullptr);
