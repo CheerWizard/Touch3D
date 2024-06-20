@@ -15,8 +15,10 @@ void* Mmap(void* addr, usize length, int protection, int flags, int file_desc, l
 int Munmap(void* addr, usize length);
 // defined by OS specific syscall implementation
 
-#define T3D_ALIGN(x) (((((x)-1)>>(sizeof(void*)/2))<<(sizeof(void*)/2))+(sizeof(void*)))
-#define T3D_MEMSET_ALIGN(s) T3D_ALIGN(s) << (sizeof(void*)/2)
+// x - value to align,
+#define T3D_ALIGN(x,a) (((((x)-1)>>(a/2))<<(a/2))+(a))
+#define T3D_MEMSET_ALIGN(s,a) T3D_ALIGN(s, a) << (a/2)
+#define T3D_ALIGNMENT sizeof(void*)
 
 #define T3D_MEMORY_BLOCK_SIZE ( \
     sizeof(usize) +                 \
@@ -37,13 +39,13 @@ struct MemoryBlock final {
     char data[1];
 };
 
-void* Malloc(usize size);
+void* Malloc(usize size, u8 alignment = T3D_ALIGNMENT);
 void Free(void* data);
-void* Realloc(void* old_data, usize size);
-void* Reallocf(void* old_data, usize size);
-void* Calloc(usize size);
-void Memset(void* data, usize value, usize size);
-void Memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size);
+void* Realloc(void* old_data, usize size, u8 alignment = T3D_ALIGNMENT);
+void* Reallocf(void* old_data, usize size, u8 alignment = T3D_ALIGNMENT);
+void* Calloc(usize size, u8 alignment = T3D_ALIGNMENT);
+void Memset(void* data, usize value, usize size, u8 alignment = T3D_ALIGNMENT);
+void Memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size, u8 alignment = T3D_ALIGNMENT);
 void* Moveptr(void* ptr, usize size);
 
 template<typename T>

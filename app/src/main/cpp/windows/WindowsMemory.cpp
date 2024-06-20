@@ -1,19 +1,21 @@
 #include <Memory.hpp>
 #include <unistd.h>
-#include <sys/mman.h>
+#include <memoryapi.h>
 
 int Brk(void* addr) {
-    return brk(addr);
+    // Windows doesn't implement this syscall
+    return 0;
 }
 
 void* Sbrk(intptr_t delta) {
-    return sbrk(delta);
+    // Windows doesn't implement this syscall
+    return nullptr;
 }
 
 void* Mmap(void *addr, usize length, int protection, int flags, int file_desc, long offset) {
-    return mmap(addr, length, protection, flags, file_desc, offset);
+    return VirtualAlloc(addr, length, file_desc, protection);
 }
 
 int Munmap(void *addr, usize length) {
-    return munmap(addr, length);
+    return VirtualFree(addr, length, 0);
 }
