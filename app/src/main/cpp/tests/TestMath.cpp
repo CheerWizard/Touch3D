@@ -1,4 +1,4 @@
-#include <Math.h>
+#include <Math.hpp>
 
 static bool TestMath() {
     return true;

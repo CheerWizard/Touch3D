@@ -1,11 +1,12 @@
 #pragma once
 
-#include <Thread.hpp>
-#include <EventBuffer.hpp>
+#include <sf.hpp>
 
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
 #include <X11/Xutil.h>
+
+using namespace sf;
 
 class LinuxApp final {
 
@@ -21,8 +22,7 @@ private:
 
 protected:
     bool m_running;
-    EventBuffer m_event_buffer;
-    ThreadPool<1, 10, T3D_THREAD_PRIORITY_NORMAL>* m_thread_pool;
+    ThreadPool<1, 10, SF_THREAD_PRIORITY_HIGHEST>* m_thread_pool;
 
     const char* m_title;
     ulong m_color_black;

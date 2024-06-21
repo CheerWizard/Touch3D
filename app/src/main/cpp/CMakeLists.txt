@@ -10,17 +10,13 @@ message("CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 message("CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")
 message("CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}")
 
-# defines for build type
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-    add_definitions(-DT3D_DEBUG)
-endif ()
+# configurations
+add_compile_definitions($<$<CONFIG:Debug>:SF_DEBUG>)
 
 include_directories(src)
 file(GLOB_RECURSE SRC src/*.cpp)
 
 macro(build_windows)
-    add_definitions(-DT3D_WINDOWS)
-    add_definitions(-DT3D_DESKTOP)
     file(GLOB_RECURSE SRC_WINDOWS windows/*.cpp)
     file(GLOB_RECURSE SRC_TEST tests/*.cpp)
     include_directories(windows)
@@ -31,8 +27,6 @@ macro(build_windows)
 endmacro()
 
 macro(build_android)
-    add_definitions(-DT3D_ANDROID)
-    add_definitions(-DT3D_PHONE)
     add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR=1)
     file(GLOB_RECURSE SRC_ANDROID android/*.cpp)
     file(GLOB_RECURSE SRC_TEST tests/*.cpp)
@@ -52,8 +46,6 @@ macro(build_android)
 endmacro()
 
 macro(build_linux)
-    add_definitions(-DT3D_LINUX)
-    add_definitions(-DT3D_DESKTOP)
     file(GLOB_RECURSE SRC_LINUX linux/*.cpp)
     file(GLOB_RECURSE SRC_TEST tests/*.cpp)
     include_directories(linux)
@@ -71,24 +63,3 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Android")
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     build_linux()
 endif ()
-
-# defines for CPU arch
-if (
-    ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ilp32"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ILP32"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ARM"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "I386"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ix86"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "IX86"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "X86"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "powerpc"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv7-a"
-    OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686"
-)
-    add_definitions(-DT3D_32)
-else ()
-    add_definitions(-DT3D_64)
-endif()

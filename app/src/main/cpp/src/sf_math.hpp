@@ -1,13 +1,12 @@
 #pragma once
 
-#include <Types.hpp>
-
+#include <sf.hpp>
 #include <cmath>
 #include <random>
 
-#define T3D_PI 3.14159265359f
-#define T3D_RADIANS(degree) ((degree) * T3D_PI / 180.0f)
-#define T3D_E 2.71828f
+#define SF_PI 3.14159265359f
+#define SF_RADIANS(degree) ((degree) * SF_PI / 180.0f)
+#define SF_E 2.71828f
 
 namespace sf {
 
@@ -41,7 +40,7 @@ namespace sf {
         float a;
 
         explicit radians(float a = 0) : a(a) {}
-        explicit radians(const degree& d) : a(T3D_RADIANS(d)) {}
+        explicit radians(const degree& d) : a(SF_RADIANS(d)) {}
 
         operator float() const { return a; }
     };
@@ -1091,4 +1090,4 @@ namespace sf {
     using double3x3 = mat3<double>;
     using double4x4 = mat4<double>;
 
-};
+}
