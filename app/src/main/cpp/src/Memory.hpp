@@ -3,41 +3,22 @@
 #include <Types.hpp>
 #include <DebugBreak.hpp>
 
-#define T3D_KB(c) (c * 1024)
+#define T3D_KB(c) ((c) * 1024)
 #define T3D_MB(c) T3D_KB(1024)
 #define T3D_GB(c) T3D_MB(1024)
 #define T3D_TB(c) T3D_GB(1024)
 
 // defined by OS specific syscall implementation
 int Brk(void* addr);
-void* Sbrk(intptr_t delta);
-void* Mmap(void* addr, usize length, int protection, int flags, int file_desc, long offset);
-int Munmap(void* addr, usize length);
+void* SBrk(intptr_t delta);
+void* MMap(void* addr, usize length, int protection, int flags, int file_desc, long offset);
+int MUnmap(void* addr, usize length);
 // defined by OS specific syscall implementation
 
-// x - value to align,
-#define T3D_ALIGN(x,a) (((((x)-1)>>(a/2))<<(a/2))+(a))
-#define T3D_MEMSET_ALIGN(s,a) T3D_ALIGN(s, a) << (a/2)
+// x - target value to align
+// a - alignment in bytes
+#define T3D_ALIGN(x,a) (((((x)-1)>>((a)/2))<<((a)/2))+(a))
 #define T3D_ALIGNMENT sizeof(void*)
-
-#define T3D_MEMORY_BLOCK_SIZE ( \
-    sizeof(usize) +                 \
-    sizeof(MemoryBlock*) +          \
-    sizeof(MemoryBlock*) +          \
-    sizeof(bool) +                  \
-    sizeof(void*)                   \
-)
-
-struct MemoryBlock final {
-    // metadata for each heap memory block
-    usize size = 0;
-    MemoryBlock* prev = nullptr;
-    MemoryBlock* next = nullptr;
-    bool free = true;
-    void* ptr = nullptr;
-    // actual data from heap memory block
-    char data[1];
-};
 
 void* Malloc(usize size, u8 alignment = T3D_ALIGNMENT);
 void Free(void* data);
@@ -83,7 +64,7 @@ inline T* MoveptrT(T* ptr, usize count) {
     return static_cast<T*>(Moveptr(ptr, sizeof(T) * count));
 }
 
-class BumpAllocator final {
+class MemoryBumpAllocator final {
 
 public:
     void Init(usize size);
@@ -139,7 +120,7 @@ SystemInfo GetSystemInfo();
 class Memory final {
 
 public:
-    MemoryPoolAllocator allocator;
+    MemoryPoolAllocator pool_allocator;
 
     Memory();
     ~Memory();
@@ -153,9 +134,9 @@ class MemoryPoolObject {
 
 public:
     void* operator new(usize size) {
-        return memory.allocator.Alloc(size);
+        return memory.pool_allocator.Alloc(size);
     }
     void operator delete(void* addr) {
-        memory.allocator.Free(addr);
+        memory.pool_allocator.Free(addr);
     }
 };

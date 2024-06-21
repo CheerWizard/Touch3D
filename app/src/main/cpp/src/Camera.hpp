@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Math.hpp>
+#include <Math.h>
 
 enum T3D_CAMERA_MODE
 {
@@ -8,7 +8,7 @@ enum T3D_CAMERA_MODE
     T3D_CAMERA_MODE_EDITOR = 1,
 };
 
-class Camera final {
+struct Camera final {
 
 public:
     // Position.z = -1 is a default valid value for 2D orthographic view

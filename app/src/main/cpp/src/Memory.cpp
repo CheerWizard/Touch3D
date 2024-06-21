@@ -1,13 +1,32 @@
 #include <Memory.hpp>
 
+#define T3D_MEMORY_BLOCK_SIZE ( \
+    sizeof(usize) +                 \
+    sizeof(MemoryBlock*) +          \
+    sizeof(MemoryBlock*) +          \
+    sizeof(bool) +                  \
+    sizeof(void*)                   \
+)
+
+struct MemoryBlock final {
+    // metadata for each heap memory block
+    usize size = 0;
+    MemoryBlock* prev = nullptr;
+    MemoryBlock* next = nullptr;
+    bool free = true;
+    void* ptr = nullptr;
+    // actual data from heap memory block
+    char data[1];
+};
+
 static MemoryBlock* block_root = nullptr;
 
 static MemoryBlock* HeapResize(MemoryBlock* last, usize size) {
     MemoryBlock* block;
 
-    block = static_cast<MemoryBlock*>(Sbrk(0));
+    block = static_cast<MemoryBlock*>(SBrk(0));
 
-    isize sbrk_result = reinterpret_cast<isize>(Sbrk(T3D_MEMORY_BLOCK_SIZE + size));
+    isize sbrk_result = reinterpret_cast<isize>(SBrk(T3D_MEMORY_BLOCK_SIZE + size));
 
     if (sbrk_result < 0) {
         return nullptr;
@@ -68,27 +87,27 @@ static MemoryBlock* BlockGet(void* ptr) {
 
 static bool BlockIsValid(void* ptr) {
     if (block_root) {
-        if (ptr > block_root && ptr < Sbrk(0)) {
+        if (ptr > block_root && ptr < SBrk(0)) {
             return ptr == BlockGet(ptr)->ptr;
         }
     }
     return false;
 }
 
-static void BlockCopy(MemoryBlock* dest_block, MemoryBlock* src_block) {
-    Memcpy(dest_block->ptr, dest_block->size, src_block->ptr, src_block->size);
+static void BlockCopy(MemoryBlock* dest_block, MemoryBlock* src_block, u8 alignment) {
+    Memcpy(dest_block->ptr, dest_block->size, src_block->ptr, src_block->size, alignment);
 }
 
-void* Malloc(usize size) {
+void* Malloc(usize size, u8 alignment) {
     MemoryBlock* block;
     MemoryBlock* last;
-    size = T3D_ALIGN(size); // we should always malloc aligned size (aligned by 32-bit or 64-bit)
+    size = T3D_ALIGN(size, alignment); // we should always malloc aligned size (aligned by 32-bit or 64-bit)
 
     if (block_root != nullptr) {
         last = block_root;
         block = BlockFind(&last, size);
         if (block != nullptr) {
-            if (block->size - size >= T3D_MEMORY_BLOCK_SIZE + sizeof(void*)) {
+            if (block->size - size >= T3D_MEMORY_BLOCK_SIZE + alignment) {
                 BlockSplit(block, size);
             }
             block->free = false;
@@ -134,21 +153,21 @@ void Free(void* data) {
     }
 }
 
-void* Realloc(void* old_data, usize size) {
+void* Realloc(void* old_data, usize size, u8 alignment) {
     MemoryBlock* block;
     MemoryBlock* new_block;
     void* new_data;
 
     if (old_data == nullptr) {
-        return Malloc(size);
+        return Malloc(size, alignment);
     }
 
     if (BlockIsValid(old_data)) {
-        size = T3D_ALIGN(size);
+        size = T3D_ALIGN(size, alignment);
         block = BlockGet(old_data);
 
         if (block->size >= size) {
-            if (block->size - size >= T3D_MEMORY_BLOCK_SIZE + sizeof(void*)) {
+            if (block->size - size >= T3D_MEMORY_BLOCK_SIZE + alignment) {
                 BlockSplit(block, size);
             }
         }
@@ -156,18 +175,18 @@ void* Realloc(void* old_data, usize size) {
         else {
             if (block->next && block->next->free && (block->size + T3D_MEMORY_BLOCK_SIZE + block->next->size) >= size) {
                 BlockConcat(block);
-                if (block->size - size >= T3D_MEMORY_BLOCK_SIZE + sizeof(void*)) {
+                if (block->size - size >= T3D_MEMORY_BLOCK_SIZE + alignment) {
                     BlockSplit(block, size);
                 }
             }
 
             else {
-                new_data = Malloc(size);
+                new_data = Malloc(size, alignment);
                 if (new_data == nullptr) {
                     return nullptr;
                 }
                 new_block = BlockGet(new_data);
-                BlockCopy(new_block, block);
+                BlockCopy(new_block, block, alignment);
                 Free(old_data);
                 return new_data;
             }
@@ -179,36 +198,36 @@ void* Realloc(void* old_data, usize size) {
     return nullptr;
 }
 
-void* Reallocf(void* old_data, usize size) {
-    void* realloc_block = Realloc(old_data, size);
+void* Reallocf(void* old_data, usize size, u8 alignment) {
+    void* realloc_block = Realloc(old_data, size, alignment);
     if (realloc_block == nullptr) {
         Free(old_data);
     }
     return realloc_block;
 }
 
-void* Calloc(usize size) {
-    void* block = Malloc(size);
+void* Calloc(usize size, u8 alignment) {
+    void* block = Malloc(size, alignment);
     if (block) {
-        Memset(block, 0, size);
+        Memset(block, 0, size, alignment);
     }
     return block;
 }
 
-void Memset(void* data, usize value, usize size) {
+void Memset(void* data, usize value, usize size, u8 alignment) {
     usize* d = static_cast<usize*>(data);
     if (data != nullptr) {
-        usize aligned_size = T3D_MEMSET_ALIGN(size);
+        usize aligned_size = size << (alignment / 2);
         for (usize i = 0 ; i < aligned_size ; i++) {
             d[i] = value;
         }
     }
 }
 
-void Memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size) {
+void Memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size, u8 alignment) {
     usize* d = static_cast<usize*>(dest_data);
     const usize* s = static_cast<const usize*>(src_data);
-    for (usize i = 0 ; (i * sizeof(void*) < src_size) && (i * sizeof(void*) < dest_size) ; i++) {
+    for (usize i = 0 ; (i * alignment < src_size) && (i * alignment < dest_size) ; i++) {
         d[i] = s[i];
     }
 }
@@ -217,23 +236,23 @@ void* Moveptr(void* ptr, usize size) {
     return reinterpret_cast<void*>(reinterpret_cast<usize>(ptr) + size);
 }
 
-void BumpAllocator::Init(usize size) {
-    m_memory = Sbrk(0);
+void MemoryBumpAllocator::Init(usize size) {
+    m_memory = SBrk(0);
     m_size = size;
-    isize sbrk_result = reinterpret_cast<isize>(Sbrk(size));
+    isize sbrk_result = reinterpret_cast<isize>(SBrk(size));
     if (sbrk_result < 0) {
         T3D_DEBUG_BREAK();
         return;
     }
 }
 
-void BumpAllocator::Free() {
+void MemoryBumpAllocator::Free() {
     Brk(m_memory);
     m_size = 0;
     m_used_size = 0;
 }
 
-void* BumpAllocator::Alloc(usize size) {
+void* MemoryBumpAllocator::Alloc(usize size) {
     void* addr = nullptr;
     usize aligned_size = (size + 7) & ~ 7; // this will make sure that first 4 bits are 0
     if (m_used_size + aligned_size <= m_size) {
@@ -335,11 +354,11 @@ Memory::Memory() {
     }
     // alloc size value can be estimated and tested
     usize alloc_size = 100;
-    allocator.Init(memory_size, alloc_size);
+    pool_allocator.Init(memory_size, alloc_size);
 }
 
 Memory::~Memory() {
-    allocator.Free();
+    pool_allocator.Free();
 }
 
 Memory memory = {};
