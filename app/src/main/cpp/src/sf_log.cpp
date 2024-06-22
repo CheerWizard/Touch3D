@@ -37,6 +37,8 @@ namespace sf {
 // SF_WINDOWS_BEGIN
 #if defined(SF_WINDOWS)
 
+#include <windows.h>
+
 namespace sf {
 
     static const int SF_LOG_COLOR_CODE[SF_LOG_COLOR_COUNT] {
@@ -58,32 +60,32 @@ namespace sf {
         0x0F, // SF_LOG_COLOR_LIGHT_WHITE
     };
 
-    void Log::PrintVerbose(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_verbose(SF_LOG_COLOR log_color, char* log) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
         puts(log);
     }
 
-    void Log::PrintInfo(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_info(SF_LOG_COLOR log_color, char* log) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
         puts(log);
     }
 
-    void Log::PrintDebug(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_debug(SF_LOG_COLOR log_color, char* log) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
         puts(log);
     }
 
-    void Log::PrintWarning(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_warning(SF_LOG_COLOR log_color, char* log) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
         puts(log);
     }
 
-    void Log::PrintError(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_error(SF_LOG_COLOR log_color, char* log) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
         puts(log);
     }
 
-    void Log::PrintAssert(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_assert(SF_LOG_COLOR log_color, char* log) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
         puts(log);
     }

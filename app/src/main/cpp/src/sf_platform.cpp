@@ -9,9 +9,103 @@ namespace sf {
 // SF_WINDOWS_BEGIN
 #if defined(SF_WINDOWS)
 
+#include <windows.h>
+
 namespace sf {
 
+    #define SF_WINDOW (HWND) m_handle
 
+    static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM l_param) {
+        Events* events;
+
+        // only called when window is created first time
+        if (msg == WM_CREATE) {
+            CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT*>(l_param);
+            events = reinterpret_cast<Events*>(pCreate->lpCreateParams);
+            SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) events);
+        }
+        else {
+            LONG_PTR ptr = GetWindowLongPtr(handle, GWLP_USERDATA);
+            events = reinterpret_cast<Events*>(ptr);
+        }
+
+        SF_ASSERT(events != nullptr, "Events should not be null here!");
+
+        switch (msg) {
+            case WM_PAINT:
+            {
+                PAINTSTRUCT ps;
+                HDC hdc = BeginPaint(handle, &ps);
+                FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW + 1));
+                EndPaint(handle, &ps);
+                return 0;
+            }
+
+            case WM_SIZE:
+            {
+                int w = LOWORD(l_param);
+                int h = HIWORD(l_param);
+                if (events->window_resize) {
+                    events->window_resize(w, h);
+                }
+                break;
+            }
+
+            case WM_DESTROY:
+            {
+                PostQuitMessage(0);
+                break;
+            }
+        }
+
+        return DefWindowProc(handle, msg, w_param, l_param);
+    }
+
+    Window::Window(const char *title, int x, int y, int w, int h, bool sync) {
+        HINSTANCE instance = (HINSTANCE) GetCurrentProcess();
+
+        WNDCLASS window_class = {};
+        window_class.hInstance = instance;
+        window_class.lpszClassName = "Windows_Window";
+        window_class.lpfnWndProc = WindowProc;
+        RegisterClass(&window_class);
+
+        m_handle = (void*) CreateWindowEx(
+                0,
+                window_class.lpszClassName,
+                title,
+                WS_OVERLAPPEDWINDOW,
+                x, y,
+                w, h,
+                nullptr,
+                nullptr,
+                instance,
+                &events
+        );
+
+        if (m_handle == nullptr) {
+            SF_ASSERT(false, "Failed to create window for Windows!");
+        }
+
+        ShowWindow(SF_WINDOW, 0);
+
+        DEVMODE devmode;
+        EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devmode);
+        m_refresh_rate = devmode.dmDisplayFrequency;
+    }
+
+    Window::~Window() {
+        DestroyWindow(SF_WINDOW);
+    }
+
+    bool Window::update() {
+        MSG msg = {};
+        if (GetMessage(&msg, nullptr, 0, 0) > 0) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        return IsWindow(SF_WINDOW);
+    }
 
 }
 

@@ -478,12 +478,8 @@ namespace sf {
     class SF_API Memory final {
 
     public:
-        usize total_ram;   // Total usable main memory size
-        usize free_ram;	   // Available memory size
-        usize shared_ram;  // Amount of shared memory
-        usize buffer_ram;  // Memory used by buffers
-        usize total_high;  // Total high memory size
-        usize free_high;   // Available high memory size
+        usize total_ram;
+        usize free_ram;
 
         MemoryBumpAllocator bump_allocator;
         MemoryPoolAllocator pool_allocator;
@@ -664,10 +660,6 @@ namespace sf {
     class SF_API Thread final {
 
     public:
-        Thread() = default;
-        Thread(const char* name, SF_THREAD_PRIORITY priority) : m_name(name), m_priority(priority) {}
-
-    public:
         static u32 get_pid();
         static u32 get_tid();
         static void sleep(u32 millis);
@@ -675,14 +667,14 @@ namespace sf {
         static void exit();
 
     public:
+        void init(const char* name, SF_THREAD_PRIORITY priority);
+        void free();
         void run(const std::function<void()>& runnable, const std::function<void()>& kill_callback = {});
         void detach() const;
         void join() const;
-        void kill();
 
     private:
         void set_thread_info();
-        static void on_kill(int signal);
 
     private:
         Runnable m_runnable;
@@ -725,7 +717,7 @@ namespace sf {
         for (int i = 0; i < thread_buffer_size ; i++)
         {
             Thread& thread = m_thread_buffer[i];
-            thread = Thread(thread_name, thread_priority);
+            thread.init(thread_name, thread_priority);
             thread.run([this]() {
                 std::function<void()> task;
                 while (m_running) {
@@ -747,7 +739,7 @@ namespace sf {
     ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::~ThreadPool() {
         m_running = false;
         for (int i = 0 ; i < thread_buffer_size ; i++) {
-            m_thread_buffer[i].kill();
+            m_thread_buffer[i].free();
         }
     }
 

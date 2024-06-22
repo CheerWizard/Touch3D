@@ -21,7 +21,7 @@ macro(build_windows)
     file(GLOB_RECURSE SRC_TEST tests/*.cpp)
     add_executable("T3D_TESTS_WINDOWS" ${SRC} ${SRC_TEST})
     #target_link_libraries("T3D_TESTS_WINDOWS" vulkan)
-    add_executable(${PROJECT_NAME} WIN32 ${SRC} WindowsMain.cpp)
+    add_executable(${PROJECT_NAME} WIN32 ${SRC} windows_main.cpp)
     #target_link_libraries(${PROJECT_NAME} vulkan)
 endmacro()
 

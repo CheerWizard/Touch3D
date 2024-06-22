@@ -208,7 +208,17 @@ namespace sf {
 
     typedef void (*EventTouchMove)(double x, double y);
 
+    struct SF_API Events final {
+        EventWindowResize window_resize = nullptr;
+        EventWindowMove window_move = nullptr;
+        EventCursorMove cursor_move = nullptr;
+        EventTouchMove touch_move = nullptr;
+    };
+
     class SF_API Window : public MemoryPoolObject {
+
+    public:
+        Events events;
 
     public:
         Window(const char* title, int x, int y, int w, int h, bool sync);
@@ -218,7 +228,7 @@ namespace sf {
 
     private:
         void* m_handle;
-
+        u32 m_refresh_rate;
     };
 
 }

@@ -1,4 +1,5 @@
 #include <sf.hpp>
+#include <unistd.h>
 
 namespace sf {
 
@@ -349,13 +350,16 @@ namespace sf {
 
     Memory::Memory() {
         get_memory_info();
-        usize bump_size = SF_MB(100);
+
+        usize bump_size = SF_MB(1);
         bump_allocator.init(bump_size);
+
         // memory size = 20% of RAM but less than 1GB
         usize pool_size = static_cast<usize>(static_cast<double>(free_ram) * 0.2);
-        if (pool_size >= SF_GB(1)) {
-            pool_size = SF_GB(1);
+        if (pool_size >= SF_MB(1)) {
+            pool_size = SF_MB(1);
         }
+
         // pool_alloc_size value can be estimated and tested
         usize pool_alloc_size = 100;
         pool_allocator.init(pool_size, pool_alloc_size);
@@ -493,7 +497,7 @@ namespace sf {
     }
 
     u32 Thread::get_tid() {
-        return gettid();
+        return pthread_self();
     }
 
     void Thread::sleep(u32 millis) {
@@ -510,22 +514,26 @@ namespace sf {
         pthread_exit(0);
     }
 
+    void Thread::init(const char *name, SF_THREAD_PRIORITY priority) {
+        m_name = name;
+        m_priority = priority;
+        signal(SIGABRT, [](int) {
+            pthread_exit(0);
+        });
+    }
+
+    void Thread::free() {
+        int result = pthread_kill(m_handle, SIGABRT);
+        SF_ASSERT(result == 0, "Unable to free a Thread=%s", m_name);
+        signal(SIGABRT, SIG_DFL);
+    }
+
     void Thread::run(const std::function<void()> &runnable, const std::function<void()>& kill_callback) {
         m_runnable.set_runnable(runnable);
         m_kill_callback = kill_callback;
 
-        struct sigaction actions;
-        std::memset(&actions, 0, sizeof(actions));
-        sigemptyset(&actions.sa_mask);
-        actions.sa_flags = 0;
-        actions.sa_handler = on_kill;
-        int result = sigaction(SIGUSR1,&actions,nullptr);
-        SF_ASSERT(result == 0, "Unable to create sigaction for pthread %s", m_name);
-
-        pthread_attr_t thread_attrs;
-
-        result = pthread_create(&m_handle, nullptr, &Runnable::run, &m_runnable);
-        SF_ASSERT(result == 0, "Unable to create a pthread %s", m_name);
+        int result = pthread_create(&m_handle, nullptr, &Runnable::run, &m_runnable);
+        SF_ASSERT(result == 0, "Unable to create a Thread=%s", m_name);
 
 #ifdef SF_DEBUG
         m_pid = m_runnable.get_pid();
@@ -544,18 +552,6 @@ namespace sf {
         SF_ASSERT(result == 0, "Unable to join to a pthread %s", m_name);
     }
 
-    void Thread::kill() {
-        int result = pthread_kill(m_handle, SIGUSR1);
-        SF_ASSERT(result == 0, "Unable to kill a pthread %s", m_name);
-    }
-
-    void Thread::on_kill(int signal) {
-//    if (m_kill_callback) {
-//        m_kill_callback();
-//    }
-        pthread_exit(0);
-    }
-
 }
 
 // SF_WINDOWS_BEGIN
@@ -564,6 +560,7 @@ namespace sf {
 #include <windows.h>
 #include <memoryapi.h>
 #include <processthreadsapi.h>
+#include <sysinfoapi.h>
 
 namespace sf {
 
@@ -583,6 +580,14 @@ namespace sf {
 
     int munmap(void *addr, usize length) {
         return VirtualFree(addr, length, 0);
+    }
+
+    void Memory::get_memory_info() {
+        MEMORYSTATUSEX memory_status;
+        memory_status.dwLength = sizeof(memory_status);
+        GlobalMemoryStatusEx(&memory_status);
+        total_ram = memory_status.ullTotalPhys;
+        free_ram = memory_status.ullAvailPhys;
     }
 
     const DWORD MS_VC_EXCEPTION = 0x406D1388;
@@ -619,7 +624,7 @@ namespace sf {
             THREAD_PRIORITY_HIGHEST,
     };
 
-    void Thread::SetFormat() {
+    void Thread::set_thread_info() {
         HANDLE handle = (HANDLE) m_handle;
 
         // set affinity mask
@@ -670,10 +675,6 @@ namespace sf {
         sysinfo(&sys_info);
         total_ram = sys_info.totalram;
         free_ram = sys_info.totalram;
-        shared_ram = sys_info.totalram;
-        buffer_ram = sys_info.totalram;
-        total_high = sys_info.totalram;
-        free_high = sys_info.totalram;
     }
 
     static const int SF_THREAD_PRIORITY_CODE[SF_THREAD_PRIORITY_COUNT] = {
@@ -751,7 +752,7 @@ namespace sf {
         3, // SF_THREAD_PRIORITY_HIGHEST
     };
 
-    void Thread::SetFormat() {
+    void Thread::set_thread_info() {
         int result;
 
         cpu_set_t cpuset;
