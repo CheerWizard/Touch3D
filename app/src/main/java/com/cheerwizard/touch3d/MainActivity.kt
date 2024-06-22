@@ -17,6 +17,10 @@ import java.io.File
 
 class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, OnGlobalLayoutListener {
 
+    companion object {
+        const val TAG = "MainActivity"
+    }
+
     val location: IntArray = IntArray(2)
     var lastContentX: Int = 0
     var lastContentY: Int = 0
@@ -63,6 +67,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback2, InputQueue.Callback, O
     external fun nativeOnContentRectChanged(x: Int, y: Int, w: Int, h: Int)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        NativeLog.i(TAG, "onCreate")
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mInputManager = getSystemService(InputMethodManager::class.java)
         } else {

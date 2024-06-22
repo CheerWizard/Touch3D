@@ -354,6 +354,14 @@ __inline__ static void SF_DEBUG_BREAK()
 
 #define SF_RGB(r, g, b) (b) + ((g)<<8) + ((r)<<16)
 
+enum SF_THREAD_PRIORITY {
+    SF_THREAD_PRIORITY_LOWEST,
+    SF_THREAD_PRIORITY_NORMAL,
+    SF_THREAD_PRIORITY_HIGHEST,
+
+    SF_THREAD_PRIORITY_COUNT
+};
+
 namespace sf {
 
     template<typename... Args>
@@ -592,14 +600,6 @@ namespace sf {
 
         return popped;
     }
-
-    enum SF_THREAD_PRIORITY {
-        SF_THREAD_PRIORITY_LOWEST,
-        SF_THREAD_PRIORITY_NORMAL,
-        SF_THREAD_PRIORITY_HIGHEST,
-
-        SF_THREAD_PRIORITY_COUNT
-    };
 
     class SF_API Mutex final {
 

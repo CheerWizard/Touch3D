@@ -175,29 +175,29 @@ Java_com_cheerwizard_touch3d_MainActivity_nativeOnContentRectChanged(
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_NativeLog_v(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
-    T3D_LOG_VERB("%s: %s", tag, log);
+    SF_LOG_VERB("%s: %s", tag, log);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_NativeLog_i(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
-    T3D_LOG_INFO("%s: %s", tag, log);
+    SF_LOG_INFO("%s: %s", tag, log);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_NativeLog_d(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
-    T3D_LOG_DBG("%s: %s", tag, log);
+    SF_LOG_DBG("%s: %s", tag, log);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_NativeLog_w(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
-    T3D_LOG_WARN("%s: %s", tag, log);
+    SF_LOG_WARN("%s: %s", tag, log);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cheerwizard_touch3d_NativeLog_e(JNIEnv *env, jobject thiz, jstring tag, jstring log) {
-    T3D_LOG_ERR("%s: %s", tag, log);
+    SF_LOG_ERR("%s: %s", tag, log);
 }

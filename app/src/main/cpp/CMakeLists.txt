@@ -12,32 +12,29 @@ message("CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}")
 
 # configurations
 add_compile_definitions($<$<CONFIG:Debug>:SF_DEBUG>)
+add_compile_definitions($<$<CONFIG:Debug>:T3D_DEBUG>)
 
 include_directories(src)
 file(GLOB_RECURSE SRC src/*.cpp)
 
 macro(build_windows)
-    file(GLOB_RECURSE SRC_WINDOWS windows/*.cpp)
     file(GLOB_RECURSE SRC_TEST tests/*.cpp)
-    include_directories(windows)
-    add_executable("T3D_TESTS_WINDOWS" ${SRC} ${SRC_WINDOWS} ${SRC_TEST})
+    add_executable("T3D_TESTS_WINDOWS" ${SRC} ${SRC_TEST})
     #target_link_libraries("T3D_TESTS_WINDOWS" vulkan)
-    add_executable(${PROJECT_NAME} WIN32 ${SRC} ${SRC_WINDOWS} WindowsMain.cpp)
+    add_executable(${PROJECT_NAME} WIN32 ${SRC} WindowsMain.cpp)
     #target_link_libraries(${PROJECT_NAME} vulkan)
 endmacro()
 
 macro(build_android)
     add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR=1)
-    file(GLOB_RECURSE SRC_ANDROID android/*.cpp)
     file(GLOB_RECURSE SRC_TEST tests/*.cpp)
-    include_directories(android)
-    add_library("T3D_TESTS_ANDROID" SHARED ${SRC} ${SRC_ANDROID} ${SRC_TEST})
+    add_library("T3D_TESTS_ANDROID" SHARED ${SRC} ${SRC_TEST})
     target_link_libraries("T3D_TESTS_ANDROID"
             android
             log
             #vulkan
     )
-    add_library(${PROJECT_NAME} SHARED ${SRC} ${SRC_ANDROID} AndroidMain.cpp)
+    add_library(${PROJECT_NAME} SHARED ${SRC} android_main.cpp)
     target_link_libraries(${PROJECT_NAME}
             android
             log
