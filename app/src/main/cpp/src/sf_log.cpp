@@ -5,28 +5,28 @@ namespace sf {
     FILE* Log::s_file = nullptr;
     ThreadPool<1, 10, SF_THREAD_PRIORITY_HIGHEST>* Log::s_thread_pool = nullptr;
 
-    void Log::Open(const char* filepath) {
+    void Log::open(const char* filepath) {
         s_thread_pool = new ThreadPool<1, 10, SF_THREAD_PRIORITY_HIGHEST>("Log");
-        s_thread_pool->Add([filepath]() {
+        s_thread_pool->add([filepath]() {
             s_file = fopen(filepath, "w+");
             if (s_file == nullptr) {
                 printf("Unable to open Log file %s", filepath);
                 SF_DEBUG_BREAK();
             }
-            Info("Log file %s is open.", filepath);
+            log_info("Log file %s is open.", filepath);
         });
     }
 
-    void Log::Close() {
-        s_thread_pool->Add([]() {
-            Info("Log file is closing...");
+    void Log::close() {
+        s_thread_pool->add([]() {
+            log_info("Log file is closing...");
             fflush(s_file);
             fclose(s_file);
             delete s_thread_pool;
         });
     }
 
-    void Log::PrintFile(char *log) {
+    void Log::write_file(char *log) {
         if (s_file != nullptr) {
             fputs(log, s_file);
         }
@@ -117,37 +117,37 @@ namespace sf {
         "\x1b[97m", // SF_LOG_COLOR_LIGHT_WHITE
     };
 
-    void Log::PrintVerbose(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_verbose(SF_LOG_COLOR log_color, char* log) {
         char fmt_buffer[256] = {};
         sprintf(fmt_buffer, "%s %s \033[0m", SF_LOG_COLOR_CODE[log_color], log);
         puts(fmt_buffer);
     }
 
-    void Log::PrintInfo(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_info(SF_LOG_COLOR log_color, char* log) {
         char fmt_buffer[256] = {};
         sprintf(fmt_buffer, "%s %s \033[0m", SF_LOG_COLOR_CODE[log_color], log);
         puts(fmt_buffer);
     }
 
-    void Log::PrintDebug(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_debug(SF_LOG_COLOR log_color, char* log) {
         char fmt_buffer[256] = {};
         sprintf(fmt_buffer, "%s %s \033[0m", SF_LOG_COLOR_CODE[log_color], log);
         puts(fmt_buffer);
     }
 
-    void Log::PrintWarning(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_warning(SF_LOG_COLOR log_color, char* log) {
         char fmt_buffer[256] = {};
         sprintf(fmt_buffer, "%s %s \033[0m", SF_LOG_COLOR_CODE[log_color], log);
         puts(fmt_buffer);
     }
 
-    void Log::PrintError(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_error(SF_LOG_COLOR log_color, char* log) {
         char fmt_buffer[256] = {};
         sprintf(fmt_buffer, "%s %s \033[0m", SF_LOG_COLOR_CODE[log_color], log);
         puts(fmt_buffer);
     }
 
-    void Log::PrintAssert(SF_LOG_COLOR log_color, char* log) {
+    void Log::print_assert(SF_LOG_COLOR log_color, char* log) {
         char fmt_buffer[256] = {};
         sprintf(fmt_buffer, "%s %s \033[0m", SF_LOG_COLOR_CODE[log_color], log);
         puts(fmt_buffer);
@@ -165,7 +165,7 @@ namespace sf {
 
 namespace sf {
 
-    void Log::PrintVerbose(SF_LOG_COLOR log_color, char *log) {
+    void Log::print_verbose(SF_LOG_COLOR log_color, char *log) {
         __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_VERBOSE, "SF_ANDROID", log);
     }
 

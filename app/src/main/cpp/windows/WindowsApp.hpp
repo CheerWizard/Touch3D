@@ -19,9 +19,6 @@ private:
 
 protected:
     bool m_running;
-    ThreadPool<10>* m_thread_pool;
-    EventBuffer m_event_buffer;
     HWND m_window;
     const char* m_title;
-    u32 m_refresh_rate;
 };

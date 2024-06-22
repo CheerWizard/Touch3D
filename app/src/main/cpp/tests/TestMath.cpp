@@ -1,4 +1,4 @@
-#include <Math.hpp>
+#include <sf_math.hpp>
 
 static bool TestMath() {
     return true;

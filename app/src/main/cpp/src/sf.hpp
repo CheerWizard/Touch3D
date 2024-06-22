@@ -135,6 +135,42 @@ using usize = u64;
 
 #endif
 
+#if defined(_MSC_VER)
+
+#define SF_DLL_EXPORT __declspec(dllexport)
+#define SF_DLL_IMPORT __declspec(dllimport)
+
+#elif defined(__GNUC__)
+
+#define SF_DLL_EXPORT __attribute__((visibility("default")))
+#define SF_DLL_IMPORT __attribute__((visibility("default")))
+
+#else
+
+// Most compilers export/import all the symbols by default. We hope for the best here.
+#define SF_DLL_EXPORT
+#define SF_DLL_IMPORT
+#pragma warning Unknown dynamic link import/export semantics.
+
+#endif
+
+// used only during build of library itself into dll
+#if defined(SF_DLL_BUILD)
+
+#define SF_API SF_DLL_EXPORT
+
+// enable to use library as a dynamically linked library
+#elif defined(SF_DLL)
+
+#define SF_API SF_DLL_IMPORT
+
+#else
+
+// by default library is used as a statically linked library or directly included as a header
+#define SF_API
+
+#endif
+
 #if defined(SF_WINDOWS)
 #define SF_FILENAME (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 #else
@@ -302,11 +338,11 @@ __inline__ static void SF_DEBUG_BREAK()
 
 #if defined(SF_ANDROID)
 
-#define SF_ASSERT(x, ...) sf::Assert(SF_FILENAME, __FUNCTION__, __LINE__, x, 0, ##__VA_ARGS__)
+#define SF_ASSERT(x, ...) sf::__assert(SF_FILENAME, __FUNCTION__, __LINE__, x, 0, ##__VA_ARGS__)
 
 #else
 
-#define SF_ASSERT(x, ...) sf::Assert(SF_FILENAME, __FUNCTION__, __LINE__,  x, ##__VA_ARGS__)
+#define SF_ASSERT(x, ...) sf::__assert(SF_FILENAME, __FUNCTION__, __LINE__,  x, ##__VA_ARGS__)
 
 #endif
 
@@ -316,10 +352,12 @@ __inline__ static void SF_DEBUG_BREAK()
 
 #endif
 
+#define SF_RGB(r, g, b) (b) + ((g)<<8) + ((r)<<16)
+
 namespace sf {
 
     template<typename... Args>
-    void Assert(const char* filename, const char* function, int line, bool condition, const char* msg, Args... args) {
+    void __assert(const char* filename, const char* function, int line, bool condition, const char* msg, Args... args) {
         char fmt_buffer[256] = {};
         char text_buffer[256] = {};
         const char* fmt = "\nAssertion Failed in %s -> %s(%i line):\n%s";
@@ -333,19 +371,19 @@ namespace sf {
         assert(condition && text_buffer);
     }
 
-    int brk(void* addr);
-    void* sbrk(intptr_t delta);
-    void* mmap(void* addr, usize length, int protection, int flags, int file_desc, long offset);
-    int munmap(void* addr, usize length);
+    SF_API int brk(void* addr);
+    SF_API void* sbrk(intptr_t delta);
+    SF_API void* mmap(void* addr, usize length, int protection, int flags, int file_desc, long offset);
+    SF_API int munmap(void* addr, usize length);
 
-    void* malloc(usize size, u8 alignment = SF_ALIGNMENT);
-    void free(void* data);
-    void* realloc(void* old_data, usize size, u8 alignment = SF_ALIGNMENT);
-    void* reallocf(void* old_data, usize size, u8 alignment = SF_ALIGNMENT);
-    void* calloc(usize size, u8 alignment = SF_ALIGNMENT);
-    void memset(void* data, usize value, usize size, u8 alignment = SF_ALIGNMENT);
-    void memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size, u8 alignment = SF_ALIGNMENT);
-    void* moveptr(void* ptr, usize size);
+    SF_API void* malloc(usize size, u8 alignment = SF_ALIGNMENT);
+    SF_API void free(void* data);
+    SF_API void* realloc(void* old_data, usize size, u8 alignment = SF_ALIGNMENT);
+    SF_API void* reallocf(void* old_data, usize size, u8 alignment = SF_ALIGNMENT);
+    SF_API void* calloc(usize size, u8 alignment = SF_ALIGNMENT);
+    SF_API void memset(void* data, usize value, usize size, u8 alignment = SF_ALIGNMENT);
+    SF_API void memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size, u8 alignment = SF_ALIGNMENT);
+    SF_API void* moveptr(void* ptr, usize size);
 
     template<typename T>
     inline T* malloc_t(usize count) {
@@ -382,16 +420,16 @@ namespace sf {
         return static_cast<T*>(moveptr(ptr, sizeof(T) * count));
     }
 
-    class MemoryBumpAllocator final {
+    class SF_API MemoryBumpAllocator final {
 
         friend class Memory;
 
     public:
-        void* Allocate(usize size);
+        void* allocate(usize size);
 
     private:
-        void Init(usize size);
-        void Free();
+        void init(usize size);
+        void free();
 
     private:
         void* m_memory = nullptr;
@@ -399,25 +437,25 @@ namespace sf {
         usize m_used_size = 0;
     };
 
-    struct MemoryPoolAllocation final {
+    struct SF_API MemoryPoolAllocation final {
         bool free = true;
         usize size = 0;
         usize used_size = 0;
         void* data = nullptr;
     };
 
-    class MemoryPoolAllocator final {
+    class SF_API MemoryPoolAllocator final {
 
         friend class Memory;
 
     public:
-        void* Allocate(usize size);
-        void Free(void* data);
+        void* allocate(usize size);
+        void free(void* data);
 
     private:
-        void Init(usize size, usize alloc_capacity);
-        void Free();
-        void AddAllocation(const MemoryPoolAllocation& alloc);
+        void init(usize size, usize alloc_capacity);
+        void free();
+        void add_allocation(const MemoryPoolAllocation& alloc);
 
     private:
         void* m_memory = nullptr;
@@ -429,7 +467,7 @@ namespace sf {
         usize m_alloc_capacity = 0;
     };
 
-    class Memory final {
+    class SF_API Memory final {
 
     public:
         usize total_ram;   // Total usable main memory size
@@ -447,37 +485,39 @@ namespace sf {
         ~Memory();
 
     private:
-        void GetMemoryInfo();
+        void get_memory_info();
     };
 // TODO(cheerwizard): memory should be initialized statically first, before anything else.
 //  it will allow to use memory global variable during static initialization of any MemoryPoolObject.
-    extern Memory memory;
+    extern SF_API Memory memory;
 
-    class MemoryPoolObject {
+    class SF_API MemoryPoolObject {
     public:
         void* operator new(usize size) {
-            return memory.pool_allocator.Allocate(size);
+            return memory.pool_allocator.allocate(size);
         }
         void operator delete(void* addr) {
-            memory.pool_allocator.Free(addr);
+            memory.pool_allocator.free(addr);
         }
     };
 
-    class MemoryBumpObject {
+    class SF_API MemoryBumpObject {
     public:
         void* operator new(usize size) {
-            return memory.bump_allocator.Allocate(size);
+            return memory.bump_allocator.allocate(size);
         }
-        void operator delete(void* addr) = delete;
+        void operator delete(void* addr) {
+            // do nothing, bump allocator has no free functionality
+        }
     };
 
-    class String final {
+    class SF_API String final {
 
     public:
         String(const char* string);
 
     private:
-        void Resize(usize size);
+        void resize(usize size);
 
     private:
         char* m_chars = nullptr;
@@ -488,9 +528,7 @@ namespace sf {
     using namespace std::chrono;
     using days = std::chrono::duration<int, std::ratio<86400>>;
 
-    class Time final {
-
-    public:
+    struct SF_API DateTime final {
         u32 y;   // year
         u32 m;   // month
         u32 d;   // day
@@ -498,18 +536,25 @@ namespace sf {
         i64 min; // minute
         i64 s;   // second
         i64 ms;  // millisecond
-
-    public:
-        static Time GetCurrentTime();
-
     };
 
+    struct SF_API Time final {
+        i64 h;   // hour
+        i64 min; // minute
+        i64 s;   // second
+        i64 ms;  // millisecond
+    };
+
+    SF_API DateTime get_current_date_time();
+    SF_API Time get_current_time();
+    SF_API float get_current_time_millis();
+
     template<typename T, usize size>
-    class RingBuffer final {
+    class CircularBuffer final {
 
     public:
-        bool Push(const T& item);
-        bool Pop(T& item);
+        bool push(const T& item);
+        bool pop(T& item);
 
     private:
         T m_elements[size] = {};
@@ -518,7 +563,7 @@ namespace sf {
     };
 
     template<typename T, usize size>
-    bool RingBuffer<T, size>::Push(const T &item)
+    bool CircularBuffer<T, size>::push(const T &item)
     {
         bool pushed = false;
 
@@ -534,7 +579,7 @@ namespace sf {
     }
 
     template<typename T, usize size>
-    bool RingBuffer<T, size>::Pop(T &item)
+    bool CircularBuffer<T, size>::pop(T &item)
     {
         bool popped = false;
 
@@ -556,7 +601,7 @@ namespace sf {
         SF_THREAD_PRIORITY_COUNT
     };
 
-    class Mutex final {
+    class SF_API Mutex final {
 
         friend class ConditionVar;
 
@@ -564,50 +609,50 @@ namespace sf {
         Mutex();
         ~Mutex();
 
-        void Lock();
-        void Unlock();
+        void lock();
+        void unlock();
 
     private:
         pthread_mutex_t m_handle;
     };
 
-    class ConditionVar final {
+    class SF_API ConditionVar final {
 
     public:
         ConditionVar();
         ~ConditionVar();
 
-        void Wait(Mutex& mutex);
-        void Notify();
+        void wait(Mutex& mutex);
+        void notify();
 
     private:
         pthread_cond_t m_handle;
     };
 
-    class Runnable final {
+    class SF_API Runnable final {
 
     public:
         Runnable(const std::function<void()>& runnable = {}) : m_runnable(runnable) {}
 
     public:
-        static void* Run(void* thiz) {
-            return static_cast<Runnable*>(thiz)->RunInternal();
+        static void* run(void* thiz) {
+            return static_cast<Runnable*>(thiz)->run();
         }
 
     public:
-        inline void SetRunnable(const std::function<void()>& runnable) {
+        inline void set_runnable(const std::function<void()>& runnable) {
             m_runnable = runnable;
         }
 
-        [[nodiscard]] inline const pid_t& GetPID() const {
+        [[nodiscard]] inline const pid_t& get_pid() const {
             return m_pid;
         }
-        [[nodiscard]] inline const pid_t& GetTID() const {
+        [[nodiscard]] inline const pid_t& get_tid() const {
             return m_tid;
         }
 
     private:
-        void* RunInternal();
+        void* run();
 
     private:
         std::function<void()> m_runnable = {};
@@ -616,29 +661,28 @@ namespace sf {
 
     };
 
-    class Thread final {
+    class SF_API Thread final {
 
     public:
         Thread() = default;
         Thread(const char* name, SF_THREAD_PRIORITY priority) : m_name(name), m_priority(priority) {}
 
     public:
-        static pthread_t GetHandle();
-        static u32 GetPID();
-        static u32 GetTID();
-        static void Sleep(u32 millis);
-        static void Yield();
-        static void Exit();
+        static u32 get_pid();
+        static u32 get_tid();
+        static void sleep(u32 millis);
+        static void yield();
+        static void exit();
 
     public:
-        void Run(const std::function<void()>& runnable, const std::function<void()>& kill_callback = {});
-        void Detach() const;
-        void Join() const;
-        void Kill();
+        void run(const std::function<void()>& runnable, const std::function<void()>& kill_callback = {});
+        void detach() const;
+        void join() const;
+        void kill();
 
     private:
-        void SetFormat();
-        static void OnKill(int signal);
+        void set_thread_info();
+        static void on_kill(int signal);
 
     private:
         Runnable m_runnable;
@@ -659,15 +703,15 @@ namespace sf {
         ~ThreadPool();
 
     public:
-        void Add(const std::function<void()>& task);
+        void add(const std::function<void()>& task);
 
     protected:
         // wakes only one thread
         // allows caller-thread to be rescheduled by OS
-        inline void Poll();
+        inline void poll();
 
     private:
-        RingBuffer<std::function<void()>, task_buffer_size> m_task_buffer;
+        CircularBuffer<std::function<void()>, task_buffer_size> m_task_buffer;
         Thread m_thread_buffer[thread_buffer_size] = {};
         Mutex m_wake_mutex;
         ConditionVar m_wake_condition_var;
@@ -682,21 +726,20 @@ namespace sf {
         {
             Thread& thread = m_thread_buffer[i];
             thread = Thread(thread_name, thread_priority);
-            thread.Run([this]()
-            {
+            thread.run([this]() {
                 std::function<void()> task;
                 while (m_running) {
-                    if (m_task_buffer.Pop(task)) {
+                    if (m_task_buffer.pop(task)) {
                         task();
                     }
-                    else {
-                        // because we don't want to overhead cpu core with thread while loop
-                        // it's better to simply put thread into wait, until it is notified by outer thread with wake condition variable
-                        m_wake_condition_var.Wait(m_wake_mutex);
-                    }
+//                    else {
+//                        // because we don't want to overhead cpu core with thread while loop
+//                        // it's better to simply put thread into wait, until it is notified by outer thread with wake condition variable
+//                        m_wake_condition_var.wait(m_wake_mutex);
+//                    }
                 }
             });
-            thread.Detach();
+            thread.detach();
         }
     }
 
@@ -704,23 +747,23 @@ namespace sf {
     ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::~ThreadPool() {
         m_running = false;
         for (int i = 0 ; i < thread_buffer_size ; i++) {
-            m_thread_buffer[i].Kill();
+            m_thread_buffer[i].kill();
         }
     }
 
     template<usize thread_buffer_size, usize task_buffer_size, SF_THREAD_PRIORITY thread_priority>
-    void ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::Add(const std::function<void()> &task) {
+    void ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::add(const std::function<void()> &task) {
         // try to push a new task until it is pushed
-        while (!m_task_buffer.Push(task)) {
-            Poll();
+        while (!m_task_buffer.push(task)) {
+            poll();
         }
-        m_wake_condition_var.Notify();
+        m_wake_condition_var.notify();
     }
 
     template<usize thread_buffer_size, usize task_buffer_size, SF_THREAD_PRIORITY thread_priority>
-    void ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::Poll() {
-        m_wake_condition_var.Notify();
-        Thread::Yield();
+    void ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::poll() {
+        m_wake_condition_var.notify();
+        Thread::yield();
     }
 
 }

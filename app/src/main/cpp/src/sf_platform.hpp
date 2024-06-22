@@ -208,4 +208,17 @@ namespace sf {
 
     typedef void (*EventTouchMove)(double x, double y);
 
+    class SF_API Window : public MemoryPoolObject {
+
+    public:
+        Window(const char* title, int x, int y, int w, int h, bool sync);
+        ~Window();
+
+        bool update();
+
+    private:
+        void* m_handle;
+
+    };
+
 }

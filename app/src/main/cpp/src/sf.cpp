@@ -238,7 +238,7 @@ namespace sf {
         return reinterpret_cast<void*>(reinterpret_cast<usize>(ptr) + size);
     }
 
-    void MemoryBumpAllocator::Init(usize size) {
+    void MemoryBumpAllocator::init(usize size) {
         m_memory = sbrk(0);
         m_size = size;
         isize sbrk_result = reinterpret_cast<isize>(sbrk(size));
@@ -248,13 +248,13 @@ namespace sf {
         }
     }
 
-    void MemoryBumpAllocator::Free() {
+    void MemoryBumpAllocator::free() {
         brk(m_memory);
         m_size = 0;
         m_used_size = 0;
     }
 
-    void* MemoryBumpAllocator::Allocate(usize size) {
+    void* MemoryBumpAllocator::allocate(usize size) {
         void* addr = nullptr;
         usize aligned_size = (size + 7) & ~ 7; // this will make sure that first 4 bits are 0
         if (m_used_size + aligned_size <= m_size) {
@@ -267,7 +267,7 @@ namespace sf {
         return addr;
     }
 
-    void MemoryPoolAllocator::Init(usize size, usize alloc_capacity) {
+    void MemoryPoolAllocator::init(usize size, usize alloc_capacity) {
         m_memory = malloc(size);
         m_size = size;
         m_last_ptr = m_memory;
@@ -276,9 +276,9 @@ namespace sf {
         m_alloc_capacity = alloc_capacity;
     }
 
-    void MemoryPoolAllocator::Free() {
-        Free(m_memory);
-        Free(m_allocs);
+    void MemoryPoolAllocator::free() {
+        free(m_memory);
+        free(m_allocs);
         m_memory = nullptr;
         m_allocs = nullptr;
         m_size = 0;
@@ -288,7 +288,7 @@ namespace sf {
         m_max_ptr = nullptr;
     }
 
-    void* MemoryPoolAllocator::Allocate(usize size) {
+    void* MemoryPoolAllocator::allocate(usize size) {
         for (usize i = 0; i < m_alloc_size ; i++) {
             MemoryPoolAllocation& allocation = m_allocs[i];
 
@@ -308,7 +308,7 @@ namespace sf {
                 new_allocation.used_size = size;
                 new_allocation.data = moveptr(allocation.data, allocation.used_size);
                 allocation.size = allocation.used_size;
-                AddAllocation(new_allocation);
+                add_allocation(new_allocation);
                 return new_allocation.data;
             }
         }
@@ -323,13 +323,13 @@ namespace sf {
         new_allocation.size = size;
         new_allocation.used_size = size;
         new_allocation.data = m_last_ptr;
-        AddAllocation(new_allocation);
+        add_allocation(new_allocation);
         m_last_ptr = moveptr(m_last_ptr, size);
         return new_allocation.data;
     }
 
-    void MemoryPoolAllocator::Free(void* data) {
-        for (usize i = 0 ; i < m_alloc_size ; i += sizeof(MemoryPoolAllocation)) {
+    void MemoryPoolAllocator::free(void* data) {
+        for (usize i = 0 ; i < m_alloc_size ; i++) {
             MemoryPoolAllocation& allocation = m_allocs[i];
             if (allocation.data == data) {
                 allocation.free = true;
@@ -338,7 +338,7 @@ namespace sf {
         }
     }
 
-    void MemoryPoolAllocator::AddAllocation(const MemoryPoolAllocation &alloc) {
+    void MemoryPoolAllocator::add_allocation(const MemoryPoolAllocation &alloc) {
         if (m_alloc_size >= m_alloc_capacity) {
             m_alloc_capacity = m_alloc_size + 100;
             m_allocs = realloc_t<MemoryPoolAllocation>(m_allocs, m_alloc_capacity);
@@ -348,9 +348,9 @@ namespace sf {
     }
 
     Memory::Memory() {
-        GetMemoryInfo();
+        get_memory_info();
         usize bump_size = SF_MB(100);
-        bump_allocator.Init(bump_size);
+        bump_allocator.init(bump_size);
         // memory size = 20% of RAM but less than 1GB
         usize pool_size = static_cast<usize>(static_cast<double>(free_ram) * 0.2);
         if (pool_size >= SF_GB(1)) {
@@ -358,23 +358,23 @@ namespace sf {
         }
         // pool_alloc_size value can be estimated and tested
         usize pool_alloc_size = 100;
-        pool_allocator.Init(pool_size, pool_alloc_size);
+        pool_allocator.init(pool_size, pool_alloc_size);
     }
 
     Memory::~Memory() {
-        bump_allocator.Free();
-        pool_allocator.Free();
+        bump_allocator.free();
+        pool_allocator.free();
     }
 
     Memory memory = {};
 
-    Time Time::GetCurrentTime() {
+    DateTime get_current_date_time() {
         system_clock::time_point current_time = system_clock::now();
         current_time += 1h;
         auto current_ms = time_point_cast<milliseconds>(current_time);
         auto current_days = time_point_cast<days>(current_ms);
 
-        // Assert an algorithm for this platform
+        // log_assert an algorithm for this platform
         auto z = current_days.time_since_epoch().count();
         static_assert(std::numeric_limits<unsigned>::digits >= 18,
                       "This algorithm has not been ported to a 16 bit unsigned integer!");
@@ -404,7 +404,7 @@ namespace sf {
         seconds s = duration_cast<seconds>(ms);
         ms -= s;
 
-        Time time = {};
+        DateTime time = {};
         time.y = y;
         time.m = m;
         time.d = d;
@@ -415,6 +415,35 @@ namespace sf {
         return time;
     }
 
+    Time get_current_time() {
+        system_clock::time_point current_time = system_clock::now();
+        current_time += 1h;
+        auto current_ms = time_point_cast<milliseconds>(current_time);
+        auto current_days = time_point_cast<days>(current_ms);
+        // Get milliseconds since the local midnight
+        auto ms = current_ms - current_days;
+        // Get hours, minutes, seconds and milliseconds from milliseconds since midnight
+        hours h = duration_cast<hours>(ms);
+        ms -= h;
+        std::chrono::minutes min = duration_cast<minutes>(ms);
+        ms -= min;
+        seconds s = duration_cast<seconds>(ms);
+        ms -= s;
+
+        Time time = {};
+        time.h = h.count();
+        time.min = min.count();
+        time.s = s.count();
+        time.ms = ms.count();
+        return time;
+    }
+
+    float get_current_time_millis() {
+        system_clock::time_point current_time = system_clock::now();
+        auto current_ms = time_point_cast<milliseconds>(current_time);
+        return static_cast<float>(current_ms.time_since_epoch().count());
+    }
+
     Mutex::Mutex() {
         pthread_mutex_init(&m_handle, nullptr);
     }
@@ -423,11 +452,11 @@ namespace sf {
         pthread_mutex_destroy(&m_handle);
     }
 
-    void Mutex::Lock() {
+    void Mutex::lock() {
         pthread_mutex_lock(&m_handle);
     }
 
-    void Mutex::Unlock() {
+    void Mutex::unlock() {
         pthread_mutex_unlock(&m_handle);
     }
 
@@ -439,92 +468,88 @@ namespace sf {
         pthread_cond_destroy(&m_handle);
     }
 
-    void ConditionVar::Wait(Mutex& mutex) {
+    void ConditionVar::wait(Mutex& mutex) {
         pthread_mutex_lock(&mutex.m_handle);
         int result = pthread_cond_wait(&m_handle, &mutex.m_handle);
         SF_ASSERT(result == 0, "Unable to wait a pthread with condition var");
     }
 
-    void ConditionVar::Notify() {
+    void ConditionVar::notify() {
         int result = pthread_cond_signal(&m_handle);
         SF_ASSERT(result == 0, "Unable to notify a pthread with condition var");
     }
 
-    void* Runnable::RunInternal() {
+    void* Runnable::run() {
 #if defined(SF_DEBUG)
-        m_pid = Thread::GetPID();
-        m_tid = Thread::GetTID();
+        m_pid = Thread::get_pid();
+        m_tid = Thread::get_tid();
 #endif
         m_runnable();
         return nullptr;
     }
 
-    pthread_t Thread::GetHandle() {
-        return pthread_self();
-    }
-
-    u32 Thread::GetPID() {
+    u32 Thread::get_pid() {
         return getpid();
     }
 
-    u32 Thread::GetTID() {
+    u32 Thread::get_tid() {
         return gettid();
     }
 
-    void Thread::Sleep(u32 millis) {
+    void Thread::sleep(u32 millis) {
         int result = usleep(millis * 1000);
         SF_ASSERT(result == 0, "Unable to sleep this thread");
     }
 
-    void Thread::Yield() {
+    void Thread::yield() {
         int result = sched_yield();
         SF_ASSERT(result == 0, "Unable to yield this thread");
     }
 
-    void Thread::Exit() {
+    void Thread::exit() {
         pthread_exit(0);
     }
 
-    void Thread::Run(const std::function<void()> &runnable, const std::function<void()>& kill_callback) {
-        m_runnable.SetRunnable(runnable);
+    void Thread::run(const std::function<void()> &runnable, const std::function<void()>& kill_callback) {
+        m_runnable.set_runnable(runnable);
         m_kill_callback = kill_callback;
 
         struct sigaction actions;
         std::memset(&actions, 0, sizeof(actions));
         sigemptyset(&actions.sa_mask);
         actions.sa_flags = 0;
-        actions.sa_handler = OnKill;
+        actions.sa_handler = on_kill;
         int result = sigaction(SIGUSR1,&actions,nullptr);
         SF_ASSERT(result == 0, "Unable to create sigaction for pthread %s", m_name);
 
         pthread_attr_t thread_attrs;
 
-        result = pthread_create(&m_handle, nullptr, &Runnable::Run, &m_runnable);
+        result = pthread_create(&m_handle, nullptr, &Runnable::run, &m_runnable);
         SF_ASSERT(result == 0, "Unable to create a pthread %s", m_name);
 
 #ifdef SF_DEBUG
-        m_pid = m_runnable.GetPID();
-        m_tid = m_runnable.GetTID();
-        SetFormat();
+        m_pid = m_runnable.get_pid();
+        m_tid = m_runnable.get_tid();
+        set_thread_info();
 #endif
     }
 
-    void Thread::Detach() const {
+    void Thread::detach() const {
         int result = pthread_detach(m_handle);
         SF_ASSERT(result == 0, "Unable to detach a pthread %s", m_name);
     }
 
-    void Thread::Join() const {
+    void Thread::join() const {
         int result = pthread_join(m_handle, nullptr);
         SF_ASSERT(result == 0, "Unable to join to a pthread %s", m_name);
     }
 
-    void Thread::Kill() {
+    void Thread::kill() {
         int result = pthread_kill(m_handle, SIGUSR1);
         SF_ASSERT(result == 0, "Unable to kill a pthread %s", m_name);
     }
 
-    void Thread::OnKill(int signal) {
+    void Thread::on_kill(int signal) {
 //    if (m_kill_callback) {
 //        m_kill_callback();
 //    }
@@ -640,7 +665,7 @@ namespace sf {
         return ::munmap(addr, length);
     }
 
-    void Memory::GetMemoryInfo() {
+    void Memory::get_memory_info() {
         struct sysinfo sys_info {};
         sysinfo(&sys_info);
         total_ram = sys_info.totalram;
@@ -657,7 +682,7 @@ namespace sf {
         3, // SF_THREAD_PRIORITY_HIGHEST
     };
 
-    void Thread::SetFormat() {
+    void Thread::set_thread_info() {
         int result;
 
         cpu_set_t cpuset;

@@ -2,15 +2,15 @@
 
 #include <sf_math.hpp>
 
+enum SF_CAMERA_MODE
+{
+    SF_CAMERA_MODE_GAME = -1,
+    SF_CAMERA_MODE_EDITOR = 1,
+};
+
 namespace sf {
 
-    enum SF_CAMERA_MODE
-    {
-        SF_CAMERA_MODE_GAME = -1,
-        SF_CAMERA_MODE_EDITOR = 1,
-    };
-
-    class Camera final {
+    class SF_API Camera final {
 
     public:
         // Position.z = -1 is a default valid value for 2D orthographic view
@@ -47,26 +47,26 @@ namespace sf {
 
         Camera(int2 frame_size) : frame_size(frame_size) {}
 
-        float2 GetPanSpeed() const;
-        float GetZoomSpeed() const;
+        float2 get_pan_speed() const;
+        float get_zoom_speed() const;
 
-        void ZoomOut();
-        void ZoomIn();
-        void MoveForward();
-        void MoveBackward();
-        void MoveLeft();
-        void MoveRight();
-        void Pan(double2 pan);
-        void Look(double2 look, SF_CAMERA_MODE camera_mode);
+        void zoom_out();
+        void zoom_in();
+        void move_forward();
+        void move_backward();
+        void move_left();
+        void move_right();
+        void pan(double2 pan);
+        void look(double2 look, SF_CAMERA_MODE camera_mode);
 
-        void OnScrollChanged(double2 scroll);
-        void OnWindowFrameResized(int2 frame_size);
-        void OnWindowRatioChanged(float ratio);
+        void on_scroll_changed(double2 scroll);
+        void on_window_changed(int2 frame_size);
+        void on_window_ratio_changed(float ratio);
 
     private:
-        void UpdatePerspective();
-        void UpdateOrtho();
-        void UpdateView(const float3& pos);
+        void update_perspective();
+        void update_ortho();
+        void update_view(const float3& pos);
 
         float3 m_focal_point;
     };
