@@ -1,8 +1,6 @@
 #pragma once
 
 #include <sf.hpp>
-#include <cstdio>
-#include <cstring>
 
 #if defined(SF_DEBUG)
 

@@ -2,7 +2,7 @@
 #include <Log.hpp>
 
 static AndroidApp* s_app = nullptr;
-static ThreadPool<1, 5, T3D_THREAD_PRIORITY_HIGHEST>* s_jni_thread_pool = nullptr;
+static ThreadPool<1, 5, SF_THREAD_PRIORITY_HIGHEST>* s_jni_thread_pool = nullptr;
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     Jni::vm = vm;
@@ -18,7 +18,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     Activity::mid_show_input = env->GetMethodID(Activity::clazz, "showInput", "(I)V");
     Activity::mid_hide_input = env->GetMethodID(Activity::clazz, "hideInput", "(I)V");
 
-    s_jni_thread_pool = new ThreadPool<1, 5, T3D_THREAD_PRIORITY_HIGHEST>("JNI");
+    s_jni_thread_pool = new ThreadPool<1, 5, SF_THREAD_PRIORITY_HIGHEST>("JNI");
 
     return JNI_VERSION_1_6;
 }

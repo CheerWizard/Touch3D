@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <sf.hpp>
 #include <unistd.h>
 
@@ -373,79 +374,34 @@ namespace sf {
     Memory memory = {};
 
     DateTime get_current_date_time() {
-        system_clock::time_point current_time = system_clock::now();
-        current_time += 1h;
-        auto current_ms = time_point_cast<milliseconds>(current_time);
-        auto current_days = time_point_cast<days>(current_ms);
-
-        // log_assert an algorithm for this platform
-        auto z = current_days.time_since_epoch().count();
-        static_assert(std::numeric_limits<unsigned>::digits >= 18,
-                      "This algorithm has not been ported to a 16 bit unsigned integer!");
-        static_assert(std::numeric_limits<int>::digits >= 20,
-                      "This algorithm has not been ported to a 16 bit signed integer!");
-
-        // Get year, month, day from days
-        z += 719468;
-        int era = (z >= 0 ? z : z - 146096) / 146097;
-        u32 doe = static_cast<unsigned>(z - era * 146097);          // [0, 146096]
-        u32 yoe = (doe - doe/1460 + doe/36524 - doe/146096) / 365;  // [0, 399]
-        int y = static_cast<int>(yoe) + era * 400;
-        u32 doy = doe - (365*yoe + yoe/4 - yoe/100);                // [0, 365]
-        u32 mp = (5*doy + 2)/153;                                   // [0, 11]
-        u32 d = doy - (153*mp+2)/5 + 1;                             // [1, 31]
-        u32 m = mp + (mp < 10 ? 3 : -9);                            // [1, 12]
-        y += (m <= 2);
-
-        // Get milliseconds since the local midnight
-        auto ms = current_ms - current_days;
-
-        // Get hours, minutes, seconds and milliseconds from milliseconds since midnight
-        hours h = duration_cast<hours>(ms);
-        ms -= h;
-        std::chrono::minutes min = duration_cast<minutes>(ms);
-        ms -= min;
-        seconds s = duration_cast<seconds>(ms);
-        ms -= s;
-
-        DateTime time = {};
-        time.y = y;
-        time.m = m;
-        time.d = d;
-        time.h = h.count();
-        time.min = min.count();
-        time.s = s.count();
-        time.ms = ms.count();
-        return time;
+        time_t t = time(nullptr);
+        tm* lt = localtime(&t);
+        DateTime date_time = {};
+        date_time.y = lt->tm_year;
+        date_time.m = lt->tm_mon;
+        date_time.d = lt->tm_mday;
+        date_time.h = lt->tm_hour;
+        date_time.min = lt->tm_min;
+        date_time.s = lt->tm_sec;
+        date_time.ms = lt->tm_sec * 1000;
+        return date_time;
     }
 
     Time get_current_time() {
-        system_clock::time_point current_time = system_clock::now();
-        current_time += 1h;
-        auto current_ms = time_point_cast<milliseconds>(current_time);
-        auto current_days = time_point_cast<days>(current_ms);
-        // Get milliseconds since the local midnight
-        auto ms = current_ms - current_days;
-        // Get hours, minutes, seconds and milliseconds from milliseconds since midnight
-        hours h = duration_cast<hours>(ms);
-        ms -= h;
-        std::chrono::minutes min = duration_cast<minutes>(ms);
-        ms -= min;
-        seconds s = duration_cast<seconds>(ms);
-        ms -= s;
-
+        time_t t = time(nullptr);
+        tm* lt = localtime(&t);
         Time time = {};
-        time.h = h.count();
-        time.min = min.count();
-        time.s = s.count();
-        time.ms = ms.count();
+        time.ms = lt->tm_sec * 1000;
+        time.s = lt->tm_sec;
+        time.min = lt->tm_min;
+        time.h = lt->tm_hour;
         return time;
     }
 
     float get_current_time_millis() {
-        system_clock::time_point current_time = system_clock::now();
-        auto current_ms = time_point_cast<milliseconds>(current_time);
-        return static_cast<float>(current_ms.time_since_epoch().count());
+        time_t t = time(nullptr);
+        tm* lt = localtime(&t);
+        return lt->tm_sec * 1000;
     }
 
     Mutex::Mutex() {

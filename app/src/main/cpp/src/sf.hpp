@@ -1,14 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include <cstddef>
-#include <chrono>
-#include <functional>
 #include <pthread.h>
-#include <csignal>
 #include <cassert>
-#include <sstream>
-#include <cstring>
+#include <csignal>
 
 using u8 = uint8_t;
 using i8 = int8_t;
@@ -528,9 +523,6 @@ namespace sf {
         usize m_size = 0;
         usize m_capacity = 0;
     };
-
-    using namespace std::chrono;
-    using days = std::chrono::duration<int, std::ratio<86400>>;
 
     struct SF_API DateTime final {
         u32 y;   // year

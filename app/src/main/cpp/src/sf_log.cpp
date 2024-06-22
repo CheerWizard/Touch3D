@@ -60,34 +60,37 @@ namespace sf {
         0x0F, // SF_LOG_COLOR_LIGHT_WHITE
     };
 
+    static void print(SF_LOG_COLOR log_color, char* log) {
+        HANDLE std_out = GetStdHandle(STD_OUT_HANDLE);
+        if (std_out != nullptr && std_out != INVALID_HANDLE_VALUE) {
+            DWORD written = 0;
+            SetConsoleTextAttribute(std_out, SF_LOG_COLOR_CODE[log_color]);
+            WriteConsoleA(std_out, log, strlen(log), &written, nullptr);
+        }
+    }
+
     void Log::print_verbose(SF_LOG_COLOR log_color, char* log) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
-        puts(log);
+        print(log_color, log);
     }
 
     void Log::print_info(SF_LOG_COLOR log_color, char* log) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
-        puts(log);
+        print(log_color, log);
     }
 
     void Log::print_debug(SF_LOG_COLOR log_color, char* log) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
-        puts(log);
+        print(log_color, log);
     }
 
     void Log::print_warning(SF_LOG_COLOR log_color, char* log) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
-        puts(log);
+        print(log_color, log);
     }
 
     void Log::print_error(SF_LOG_COLOR log_color, char* log) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
-        puts(log);
+        print(log_color, log);
     }
 
     void Log::print_assert(SF_LOG_COLOR log_color, char* log) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), SF_LOG_COLOR_CODE[log_color]);
-        puts(log);
+        print(log_color, log);
     }
 
 }
@@ -171,23 +174,23 @@ namespace sf {
         __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_VERBOSE, "SF_ANDROID", log);
     }
 
-    void Log::PrintInfo(SF_LOG_COLOR log_color, char *log) {
+    void Log::print_info(SF_LOG_COLOR log_color, char *log) {
         __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_INFO, "SF_ANDROID", log);
     }
 
-    void Log::PrintDebug(SF_LOG_COLOR log_color, char *log) {
+    void Log::print_debug(SF_LOG_COLOR log_color, char *log) {
         __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_DEBUG, "SF_ANDROID", log);
     }
 
-    void Log::PrintWarning(SF_LOG_COLOR log_color, char *log) {
+    void Log::print_warning(SF_LOG_COLOR log_color, char *log) {
         __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_WARN, "SF_ANDROID", log);
     }
 
-    void Log::PrintError(SF_LOG_COLOR log_color, char *log) {
+    void Log::print_error(SF_LOG_COLOR log_color, char *log) {
         __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_ERROR, "SF_ANDROID", log);
     }
 
-    void Log::PrintAssert(SF_LOG_COLOR log_color, char *log) {
+    void Log::print_assert(SF_LOG_COLOR log_color, char *log) {
         __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_FATAL, "SF_ANDROID", log);
     }
 
