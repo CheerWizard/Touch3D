@@ -1,9 +1,10 @@
 #pragma once
 
 #include <cstdint>
-#include <pthread.h>
 #include <cassert>
 #include <csignal>
+#include <cstdio>
+#include <pthread.h>
 
 using u8 = uint8_t;
 using i8 = int8_t;
@@ -588,6 +589,17 @@ namespace sf {
 
         return popped;
     }
+
+    class SF_API Function final {
+
+    typedef void (*FunctionPtr)(void* thiz);
+
+    public:
+        Function();
+
+    private:
+
+    };
 
     class SF_API Mutex final {
 

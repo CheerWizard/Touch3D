@@ -61,7 +61,7 @@ namespace sf {
     };
 
     static void print(SF_LOG_COLOR log_color, char* log) {
-        HANDLE std_out = GetStdHandle(STD_OUT_HANDLE);
+        HANDLE std_out = GetStdHandle(STD_OUTPUT_HANDLE);
         if (std_out != nullptr && std_out != INVALID_HANDLE_VALUE) {
             DWORD written = 0;
             SetConsoleTextAttribute(std_out, SF_LOG_COLOR_CODE[log_color]);

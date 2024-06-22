@@ -87,7 +87,7 @@ namespace sf {
             SF_ASSERT(false, "Failed to create window for Windows!");
         }
 
-        ShowWindow(SF_WINDOW, 0);
+        ShowWindow(SF_WINDOW, SW_SHOWDEFAULT);
 
         DEVMODE devmode;
         EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devmode);
