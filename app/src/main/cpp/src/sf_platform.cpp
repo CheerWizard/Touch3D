@@ -1,4 +1,5 @@
 #include <sf_platform.hpp>
+#include <sf_app.hpp>
 
 namespace sf {
 
@@ -45,9 +46,7 @@ namespace sf {
             {
                 int w = LOWORD(l_param);
                 int h = HIWORD(l_param);
-                if (events->window_resize) {
-                    events->window_resize(w, h);
-                }
+                events->event_on_window_resize(w, h);
                 break;
             }
 

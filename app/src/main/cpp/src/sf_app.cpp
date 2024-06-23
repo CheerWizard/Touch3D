@@ -5,10 +5,13 @@ namespace sf {
 
     App::App() {
         SF_LOG_OPEN("App.log");
+        m_window = new Window("SF App", 400, 300, 800, 600, true);
+        m_window->events.event_on_window_resize = { this, sf::on_window_resize<App>, nullptr };
     }
 
     App::~App() {
         SF_LOG_CLOSE();
+        delete m_window;
     }
 
     void App::run() {
@@ -26,6 +29,18 @@ namespace sf {
 
     void App::assert_init() {
         SF_ASSERT(m_window != nullptr, "Window was not created!");
+    }
+
+    void App::on_window_resize(int w, int h) {
+    }
+
+    void App::on_window_move(int x, int y) {
+    }
+
+    void App::on_cursor_move(double x, double y) {
+    }
+
+    void App::on_touch_move(double x, double y) {
     }
 
 }

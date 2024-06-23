@@ -5,6 +5,8 @@
 #include <csignal>
 #include <cstdio>
 #include <pthread.h>
+#include <cstring>
+#include <functional>
 
 using u8 = uint8_t;
 using i8 = int8_t;
@@ -590,17 +592,6 @@ namespace sf {
         return popped;
     }
 
-    class SF_API Function final {
-
-    typedef void (*FunctionPtr)(void* thiz);
-
-    public:
-        Function();
-
-    private:
-
-    };
-
     class SF_API Mutex final {
 
         friend class ConditionVar;
@@ -640,14 +631,14 @@ namespace sf {
         }
 
     public:
-        inline void set_runnable(const std::function<void()>& runnable) {
+        void set_runnable(const std::function<void()>& runnable) {
             m_runnable = runnable;
         }
 
-        [[nodiscard]] inline const pid_t& get_pid() const {
+        [[nodiscard]] const pid_t& get_pid() const {
             return m_pid;
         }
-        [[nodiscard]] inline const pid_t& get_tid() const {
+        [[nodiscard]] const pid_t& get_tid() const {
             return m_tid;
         }
 
@@ -655,7 +646,7 @@ namespace sf {
         void* run();
 
     private:
-        std::function<void()> m_runnable = {};
+        std::function<void()> m_runnable;
         pid_t m_pid;
         pid_t m_tid;
 
@@ -682,11 +673,11 @@ namespace sf {
 
     private:
         Runnable m_runnable;
-        pthread_t m_handle;
-        pid_t m_pid;
-        pid_t m_tid;
-        const char* m_name;
-        SF_THREAD_PRIORITY m_priority;
+        pthread_t m_handle = 0;
+        pid_t m_pid = 0;
+        pid_t m_tid = 0;
+        const char* m_name = nullptr;
+        SF_THREAD_PRIORITY m_priority = SF_THREAD_PRIORITY_NORMAL;
         std::function<void()> m_kill_callback;
 
     };
@@ -704,7 +695,7 @@ namespace sf {
     protected:
         // wakes only one thread
         // allows caller-thread to be rescheduled by OS
-        inline void poll();
+        void poll();
 
     private:
         CircularBuffer<std::function<void()>, task_buffer_size> m_task_buffer;

@@ -8,9 +8,14 @@ namespace sf {
 
     public:
         App();
-        ~App();
+        virtual ~App();
 
         void run();
+
+        void on_window_resize(int w, int h);
+        void on_window_move(int x, int y);
+        void on_cursor_move(double x, double y);
+        void on_touch_move(double x, double y);
 
     private:
         void assert_init();

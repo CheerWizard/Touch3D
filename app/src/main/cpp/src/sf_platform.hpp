@@ -2,6 +2,15 @@
 
 #include <sf.hpp>
 
+#define SF_EVENT(name, R, ...) \
+typedef sf::Event<R, ##__VA_ARGS__> Event_##name;
+#define SF_EVENT_CALL_BEGIN(name, R, ...) \
+template<typename Caller> \
+static R name(void* caller, ##__VA_ARGS__) {
+#define SF_EVENT_CALL_END(name, R, ...) \
+return static_cast<Caller*>(caller)->name(__VA_ARGS__); \
+}
+
 enum SF_KEYCODE
 {
     SF_KEYCODE_NONE                = 0,
@@ -201,18 +210,45 @@ enum SF_GAMEPAD_AXIS
 
 namespace sf {
 
-    typedef void (*EventWindowResize)(int w, int h);
-    typedef void (*EventWindowMove)(int w, int h);
+    template<typename R, typename... P>
+    struct SF_API Event final {
+        typedef R (*Callable)(void*, P...);
 
-    typedef void (*EventCursorMove)(double x, double y);
+        void* caller = nullptr;
+        Callable callable = nullptr;
+        Event* next = nullptr;
 
-    typedef void (*EventTouchMove)(double x, double y);
+        R operator ()(P... params) {
+            SF_ASSERT(callable != nullptr, "Callable function pointer must be not NULL!");
+            R result = callable(caller, params...);
+            if (next != nullptr) {
+                result = *next(params...);
+            }
+            return result;
+        }
+    };
 
-    struct SF_API Events final {
-        EventWindowResize window_resize = nullptr;
-        EventWindowMove window_move = nullptr;
-        EventCursorMove cursor_move = nullptr;
-        EventTouchMove touch_move = nullptr;
+    SF_EVENT(on_window_resize, void, int, int)
+    SF_EVENT_CALL_BEGIN(on_window_resize, void, int w, int h)
+    SF_EVENT_CALL_END(on_window_resize, void, w, h)
+
+    SF_EVENT(on_window_move, void, int, int)
+    SF_EVENT_CALL_BEGIN(on_window_move, void, int x, int y)
+    SF_EVENT_CALL_END(on_window_move, void, x, y)
+
+    SF_EVENT(on_cursor_move, void, double, double)
+    SF_EVENT_CALL_BEGIN(on_cursor_move, void, double x, double y)
+    SF_EVENT_CALL_END(on_cursor_move, void, x, y)
+
+    SF_EVENT(on_touch_move, void, double, double)
+    SF_EVENT_CALL_BEGIN(on_touch_move, void, double x, double y)
+    SF_EVENT_CALL_END(on_touch_move, void, x, y)
+
+    struct Events final {
+        Event_on_window_resize event_on_window_resize;
+        Event_on_window_move event_on_window_move;
+        Event_on_cursor_move event_on_cursor_move;
+        Event_on_touch_move event_on_touch_move;
     };
 
     class SF_API Window : public MemoryPoolObject {
