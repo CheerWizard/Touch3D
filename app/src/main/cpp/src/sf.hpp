@@ -516,6 +516,7 @@ namespace sf {
     class SF_API String final {
 
     public:
+        String() = default;
         String(const char* string);
 
     private:
@@ -523,6 +524,21 @@ namespace sf {
 
     private:
         char* m_chars = nullptr;
+        usize m_size = 0;
+        usize m_capacity = 0;
+    };
+
+    template<typename T>
+    class SF_API Vector final {
+
+    public:
+        Vector() = default;
+
+    private:
+        void resize(usize size);
+
+    private:
+        T* m_elements = nullptr;
         usize m_size = 0;
         usize m_capacity = 0;
     };
