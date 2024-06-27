@@ -7,6 +7,13 @@
 #include <pthread.h>
 #include <cstring>
 #include <functional>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <unordered_map>
+#include <unordered_set>
+#include <map>
+#include <set>
 
 using u8 = uint8_t;
 using i8 = int8_t;
@@ -392,158 +399,135 @@ namespace sf {
     SF_API void* moveptr(void* ptr, usize size);
 
     template<typename T>
-    inline T* malloc_t(usize count) {
+    T* malloc_t(usize count) {
         return static_cast<T*>(malloc(sizeof(T) * count));
     }
 
     template<typename T>
-    inline T* realloc_t(T* data, usize count) {
+    T* realloc_t(T* data, usize count) {
         return static_cast<T*>(realloc(data, sizeof(T) * count));
     }
 
     template<typename T>
-    inline T* reallocf_t(T* data, usize count) {
+    T* reallocf_t(T* data, usize count) {
         return static_cast<T*>(reallocf(data, sizeof(T) * count));
     }
 
     template<typename T>
-    inline T* calloc_t(usize count) {
+    T* calloc_t(usize count) {
         return static_cast<T*>(calloc(sizeof(T) * count));
     }
 
     template<typename T>
-    inline void memset_t(T* data, usize value, usize count) {
+    void memset_t(T* data, usize value, usize count) {
         memset(data, value, sizeof(T) * count);
     }
 
     template<typename T>
-    inline void memcpy_t(T* dest_data, usize dest_count, const T* src_data, usize src_count) {
+    void memcpy_t(T* dest_data, usize dest_count, const T* src_data, usize src_count) {
         memcpy(dest_data, sizeof(T) * dest_count, src_data, sizeof(T) * src_count);
     }
 
     template<typename T>
-    inline T* moveptr_t(T* ptr, usize count) {
+    T* moveptr_t(T* ptr, usize count) {
         return static_cast<T*>(moveptr(ptr, sizeof(T) * count));
     }
 
-    class SF_API MemoryBumpAllocator final {
-
-        friend class Memory;
-
-    public:
-        void* allocate(usize size);
-
-    private:
-        void init(usize size);
-        void free();
-
-    private:
-        void* m_memory = nullptr;
-        usize m_size = 0;
-        usize m_used_size = 0;
+    struct SF_API memory_bump_t final {
+        void* memory = nullptr;
+        usize size = 0;
+        usize used_size = 0;
     };
 
-    struct SF_API MemoryPoolAllocation final {
+    SF_API memory_bump_t memory_bump_init(usize size);
+    SF_API void memory_bump_free(memory_bump_t& memory_bump);
+    SF_API void* memory_bump_allocate(memory_bump_t& memory_bump, usize size);
+
+    struct SF_API memory_pool_alloc_t final {
         bool free = true;
         usize size = 0;
         usize used_size = 0;
         void* data = nullptr;
     };
 
-    class SF_API MemoryPoolAllocator final {
-
-        friend class Memory;
-
-    public:
-        void* allocate(usize size);
-        void free(void* data);
-
-    private:
-        void init(usize size, usize alloc_capacity);
-        void free();
-        void add_allocation(const MemoryPoolAllocation& alloc);
-
-    private:
-        void* m_memory = nullptr;
-        usize m_size = 0;
-        void* m_last_ptr = nullptr;
-        void* m_max_ptr = nullptr;
-        MemoryPoolAllocation* m_allocs = nullptr;
-        usize m_alloc_size = 0;
-        usize m_alloc_capacity = 0;
+    struct SF_API memory_pool_t final {
+        void* memory = nullptr;
+        usize size = 0;
+        void* last_ptr = nullptr;
+        void* max_ptr = nullptr;
+        memory_pool_alloc_t* allocs = nullptr;
+        usize alloc_size = 0;
+        usize alloc_capacity = 0;
     };
 
-    class SF_API Memory final {
+    SF_API memory_pool_t memory_pool_init(usize size, usize alloc_capacity);
+    SF_API void memory_pool_free(memory_pool_t& memory_pool);
+    SF_API void* memory_pool_allocate(memory_pool_t& memory_pool, usize size);
+    SF_API void memory_pool_free(const memory_pool_t& memory_pool, const void* addr);
 
-    public:
-        usize total_ram;
-        usize free_ram;
-
-        MemoryBumpAllocator bump_allocator;
-        MemoryPoolAllocator pool_allocator;
-
-    public:
-        Memory();
-        ~Memory();
-
-    private:
-        void get_memory_info();
-    };
-// TODO(cheerwizard): memory should be initialized statically first, before anything else.
-//  it will allow to use memory global variable during static initialization of any MemoryPoolObject.
-    extern SF_API Memory memory;
-
-    class SF_API MemoryPoolObject {
-    public:
-        void* operator new(usize size) {
-            return memory.pool_allocator.allocate(size);
-        }
-        void operator delete(void* addr) {
-            memory.pool_allocator.free(addr);
-        }
+    struct memory_info_t final {
+        usize ram_total_bytes = 0;
+        usize ram_free_bytes = 0;
     };
 
-    class SF_API MemoryBumpObject {
-    public:
-        void* operator new(usize size) {
-            return memory.bump_allocator.allocate(size);
-        }
-        void operator delete(void* addr) {
-            // do nothing, bump allocator has no free functionality
-        }
+    SF_API memory_info_t memory_info_get();
+
+    struct SF_API memory_t final {
+        memory_bump_t memory_bump;
+        memory_pool_t memory_pool;
     };
 
-    class SF_API String final {
+    SF_API void memory_init();
+    SF_API void memory_free();
 
-    public:
-        String() = default;
-        String(const char* string);
-
-    private:
-        void resize(usize size);
-
-    private:
-        char* m_chars = nullptr;
-        usize m_size = 0;
-        usize m_capacity = 0;
-    };
+    extern memory_t global_memory;
 
     template<typename T>
-    class SF_API Vector final {
+    struct stl_allocator_t {
+        typedef T value_type;
 
-    public:
-        Vector() = default;
+        stl_allocator_t() = default;
 
-    private:
-        void resize(usize size);
+        template<class U>
+        constexpr stl_allocator_t(const stl_allocator_t<U>&) noexcept {}
 
-    private:
-        T* m_elements = nullptr;
-        usize m_size = 0;
-        usize m_capacity = 0;
+        [[nodiscard]] T* allocate(std::size_t count) {
+            return static_cast<T*>(memory_pool_allocate(global_memory.memory_pool, sizeof(T) * count));
+        }
+
+        void deallocate(T* element, std::size_t count) noexcept {
+            memory_pool_free(global_memory.memory_pool, element);
+        }
     };
 
-    struct SF_API DateTime final {
+    template<class T, class U>
+    bool operator==(const stl_allocator_t<T>&, const stl_allocator_t<U>&) { return true; }
+
+    template<class T, class U>
+    bool operator!=(const stl_allocator_t<T>&, const stl_allocator_t<U>&) { return false; }
+
+    typedef std::basic_string<char, std::char_traits<char>, stl_allocator_t<char>> string_t;
+
+    SF_API u64 string_hash(const string_t& string);
+
+    typedef std::basic_stringstream<char, std::char_traits<char>, stl_allocator_t<char>> sstream_t;
+
+    template<typename T>
+    using vector_t = std::vector<T, stl_allocator_t<T>>;
+
+    template<typename K, typename V>
+    using map_t = std::map<K, V, std::equal_to<K>, stl_allocator_t<std::pair<K, V>>>;
+
+    template<typename K, typename Comparator = std::less<K>>
+    using set_t = std::set<K, Comparator, stl_allocator_t<K>>;
+
+    template<typename K>
+    using hash_set_t = std::unordered_set<K, std::hash<K>, std::equal_to<K>, stl_allocator_t<K>>;
+
+    template<typename K, typename V>
+    using hash_map_t = std::unordered_map<K, V, std::hash<K>, std::equal_to<K>, stl_allocator_t<std::pair<K, V>>>;
+
+    struct SF_API date_time_t final {
         u32 y;   // year
         u32 m;   // month
         u32 d;   // day
@@ -553,220 +537,161 @@ namespace sf {
         i64 ms;  // millisecond
     };
 
-    struct SF_API Time final {
+    SF_API date_time_t date_time_get_current();
+
+    struct SF_API time_t final {
         i64 h;   // hour
         i64 min; // minute
         i64 s;   // second
         i64 ms;  // millisecond
     };
 
-    SF_API DateTime get_current_date_time();
-    SF_API Time get_current_time();
-    SF_API float get_current_time_millis();
+    SF_API time_t time_get_current();
+    SF_API float time_get_current_ms();
 
-    template<typename T, usize size>
-    class CircularBuffer final {
-
-    public:
-        bool push(const T& item);
-        bool pop(T& item);
-
-    private:
-        T m_elements[size] = {};
-        usize m_tail = 0;
-        usize m_head = 0;
+    template<typename T>
+    struct circular_buffer_t final {
+        T* elements = nullptr;
+        usize size = 0;
+        usize tail = 0;
+        usize head = 0;
     };
 
-    template<typename T, usize size>
-    bool CircularBuffer<T, size>::push(const T &item)
-    {
+    template<typename T>
+    circular_buffer_t<T> circular_buffer_init(const usize size) {
+        circular_buffer_t<T> circular_buffer;
+        circular_buffer.elements = static_cast<T*>(memory_pool_allocate(global_memory.memory_pool, sizeof(T) * size));
+        circular_buffer.size = size;
+        return circular_buffer;
+    }
+
+    template<typename T>
+    void circular_buffer_free(const circular_buffer_t<T>& circular_buffer) {
+        memory_pool_free(global_memory.memory_pool, circular_buffer.elements);
+    }
+
+    template<typename T>
+    bool circular_buffer_push(circular_buffer_t<T>& circular_buffer, const T &item) {
         bool pushed = false;
 
-        usize next = (m_head + 1) % size;
-        if (next != m_tail)
-        {
-            m_elements[m_head] = item;
-            m_head = next;
+        usize next = (circular_buffer.head + 1) % circular_buffer.elements.size();
+        if (next != circular_buffer.tail) {
+            circular_buffer.elements[circular_buffer.head] = item;
+            circular_buffer.head = next;
             pushed = true;
         }
 
         return pushed;
     }
 
-    template<typename T, usize size>
-    bool CircularBuffer<T, size>::pop(T &item)
-    {
+    template<typename T>
+    bool circular_buffer_pop(circular_buffer_t<T>& circular_buffer, T &item) {
         bool popped = false;
 
-        if (m_tail != m_head)
-        {
-            item = m_elements[m_tail];
-            m_tail = (m_tail + 1) % size;
+        if (circular_buffer.tail != circular_buffer.head) {
+            item = circular_buffer.elements[circular_buffer.tail];
+            circular_buffer.tail = (circular_buffer.tail + 1) % circular_buffer.elements.size();
             popped = true;
         }
 
         return popped;
     }
 
-    class SF_API Mutex final {
-
-        friend class ConditionVar;
-
-    public:
-        Mutex();
-        ~Mutex();
-
-        void lock();
-        void unlock();
-
-    private:
-        pthread_mutex_t m_handle;
+    struct SF_API mutex_t final {
+        pthread_mutex_t handle;
     };
 
-    class SF_API ConditionVar final {
+    SF_API mutex_t mutex_init();
+    SF_API void mutex_free(mutex_t& mutex);
+    SF_API void mutex_lock(mutex_t& mutex);
+    SF_API void mutex_unlock(mutex_t& mutex);
 
-    public:
-        ConditionVar();
-        ~ConditionVar();
-
-        void wait(Mutex& mutex);
-        void notify();
-
-    private:
-        pthread_cond_t m_handle;
+    struct SF_API condition_var_t final {
+        pthread_cond_t handle;
     };
 
-    class SF_API Runnable final {
+    SF_API condition_var_t condition_var_init();
+    SF_API void condition_var_free(condition_var_t& condition_var);
+    SF_API void condition_var_wait(condition_var_t& condition_var, mutex_t& mutex);
+    SF_API void condition_var_notify(condition_var_t& condition_var);
 
-    public:
-        Runnable(const std::function<void()>& runnable = {}) : m_runnable(runnable) {}
+    struct SF_API thread_t final {
+        std::function<void()> run_function = {};
+        pthread_t handle = 0;
+        pid_t pid = 0;
+        pid_t tid = 0;
+        const char* name = nullptr;
+        SF_THREAD_PRIORITY priority = SF_THREAD_PRIORITY_NORMAL;
+        std::function<void()> kill_function = {};
+    };
+    SF_API u32 thread_get_pid();
+    SF_API u32 thread_get_tid();
+    SF_API void thread_sleep(u32 ms);
+    SF_API void thread_yield();
+    SF_API void thread_exit();
+    SF_API thread_t thread_init(const char* name, SF_THREAD_PRIORITY priority);
+    SF_API void thread_free(const thread_t& thread);
+    SF_API void thread_run(thread_t& thread);
+    SF_API void thread_detach(const thread_t& thread);
+    SF_API void thread_join(const thread_t& thread);
+    SF_API void thread_set_info(thread_t& thread);
 
-    public:
-        static void* run(void* thiz) {
-            return static_cast<Runnable*>(thiz)->run();
-        }
+    typedef void (*task_t)();
 
-    public:
-        void set_runnable(const std::function<void()>& runnable) {
-            m_runnable = runnable;
-        }
-
-        [[nodiscard]] const pid_t& get_pid() const {
-            return m_pid;
-        }
-        [[nodiscard]] const pid_t& get_tid() const {
-            return m_tid;
-        }
-
-    private:
-        void* run();
-
-    private:
-        std::function<void()> m_runnable;
-        pid_t m_pid;
-        pid_t m_tid;
-
+    struct thread_pool_t final {
+        bool running = false;
+        thread_t* threads;
+        usize thread_size;
+        circular_buffer_t<task_t> tasks;
+        mutex_t mutex_wake;
+        condition_var_t condition_var_wake;
     };
 
-    class SF_API Thread final {
-
-    public:
-        static u32 get_pid();
-        static u32 get_tid();
-        static void sleep(u32 millis);
-        static void yield();
-        static void exit();
-
-    public:
-        void init(const char* name, SF_THREAD_PRIORITY priority);
-        void free();
-        void run(const std::function<void()>& runnable, const std::function<void()>& kill_callback = {});
-        void detach() const;
-        void join() const;
-
-    private:
-        void set_thread_info();
-
-    private:
-        Runnable m_runnable;
-        pthread_t m_handle = 0;
-        pid_t m_pid = 0;
-        pid_t m_tid = 0;
-        const char* m_name = nullptr;
-        SF_THREAD_PRIORITY m_priority = SF_THREAD_PRIORITY_NORMAL;
-        std::function<void()> m_kill_callback;
-
-    };
-
-    template<usize thread_buffer_size, usize task_buffer_size, SF_THREAD_PRIORITY thread_priority>
-    class ThreadPool final {
-
-    public:
-        ThreadPool(const char* thread_name);
-        ~ThreadPool();
-
-    public:
-        void add(const std::function<void()>& task);
-
-    protected:
-        // wakes only one thread
-        // allows caller-thread to be rescheduled by OS
-        void poll();
-
-    private:
-        CircularBuffer<std::function<void()>, task_buffer_size> m_task_buffer;
-        Thread m_thread_buffer[thread_buffer_size] = {};
-        Mutex m_wake_mutex;
-        ConditionVar m_wake_condition_var;
-        bool m_running = false;
-    };
-
-    template<usize thread_buffer_size, usize task_buffer_size, SF_THREAD_PRIORITY thread_priority>
-    ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::ThreadPool(const char* thread_name)
-    {
-        m_running = true;
-        for (int i = 0; i < thread_buffer_size ; i++)
-        {
-            Thread& thread = m_thread_buffer[i];
-            thread.init(thread_name, thread_priority);
-            thread.run([this]() {
-                std::function<void()> task;
-                while (m_running) {
-                    if (m_task_buffer.pop(task)) {
+    thread_pool_t thread_pool_init(usize thread_size, usize task_size, const char* name, SF_THREAD_PRIORITY priority) {
+        thread_pool_t thread_pool;
+        thread_pool.threads = static_cast<thread_t*>(memory_pool_allocate(global_memory.memory_pool, sizeof(thread_t) * thread_size));
+        thread_pool.thread_size = thread_size;
+        thread_pool.tasks = circular_buffer_init<task_t>(task_size);
+        thread_pool.mutex_wake = mutex_init();
+        thread_pool.condition_var_wake = condition_var_init();
+        for (int i = 0; i < thread_size ; i++) {
+            thread_t& thread = thread_pool.threads[i];
+            thread = thread_init(name, priority);
+            thread.run_function = [thread_pool] {
+                while (thread_pool.running) {
+                    if (std::function<void()> task; circular_buffer_pop(thread_pool.tasks, task)) {
                         task();
                     }
-//                    else {
-//                        // because we don't want to overhead cpu core with thread while loop
-//                        // it's better to simply put thread into wait, until it is notified by outer thread with wake condition variable
-//                        m_wake_condition_var.wait(m_wake_mutex);
-//                    }
+                    else {
+                        // because we don't want to overhead cpu core with thread while loop
+                        // it's better to simply put thread into wait, until it is notified by outer thread with wake condition variable
+                        condition_var_wait(thread_pool.condition_var_wake, thread_pool.mutex_wake);
+                    }
                 }
-            });
-            thread.detach();
+            };
+            thread.kill_function = {};
+            thread_run(thread);
+            thread_detach(thread);
+        }
+        return thread_pool;
+    }
+
+    template<usize thread_size, usize task_size>
+    void thread_pool_free(thread_pool_t<thread_size, task_size>& thread_pool) {
+        thread_pool.running = false;
+        for (int i = 0 ; i < thread_size ; i++) {
+            thread_free(thread_pool.threads[i]);
         }
     }
 
-    template<usize thread_buffer_size, usize task_buffer_size, SF_THREAD_PRIORITY thread_priority>
-    ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::~ThreadPool() {
-        m_running = false;
-        for (int i = 0 ; i < thread_buffer_size ; i++) {
-            m_thread_buffer[i].free();
-        }
-    }
-
-    template<usize thread_buffer_size, usize task_buffer_size, SF_THREAD_PRIORITY thread_priority>
-    void ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::add(const std::function<void()> &task) {
+    template<usize thread_buffer_size, usize task_buffer_size>
+    void thread_pool_add(const thread_pool_t<thread_buffer_size, task_buffer_size>& thread_pool, const std::function<void()> &task) {
         // try to push a new task until it is pushed
-        while (!m_task_buffer.push(task)) {
-            poll();
+        while (!circular_buffer_push<std::function<void()>, task_buffer_size>(thread_pool.tasks, task)) {
+            condition_var_notify(thread_pool.wake_condition);
+            thread_yield();
         }
-        m_wake_condition_var.notify();
-    }
-
-    template<usize thread_buffer_size, usize task_buffer_size, SF_THREAD_PRIORITY thread_priority>
-    void ThreadPool<thread_buffer_size, task_buffer_size, thread_priority>::poll() {
-        m_wake_condition_var.notify();
-        Thread::yield();
+        condition_var_notify(thread_pool.wake_condition);
     }
 
 }

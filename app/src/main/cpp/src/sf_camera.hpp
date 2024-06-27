@@ -10,14 +10,12 @@ enum SF_CAMERA_MODE
 
 namespace sf {
 
-    class SF_API Camera final {
-
-    public:
+    struct SF_API camera_t final {
         // Position.z = -1 is a default valid value for 2D orthographic view
         // If Position.z >= 0, 2D geometry will not be shown on screen
-        float3 position = { 0, 0, -1 };
-        float3 front = { 0, 0, 0 };
-        float3 up = { 0, 1, 0 };
+        float3_t position = { 0, 0, -1 };
+        float3_t front = { 0, 0, 0 };
+        float3_t up = { 0, 1, 0 };
         float pitch = 0;
         float yaw = 0;
         float roll = 0;
@@ -31,9 +29,9 @@ namespace sf {
         float z_far;
         float z_near;
 
-        float4x4 perspective;
-        float4x4 ortho;
-        float4x4 view;
+        float4x4_t perspective;
+        float4x4_t ortho;
+        float4x4_t view;
 
         float move_speed = 0.1f;
         float zoom_acceleration = 10.0f;
@@ -43,32 +41,27 @@ namespace sf {
         float min_fov = 1.0f;
         float max_fov = 45.0f;
 
-        int2 frame_size;
+        int2_t frame_size;
 
-        Camera(int2 frame_size) : frame_size(frame_size) {}
-
-        float2 get_pan_speed() const;
-        float get_zoom_speed() const;
-
-        void zoom_out();
-        void zoom_in();
-        void move_forward();
-        void move_backward();
-        void move_left();
-        void move_right();
-        void pan(double2 pan);
-        void look(double2 look, SF_CAMERA_MODE camera_mode);
-
-        void on_scroll_changed(double2 scroll);
-        void on_window_changed(int2 frame_size);
-        void on_window_ratio_changed(float ratio);
-
-    private:
-        void update_perspective();
-        void update_ortho();
-        void update_view(const float3& pos);
-
-        float3 m_focal_point;
+        float3_t focal_point;
     };
+
+    SF_API camera_t camera_init(int2_t frame_size);
+    SF_API float2_t camera_get_pan_speed(const camera_t& camera);
+    SF_API float camera_get_zoom_speed(const camera_t& camera);
+    SF_API void camera_zoom_out(camera_t& camera);
+    SF_API void camera_zoom_in(camera_t& camera);
+    SF_API void camera_move_forward(camera_t& camera);
+    SF_API void camera_move_backward(camera_t& camera);
+    SF_API void camera_move_left(camera_t& camera);
+    SF_API void camera_move_right(camera_t& camera);
+    SF_API void camera_pan(camera_t& camera, double2_t pan);
+    SF_API void camera_look(camera_t& camera, double2_t look, SF_CAMERA_MODE camera_mode);
+    SF_API void camera_on_scroll_changed(camera_t& camera, double2_t scroll);
+    SF_API void camera_on_window_frame_resized(camera_t& camera, int2_t frame_size);
+    SF_API void camera_on_window_ratio_changed(camera_t& camera, float ratio);
+    SF_API void camera_update_perspective(camera_t& camera);
+    SF_API void camera_update_ortho(camera_t& camera);
+    SF_API void camera_update_view(camera_t& camera, const float3_t& pos);
 
 }

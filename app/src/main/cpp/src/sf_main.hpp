@@ -2,11 +2,9 @@
 
 #include <sf_app.hpp>
 
-sf::App* new_app();
-
 int main() {
-    sf::App* app = new_app();
-    app->run();
-    delete app;
+    sf::app_init();
+    sf::app_run();
+    sf::app_free();
     return 0;
 }

@@ -2,15 +2,6 @@
 
 #include <sf.hpp>
 
-#define SF_EVENT(name, R, ...) \
-typedef sf::Event<R, ##__VA_ARGS__> Event_##name;
-#define SF_EVENT_CALL_BEGIN(name, R, ...) \
-template<typename Caller> \
-static R name(void* caller, ##__VA_ARGS__) {
-#define SF_EVENT_CALL_END(name, R, ...) \
-return static_cast<Caller*>(caller)->name(__VA_ARGS__); \
-}
-
 enum SF_KEYCODE
 {
     SF_KEYCODE_NONE                = 0,
@@ -210,61 +201,40 @@ enum SF_GAMEPAD_AXIS
 
 namespace sf {
 
-    template<typename R, typename... P>
-    struct SF_API Event final {
-        typedef R (*Callable)(void*, P...);
+    typedef void (*event_on_window_resize_t)(int w, int h);
+    typedef void (*event_on_window_move_t)(int x, int y);
+    typedef void (*event_on_key_t)(SF_KEYCODE keycode, bool pressed);
+    typedef void (*event_on_mouse_t)(SF_MOUSE_CODE mouse_code, bool pressed);
+    typedef void (*event_on_gamepad_t)(SF_GAMEPAD_CODE gamepad_code, bool pressed);
+    typedef void (*event_on_cursor_move_t)(double x, double y);
+    typedef void (*event_on_touch_move_t)(double x, double y);
 
-        void* caller = nullptr;
-        Callable callable = nullptr;
-        Event* next = nullptr;
+    struct SF_API window_t final {
 
-        R operator ()(P... params) {
-            SF_ASSERT(callable != nullptr, "Callable function pointer must be not NULL!");
-            R result = callable(caller, params...);
-            if (next != nullptr) {
-                result = *next(params...);
-            }
-            return result;
-        }
+        struct SF_API desktop_events_t final {
+            event_on_window_resize_t event_on_window_resize;
+            event_on_window_move_t event_on_window_move;
+            event_on_key_t event_on_key;
+            event_on_mouse_t event_on_mouse;
+            event_on_gamepad_t event_on_gamepad;
+            event_on_cursor_move_t event_on_cursor_move;
+        };
+
+        struct SF_API phone_events_t final {
+            event_on_touch_move_t event_on_touch_move;
+        };
+
+        desktop_events_t desktop_events;
+        phone_events_t phone_events;
+
+        void* handle;
+        u32 refresh_rate;
+
     };
 
-    SF_EVENT(on_window_resize, void, int, int)
-    SF_EVENT_CALL_BEGIN(on_window_resize, void, int w, int h)
-    SF_EVENT_CALL_END(on_window_resize, void, w, h)
+    SF_API window_t window_init(const char* title, int x, int y, int w, int h, bool sync);
+    SF_API void window_free(const window_t& window);
 
-    SF_EVENT(on_window_move, void, int, int)
-    SF_EVENT_CALL_BEGIN(on_window_move, void, int x, int y)
-    SF_EVENT_CALL_END(on_window_move, void, x, y)
-
-    SF_EVENT(on_cursor_move, void, double, double)
-    SF_EVENT_CALL_BEGIN(on_cursor_move, void, double x, double y)
-    SF_EVENT_CALL_END(on_cursor_move, void, x, y)
-
-    SF_EVENT(on_touch_move, void, double, double)
-    SF_EVENT_CALL_BEGIN(on_touch_move, void, double x, double y)
-    SF_EVENT_CALL_END(on_touch_move, void, x, y)
-
-    struct Events final {
-        Event_on_window_resize event_on_window_resize;
-        Event_on_window_move event_on_window_move;
-        Event_on_cursor_move event_on_cursor_move;
-        Event_on_touch_move event_on_touch_move;
-    };
-
-    class SF_API Window : public MemoryPoolObject {
-
-    public:
-        Events events;
-
-    public:
-        Window(const char* title, int x, int y, int w, int h, bool sync);
-        ~Window();
-
-        bool update();
-
-    private:
-        void* m_handle;
-        u32 m_refresh_rate;
-    };
+    SF_API bool window_update(window_t& window);
 
 }

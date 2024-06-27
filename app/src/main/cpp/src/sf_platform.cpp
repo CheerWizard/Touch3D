@@ -1,5 +1,4 @@
 #include <sf_platform.hpp>
-#include <sf_app.hpp>
 
 namespace sf {
 
@@ -17,20 +16,20 @@ namespace sf {
     #define SF_WINDOW (HWND) m_handle
 
     static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM l_param) {
-        Events* events;
+        DesktopEvents* desktop_events;
 
         // only called when window is created first time
         if (msg == WM_CREATE) {
             CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT*>(l_param);
-            events = reinterpret_cast<Events*>(pCreate->lpCreateParams);
-            SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) events);
+            desktop_events = reinterpret_cast<DesktopEvents*>(pCreate->lpCreateParams);
+            SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) desktop_events);
         }
         else {
             LONG_PTR ptr = GetWindowLongPtr(handle, GWLP_USERDATA);
-            events = reinterpret_cast<Events*>(ptr);
+            desktop_events = reinterpret_cast<DesktopEvents*>(ptr);
         }
 
-        SF_ASSERT(events != nullptr, "Events should not be null here!");
+        SF_ASSERT(desktop_events != nullptr, "DesktopEvents should not be null here!");
 
         switch (msg) {
             case WM_PAINT:
@@ -46,7 +45,7 @@ namespace sf {
             {
                 int w = LOWORD(l_param);
                 int h = HIWORD(l_param);
-                events->event_on_window_resize(w, h);
+                desktop_events->event_on_window_resize(w, h);
                 break;
             }
 
@@ -79,7 +78,7 @@ namespace sf {
                 nullptr,
                 nullptr,
                 instance,
-                &events
+                &desktop_events
         );
 
         if (m_handle == nullptr) {
@@ -120,13 +119,15 @@ namespace sf {
 
 namespace sf {
 
-    #define SF_WINDOW (XID) m_handle
+    #define SF_WINDOW (XID) window.handle
 
     static Display* s_display = nullptr;
     static int s_screen;
     static GC s_context;
 
-    Window::Window(const char *title, int x, int y, int w, int h, bool sync) {
+    window_t window_init(const char *title, int x, int y, int w, int h, bool sync) {
+        window_t window;
+
         s_display = XOpenDisplay(nullptr);
         if (s_display == nullptr) {
             SF_ASSERT(false, "Unable to open X11 display for Linux!");
@@ -139,15 +140,15 @@ namespace sf {
 
         s_screen = DefaultScreen(s_display);
 
-        m_handle = (void*) XCreateSimpleWindow(
-                s_display,
-                DefaultRootWindow(s_display),
-                400, 300,
-                800, 600,
-                5,
-                black,
-                white
-        );
+        window.handle = reinterpret_cast<void*>(XCreateSimpleWindow(
+            s_display,
+            DefaultRootWindow(s_display),
+            400, 300,
+            800, 600,
+            5,
+            black,
+            white
+        ));
 
         XSetStandardProperties(
                 s_display,
@@ -174,15 +175,17 @@ namespace sf {
         XSetForeground(s_display, s_context, black);
         XClearWindow(s_display, SF_WINDOW);
         XMapRaised(s_display, SF_WINDOW);
+
+        return window;
     }
 
-    Window::~Window() {
+    void window_free(const window_t &window) {
         XFreeGC(s_display, s_context);
         XDestroyWindow(s_display, SF_WINDOW);
         XCloseDisplay(s_display);
     }
 
-    bool Window::update() {
+    bool window_update(window_t &window) {
         XEvent event;
         bool updated = XNextEvent(s_display, &event) == 0;
         if (event.type == Expose && event.xexpose.count == 0) {
@@ -205,4 +208,5 @@ namespace sf {
 
 }
 
-#endif // SF_ANDROID_END
+#endif
+// SF_ANDROID_END

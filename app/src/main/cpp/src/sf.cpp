@@ -157,7 +157,7 @@ namespace sf {
         }
     }
 
-    void* realloc(void* old_data, usize size, u8 alignment) {
+    void* realloc(void* old_data, usize size, const u8 alignment) {
         MemoryBlock* block;
         MemoryBlock* new_block;
         void* new_data;
@@ -202,7 +202,7 @@ namespace sf {
         return nullptr;
     }
 
-    void* reallocf(void* old_data, usize size, u8 alignment) {
+    void* reallocf(void* old_data, const usize size, const u8 alignment) {
         void* realloc_block = realloc(old_data, size, alignment);
         if (realloc_block == nullptr) {
             free(old_data);
@@ -210,7 +210,7 @@ namespace sf {
         return realloc_block;
     }
 
-    void* calloc(usize size, u8 alignment) {
+    void* calloc(const usize size, const u8 alignment) {
         void* block = malloc(size, alignment);
         if (block) {
             memset(block, 0, size, alignment);
@@ -218,50 +218,49 @@ namespace sf {
         return block;
     }
 
-    void memset(void* data, usize value, usize size, u8 alignment) {
-        usize* d = static_cast<usize*>(data);
+    void memset(void* data, const usize value, const usize size, const u8 alignment) {
+        auto* d = static_cast<usize*>(data);
         if (data != nullptr) {
-            usize aligned_size = size << (alignment / 2);
+            const usize aligned_size = size << (alignment / 2);
             for (usize i = 0 ; i < aligned_size ; i++) {
                 d[i] = value;
             }
         }
     }
 
-    void memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size, u8 alignment) {
-        usize* d = static_cast<usize*>(dest_data);
-        const usize* s = static_cast<const usize*>(src_data);
-        for (usize i = 0 ; (i * alignment < src_size) && (i * alignment < dest_size) ; i++) {
+    void memcpy(void* dest_data, const usize dest_size, const void* src_data, const usize src_size, const u8 alignment) {
+        const auto d = static_cast<usize*>(dest_data);
+        const auto* s = static_cast<const usize*>(src_data);
+        for (usize i = 0 ; i * alignment < src_size && i * alignment < dest_size ; i++) {
             d[i] = s[i];
         }
     }
 
-    void* moveptr(void* ptr, usize size) {
+    void* moveptr(void* ptr, const usize size) {
         return reinterpret_cast<void*>(reinterpret_cast<usize>(ptr) + size);
     }
 
-    void MemoryBumpAllocator::init(usize size) {
-        m_memory = sbrk(0);
-        m_size = size;
-        isize sbrk_result = reinterpret_cast<isize>(sbrk(size));
-        if (sbrk_result < 0) {
+    memory_bump_t memory_bump_init(const usize size) {
+        memory_bump_t memory_bump;
+        memory_bump.memory = sbrk(0);
+        memory_bump.size = size;
+        if (const auto sbrk_result = reinterpret_cast<isize>(sbrk(size)); sbrk_result < 0) {
             SF_DEBUG_BREAK();
-            return;
         }
+        return memory_bump;
     }
 
-    void MemoryBumpAllocator::free() {
-        brk(m_memory);
-        m_size = 0;
-        m_used_size = 0;
+    void memory_bump_free(memory_bump_t& memory_bump) {
+        brk(memory_bump.memory);
+        memory_bump.size = 0;
+        memory_bump.used_size = 0;
     }
 
-    void* MemoryBumpAllocator::allocate(usize size) {
+    void* memory_bump_allocate(memory_bump_t& memory_bump, const usize size) {
         void* addr = nullptr;
-        usize aligned_size = (size + 7) & ~ 7; // this will make sure that first 4 bits are 0
-        if (m_used_size + aligned_size <= m_size) {
-            addr = (char*)m_memory + m_used_size;
-            m_used_size += aligned_size;
+        if (const usize aligned_size = (size + 7) & ~ 7; memory_bump.used_size + aligned_size <= memory_bump.size) {
+            addr = static_cast<char*>(memory_bump.memory) + memory_bump.used_size;
+            memory_bump.used_size += aligned_size;
         }
         else {
             SF_DEBUG_BREAK();
@@ -269,114 +268,120 @@ namespace sf {
         return addr;
     }
 
-    void MemoryPoolAllocator::init(usize size, usize alloc_capacity) {
-        m_memory = malloc(size);
-        m_size = size;
-        m_last_ptr = m_memory;
-        m_max_ptr = moveptr(m_memory, size);
-        m_allocs = malloc_t<MemoryPoolAllocation>(alloc_capacity);
-        m_alloc_capacity = alloc_capacity;
+    memory_pool_t memory_pool_init(const usize size, const usize alloc_capacity) {
+        memory_pool_t memory_pool;
+        memory_pool.memory = malloc(size);
+        memory_pool.size = size;
+        memory_pool.last_ptr = memory_pool.memory;
+        memory_pool.max_ptr = moveptr(memory_pool.memory, size);
+        memory_pool.allocs = malloc_t<memory_pool_alloc_t>(alloc_capacity);
+        memory_pool.alloc_capacity = alloc_capacity;
+        return memory_pool;
     }
 
-    void MemoryPoolAllocator::free() {
-        free(m_memory);
-        free(m_allocs);
-        m_memory = nullptr;
-        m_allocs = nullptr;
-        m_size = 0;
-        m_alloc_capacity = 0;
-        m_alloc_size = 0;
-        m_last_ptr = nullptr;
-        m_max_ptr = nullptr;
+    void memory_pool_free(memory_pool_t& memory_pool) {
+        free(memory_pool.memory);
+        free(memory_pool.allocs);
+        memory_pool.memory = nullptr;
+        memory_pool.allocs = nullptr;
+        memory_pool.size = 0;
+        memory_pool.alloc_capacity = 0;
+        memory_pool.alloc_size = 0;
+        memory_pool.last_ptr = nullptr;
+        memory_pool.max_ptr = nullptr;
     }
 
-    void* MemoryPoolAllocator::allocate(usize size) {
-        for (usize i = 0; i < m_alloc_size ; i++) {
-            MemoryPoolAllocation& allocation = m_allocs[i];
+    static void memory_pool_add_allocation(memory_pool_t& memory_pool, const memory_pool_alloc_t* allocation) {
+        if (memory_pool.alloc_size >= memory_pool.alloc_capacity) {
+            memory_pool.alloc_capacity = memory_pool.alloc_size + 100;
+            memory_pool.allocs = realloc_t<memory_pool_alloc_t>(memory_pool.allocs, memory_pool.alloc_capacity);
+        }
+        memcpy_t(moveptr_t(memory_pool.allocs, memory_pool.alloc_size), memory_pool.alloc_capacity, allocation, 1);
+        memory_pool.alloc_size++;
+    }
+
+    void* memory_pool_allocate(memory_pool_t& memory_pool, const usize size) {
+        for (usize i = 0; i < memory_pool.alloc_size ; i++) {
+            memory_pool_alloc_t* allocation = &memory_pool.allocs[i];
 
             // check if allocation is free to use and has at least enough space for usage
-            if (allocation.free && allocation.size >= size) {
-                allocation.free = false;
-                allocation.used_size = size;
-                return allocation.data;
+            if (allocation->free && allocation->size >= size) {
+                allocation->free = false;
+                allocation->used_size = size;
+                return allocation->data;
             }
 
             // check if used allocation has additional free space for usage
             // if yes - than create additional allocation from used allocation
-            if ((allocation.size - allocation.used_size) >= size) {
-                MemoryPoolAllocation new_allocation;
+            if (allocation->size - allocation->used_size >= size) {
+                memory_pool_alloc_t new_allocation;
                 new_allocation.free = false;
-                new_allocation.size = allocation.size - allocation.used_size;
+                new_allocation.size = allocation->size - allocation->used_size;
                 new_allocation.used_size = size;
-                new_allocation.data = moveptr(allocation.data, allocation.used_size);
-                allocation.size = allocation.used_size;
-                add_allocation(new_allocation);
+                new_allocation.data = moveptr(allocation->data, allocation->used_size);
+                allocation->size = allocation->used_size;
+                memory_pool_add_allocation(memory_pool, &new_allocation);
                 return new_allocation.data;
             }
         }
 
         // check if we have enough space in memory pool
-        if (m_last_ptr >= m_max_ptr) {
+        if (memory_pool.last_ptr >= memory_pool.max_ptr) {
             return nullptr;
         }
 
-        MemoryPoolAllocation new_allocation;
+        memory_pool_alloc_t new_allocation;
         new_allocation.free = false;
         new_allocation.size = size;
         new_allocation.used_size = size;
-        new_allocation.data = m_last_ptr;
-        add_allocation(new_allocation);
-        m_last_ptr = moveptr(m_last_ptr, size);
+        new_allocation.data = memory_pool.last_ptr;
+        memory_pool_add_allocation(memory_pool, &new_allocation);
+        memory_pool.last_ptr = moveptr(memory_pool.last_ptr, size);
         return new_allocation.data;
     }
 
-    void MemoryPoolAllocator::free(void* data) {
-        for (usize i = 0 ; i < m_alloc_size ; i++) {
-            MemoryPoolAllocation& allocation = m_allocs[i];
-            if (allocation.data == data) {
+    void memory_pool_free(const memory_pool_t& memory_pool, const void *addr) {
+        for (usize i = 0 ; i < memory_pool.alloc_size ; i++) {
+            if (memory_pool_alloc_t& allocation = memory_pool.allocs[i]; allocation.data == addr) {
                 allocation.free = true;
                 allocation.used_size = 0;
             }
         }
     }
 
-    void MemoryPoolAllocator::add_allocation(const MemoryPoolAllocation &alloc) {
-        if (m_alloc_size >= m_alloc_capacity) {
-            m_alloc_capacity = m_alloc_size + 100;
-            m_allocs = realloc_t<MemoryPoolAllocation>(m_allocs, m_alloc_capacity);
-        }
-        memcpy_t(moveptr_t(m_allocs, m_alloc_size), m_alloc_capacity, &alloc, 1);
-        m_alloc_size++;
-    }
+    memory_t global_memory;
 
-    Memory::Memory() {
-        get_memory_info();
+    void memory_init() {
+        auto [ram_total_bytes, ram_free_bytes] = memory_info_get();
 
-        usize bump_size = SF_MB(1);
-        bump_allocator.init(bump_size);
+        constexpr usize bump_size = SF_MB(1);
+        global_memory.memory_bump = memory_bump_init(bump_size);
 
         // memory size = 20% of RAM but less than 1GB
-        usize pool_size = static_cast<usize>(static_cast<double>(free_ram) * 0.2);
+        auto pool_size = static_cast<usize>(static_cast<double>(ram_free_bytes) * 0.2);
         if (pool_size >= SF_MB(1)) {
             pool_size = SF_MB(1);
         }
 
         // pool_alloc_size value can be estimated and tested
-        usize pool_alloc_size = 100;
-        pool_allocator.init(pool_size, pool_alloc_size);
+        constexpr usize pool_alloc_size = 100;
+        global_memory.memory_pool = memory_pool_init(pool_size, pool_alloc_size);
     }
 
-    Memory::~Memory() {
-        bump_allocator.free();
-        pool_allocator.free();
+    void memory_free() {
+        memory_bump_free(global_memory.memory_bump);
+        memory_pool_free(global_memory.memory_pool);
     }
 
-    Memory memory = {};
+    u64 string_hash(const string_t& string) {
+        constexpr std::hash<string_t> hasher;
+        return hasher(string);
+    }
 
-    DateTime get_current_date_time() {
-        time_t t = time(nullptr);
-        tm* lt = localtime(&t);
-        DateTime date_time = {};
+    date_time_t date_time_get_current() {
+        const ::time_t t = time(nullptr);
+        const tm* lt = localtime(&t);
+        date_time_t date_time = {};
         date_time.y = lt->tm_year;
         date_time.m = lt->tm_mon;
         date_time.d = lt->tm_mday;
@@ -387,10 +392,10 @@ namespace sf {
         return date_time;
     }
 
-    Time get_current_time() {
-        time_t t = time(nullptr);
-        tm* lt = localtime(&t);
-        Time time = {};
+    time_t time_get_current() {
+        const ::time_t t = time(nullptr);
+        const tm* lt = localtime(&t);
+        time_t time = {};
         time.ms = lt->tm_sec * 1000;
         time.s = lt->tm_sec;
         time.min = lt->tm_min;
@@ -398,114 +403,113 @@ namespace sf {
         return time;
     }
 
-    float get_current_time_millis() {
-        time_t t = time(nullptr);
-        tm* lt = localtime(&t);
+    float time_get_current_ms() {
+        const ::time_t t = time(nullptr);
+        const tm* lt = localtime(&t);
         return lt->tm_sec * 1000;
     }
 
-    Mutex::Mutex() {
-        pthread_mutex_init(&m_handle, nullptr);
+    mutex_t mutex_init() {
+        mutex_t mutex;
+        pthread_mutex_init(&mutex.handle, nullptr);
+        return mutex;
     }
 
-    Mutex::~Mutex() {
-        pthread_mutex_destroy(&m_handle);
+    void mutex_free(mutex_t& mutex) {
+        pthread_mutex_destroy(&mutex.handle);
     }
 
-    void Mutex::lock() {
-        pthread_mutex_lock(&m_handle);
+    void mutex_lock(mutex_t& mutex) {
+        pthread_mutex_lock(&mutex.handle);
     }
 
-    void Mutex::unlock() {
-        pthread_mutex_unlock(&m_handle);
+    void mutex_unlock(mutex_t& mutex) {
+        pthread_mutex_unlock(&mutex.handle);
     }
 
-    ConditionVar::ConditionVar() {
-        pthread_cond_init(&m_handle, nullptr);
+    condition_var_t condition_var_init() {
+        condition_var_t condition_var;
+        pthread_cond_init(&condition_var.handle, nullptr);
+        return condition_var;
     }
 
-    ConditionVar::~ConditionVar() {
-        pthread_cond_destroy(&m_handle);
+    void condition_var_free(condition_var_t& condition_var) {
+        pthread_cond_destroy(&condition_var.handle);
     }
 
-    void ConditionVar::wait(Mutex& mutex) {
-        pthread_mutex_lock(&mutex.m_handle);
-        int result = pthread_cond_wait(&m_handle, &mutex.m_handle);
+    void condition_var_wait(condition_var_t& condition_var, mutex_t& mutex) {
+        pthread_mutex_lock(&mutex.handle);
+        int result = pthread_cond_wait(&condition_var.handle, &mutex.handle);
         SF_ASSERT(result == 0, "Unable to wait a pthread with condition var");
     }
 
-    void ConditionVar::notify() {
-        int result = pthread_cond_signal(&m_handle);
+    void condition_var_notify(condition_var_t& condition_var) {
+        int result = pthread_cond_signal(&condition_var.handle);
         SF_ASSERT(result == 0, "Unable to notify a pthread with condition var");
     }
 
-    void* Runnable::run() {
-#if defined(SF_DEBUG)
-        m_pid = Thread::get_pid();
-        m_tid = Thread::get_tid();
-#endif
-        m_runnable();
-        return nullptr;
-    }
-
-    u32 Thread::get_pid() {
+    u32 thread_get_pid() {
         return getpid();
     }
 
-    u32 Thread::get_tid() {
+    u32 thread_get_tid() {
         return pthread_self();
     }
 
-    void Thread::sleep(u32 millis) {
-        int result = usleep(millis * 1000);
+    void thread_sleep(u32 ms) {
+        int result = usleep(ms * 1000);
         SF_ASSERT(result == 0, "Unable to sleep this thread");
     }
 
-    void Thread::yield() {
+    void thread_yield() {
         int result = sched_yield();
         SF_ASSERT(result == 0, "Unable to yield this thread");
     }
 
-    void Thread::exit() {
+    void thread_exit() {
         pthread_exit(0);
     }
 
-    void Thread::init(const char *name, SF_THREAD_PRIORITY priority) {
-        m_name = name;
-        m_priority = priority;
+    thread_t thread_init(const char *name, SF_THREAD_PRIORITY priority) {
+        thread_t thread;
+        thread.name = name;
+        thread.priority = priority;
         signal(SIGABRT, [](int) {
             pthread_exit(0);
         });
+        return thread;
     }
 
-    void Thread::free() {
-        int result = pthread_kill(m_handle, SIGABRT);
-        SF_ASSERT(result == 0, "Unable to free a Thread=%s", m_name);
+    void thread_free(const thread_t &thread) {
+        int result = pthread_kill(thread.handle, SIGABRT);
+        SF_ASSERT(result == 0, "Unable to free a Thread=%s", thread.name);
         signal(SIGABRT, SIG_DFL);
     }
 
-    void Thread::run(const std::function<void()> &runnable, const std::function<void()>& kill_callback) {
-        m_runnable.set_runnable(runnable);
-        m_kill_callback = kill_callback;
-
-        int result = pthread_create(&m_handle, nullptr, &Runnable::run, &m_runnable);
-        SF_ASSERT(result == 0, "Unable to create a Thread=%s", m_name);
-
-#ifdef SF_DEBUG
-        m_pid = m_runnable.get_pid();
-        m_tid = m_runnable.get_tid();
-        set_thread_info();
+    static void* thread_run_function(void* thread) {
+        thread_t& t = *static_cast<thread_t*>(thread);
+#if defined(SF_DEBUG)
+        t.pid = thread_get_pid();
+        t.tid = thread_get_tid();
+        thread_set_info(t);
 #endif
+        t.run_function();
+        return nullptr;
     }
 
-    void Thread::detach() const {
-        int result = pthread_detach(m_handle);
-        SF_ASSERT(result == 0, "Unable to detach a pthread %s", m_name);
+    void thread_run(thread_t &thread) {
+        int result = pthread_create(&thread.handle, nullptr, thread_run_function, &thread);
+        SF_ASSERT(result == 0, "Unable to create a Thread=%s", thread.name);
     }
 
-    void Thread::join() const {
-        int result = pthread_join(m_handle, nullptr);
-        SF_ASSERT(result == 0, "Unable to join to a pthread %s", m_name);
+    void thread_detach(const thread_t &thread) {
+        int result = pthread_detach(thread.handle);
+        SF_ASSERT(result == 0, "Unable to detach a pthread %s", thread.name);
+    }
+
+    void thread_join(const thread_t &thread) {
+        int result = pthread_join(thread.handle, nullptr);
+        SF_ASSERT(result == 0, "Unable to join to a pthread %s", thread.name);
     }
 
 }
@@ -538,12 +542,14 @@ namespace sf {
         return VirtualFree(addr, length, 0);
     }
 
-    void Memory::get_memory_info() {
+    MemoryInfo Memory::get_memory_info() {
         MEMORYSTATUSEX memory_status;
         memory_status.dwLength = sizeof(memory_status);
         GlobalMemoryStatusEx(&memory_status);
-        total_ram = memory_status.ullTotalPhys;
-        free_ram = memory_status.ullAvailPhys;
+        MemoryInfo memory_info;
+        memory_info.ram_total_bytes = memory_status.ullTotalVirtual;
+        memory_info.ram_free_bytes = memory_status.ullAvailVirtual;
+        return memory_info;
     }
 
     const DWORD MS_VC_EXCEPTION = 0x406D1388;
@@ -626,11 +632,13 @@ namespace sf {
         return ::munmap(addr, length);
     }
 
-    void Memory::get_memory_info() {
+    memory_info_t memory_info_get() {
         struct sysinfo sys_info {};
         sysinfo(&sys_info);
-        total_ram = sys_info.totalram;
-        free_ram = sys_info.totalram;
+        memory_info_t memory_info;
+        memory_info.ram_total_bytes = sys_info.totalram;
+        memory_info.ram_free_bytes = sys_info.freeram;
+        return memory_info;
     }
 
     static const int SF_THREAD_PRIORITY_CODE[SF_THREAD_PRIORITY_COUNT] = {
@@ -639,26 +647,26 @@ namespace sf {
         3, // SF_THREAD_PRIORITY_HIGHEST
     };
 
-    void Thread::set_thread_info() {
+    void thread_set_info(thread_t& thread) {
         int result;
 
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
         size_t cpusetsize = sizeof(cpuset);
-        CPU_SET(m_tid, &cpuset);
+        CPU_SET(thread.tid, &cpuset);
 
         // Set affinity mask
-        result = sched_setaffinity(m_pid, cpusetsize, &cpuset);
+        result = sched_setaffinity(thread.pid, cpusetsize, &cpuset);
     //    SF_ASSERT(result != 0, "Failed to set thread affinity mask on Linux!");
 
         // Set priority
         sched_param param {};
-        param.sched_priority = SF_THREAD_PRIORITY_CODE[m_priority];
-        result = pthread_setschedparam(m_handle, SCHED_OTHER, &param);
+        param.sched_priority = SF_THREAD_PRIORITY_CODE[thread.priority];
+        result = pthread_setschedparam(thread.handle, SCHED_OTHER, &param);
     //    SF_ASSERT(result != 0, "Failed to set thread priority on Linux!");
 
         // Set name
-        result = pthread_setname_np(m_handle, m_name);
+        result = pthread_setname_np(thread.handle, thread.name);
     //    SF_ASSERT(result != 0, "Failed to set thread name on Linux!");
     }
 
@@ -690,16 +698,13 @@ namespace sf {
         return ::munmap(addr, length);
     }
 
-    void Memory::GetMemoryInfo() {
+    MemoryInfo Memory::get_memory_info() {
         struct sysinfo sys_info {};
         sysinfo(&sys_info);
-        total_ram = sys_info.totalram;
-        free_ram = sys_info.totalram;
-        shared_ram = sys_info.totalram;
-        buffer_ram = sys_info.totalram;
-        process_count = sys_info.totalram;
-        total_high = sys_info.totalram;
-        free_high = sys_info.totalram;
+        MemoryInfo memory_info;
+        memory_info.ram_total_bytes = sys_info.totalram;
+        memory_info.ram_free_bytes = sys_info.freeram;
+        return memory_info;
     }
 
     static const int SF_THREAD_PRIORITY_CODE[SF_THREAD_PRIORITY_COUNT] = {
