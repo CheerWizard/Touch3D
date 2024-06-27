@@ -119,7 +119,8 @@ namespace sf {
     static void log_info(const char* msg, Args &&... args) {
         task_t task_log;
         task_log.args = nullptr;
-        task_log.function = [](void* task_args) {
+        // TODO: need to figure out how to pass a function by lambda with input list params and args expansion
+        auto function = [=](void* task_args) {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
@@ -138,6 +139,7 @@ namespace sf {
             log_console_verbose(SF_LOG_COLOR_GREEN, text_buffer);
             log_file_write(text_buffer);
         };
+        task_log.function = function();
     }
 
     template<typename... Args>
