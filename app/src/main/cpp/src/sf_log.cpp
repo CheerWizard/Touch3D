@@ -75,27 +75,27 @@ namespace sf {
         }
     }
 
-    void Log::print_verbose(SF_LOG_COLOR log_color, char* log) {
+    void log_console_verbose(SF_LOG_COLOR log_color, char* log) {
         print(log_color, log);
     }
 
-    void Log::print_info(SF_LOG_COLOR log_color, char* log) {
+    void log_console_info(SF_LOG_COLOR log_color, char* log) {
         print(log_color, log);
     }
 
-    void Log::print_debug(SF_LOG_COLOR log_color, char* log) {
+    void log_console_debug(SF_LOG_COLOR log_color, char* log) {
         print(log_color, log);
     }
 
-    void Log::print_warning(SF_LOG_COLOR log_color, char* log) {
+    void log_console_warning(SF_LOG_COLOR log_color, char* log) {
         print(log_color, log);
     }
 
-    void Log::print_error(SF_LOG_COLOR log_color, char* log) {
+    void log_console_error(SF_LOG_COLOR log_color, char* log) {
         print(log_color, log);
     }
 
-    void Log::print_assert(SF_LOG_COLOR log_color, char* log) {
+    void log_console_assert(SF_LOG_COLOR log_color, char* log) {
         print(log_color, log);
     }
 

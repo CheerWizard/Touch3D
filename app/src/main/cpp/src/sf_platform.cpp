@@ -13,20 +13,20 @@ namespace sf {
 
 namespace sf {
 
-    #define SF_WINDOW (HWND) m_handle
+    #define SF_WINDOW (HWND) window.handle
 
     static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM l_param) {
-        DesktopEvents* desktop_events;
+        window_t::desktop_events_t* desktop_events;
 
         // only called when window is created first time
         if (msg == WM_CREATE) {
             CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT*>(l_param);
-            desktop_events = reinterpret_cast<DesktopEvents*>(pCreate->lpCreateParams);
+            desktop_events = reinterpret_cast<window_t::desktop_events_t*>(pCreate->lpCreateParams);
             SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) desktop_events);
         }
         else {
             LONG_PTR ptr = GetWindowLongPtr(handle, GWLP_USERDATA);
-            desktop_events = reinterpret_cast<DesktopEvents*>(ptr);
+            desktop_events = reinterpret_cast<window_t::desktop_events_t*>(ptr);
         }
 
         SF_ASSERT(desktop_events != nullptr, "DesktopEvents should not be null here!");
@@ -59,7 +59,9 @@ namespace sf {
         return DefWindowProc(handle, msg, w_param, l_param);
     }
 
-    Window::Window(const char *title, int x, int y, int w, int h, bool sync) {
+    window_t window_init(const char *title, int x, int y, int w, int h, bool sync) {
+        window_t window;
+
         HINSTANCE instance = (HINSTANCE) GetCurrentProcess();
 
         WNDCLASS window_class = {};
@@ -78,7 +80,7 @@ namespace sf {
                 nullptr,
                 nullptr,
                 instance,
-                &desktop_events
+                &window.desktop_events
         );
 
         if (m_handle == nullptr) {
@@ -90,13 +92,15 @@ namespace sf {
         DEVMODE devmode;
         EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devmode);
         m_refresh_rate = devmode.dmDisplayFrequency;
+
+        return window;
     }
 
-    Window::~Window() {
+    void window_free(const window_t& window) {
         DestroyWindow(SF_WINDOW);
     }
 
-    bool Window::update() {
+    bool window_update(window_t& window) {
         MSG msg = {};
         if (GetMessage(&msg, nullptr, 0, 0) > 0) {
             TranslateMessage(&msg);

@@ -597,11 +597,11 @@ namespace sf {
         return VirtualFree(addr, length, 0);
     }
 
-    MemoryInfo Memory::get_memory_info() {
+    memory_info_t memory_info_get() {
+        memory_info_t memory_info;
         MEMORYSTATUSEX memory_status;
         memory_status.dwLength = sizeof(memory_status);
         GlobalMemoryStatusEx(&memory_status);
-        MemoryInfo memory_info;
         memory_info.ram_total_bytes = memory_status.ullTotalVirtual;
         memory_info.ram_free_bytes = memory_status.ullAvailVirtual;
         return memory_info;
@@ -641,8 +641,8 @@ namespace sf {
             THREAD_PRIORITY_HIGHEST,
     };
 
-    void Thread::set_thread_info() {
-        HANDLE handle = (HANDLE) m_handle;
+    void thread_set_info(thread_t& thread) {
+        HANDLE handle = (HANDLE) thread.handle;
 
         // set affinity mask
         DWORD_PTR affinityMask = 1ull << 0;
@@ -650,11 +650,11 @@ namespace sf {
     //    SF_ASSERT(affinity_result > 0, "Failed to set thread affinity mask on Windows!")
 
         // set priority
-        BOOL priority_result = SetThreadPriority(handle, SF_THREAD_PRIORITY_CODE[m_priority]);
+        BOOL priority_result = SetThreadPriority(handle, SF_THREAD_PRIORITY_CODE[thread.priority]);
     //    SF_ASSERT(priority_result != 0, "Failed to set thread priority on Windows!");
 
         // set name
-        HRESULT hr = SetThreadName(m_handle, m_name);
+        HRESULT hr = SetThreadName(handle, thread.name);
     //    SF_ASSERT(SUCCEEDED(hr), "Failed to set thread name on Windows!");
     }
 
