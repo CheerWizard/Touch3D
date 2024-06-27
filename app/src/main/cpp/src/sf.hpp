@@ -6,7 +6,6 @@
 #include <cstdio>
 #include <pthread.h>
 #include <cstring>
-#include <functional>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -615,15 +614,18 @@ namespace sf {
     SF_API void condition_var_wait(condition_var_t& condition_var, mutex_t& mutex);
     SF_API void condition_var_notify(condition_var_t& condition_var);
 
+    typedef void (*thread_run_function_t) (void* args);
+
     struct SF_API thread_t final {
-        std::function<void()> run_function = {};
         pthread_t handle = 0;
+        void* run_args = nullptr;
+        thread_run_function_t run_function = nullptr;
         pid_t pid = 0;
         pid_t tid = 0;
         const char* name = nullptr;
         SF_THREAD_PRIORITY priority = SF_THREAD_PRIORITY_NORMAL;
-        std::function<void()> kill_function = {};
     };
+
     SF_API u32 thread_get_pid();
     SF_API u32 thread_get_tid();
     SF_API void thread_sleep(u32 ms);
@@ -636,62 +638,29 @@ namespace sf {
     SF_API void thread_join(const thread_t& thread);
     SF_API void thread_set_info(thread_t& thread);
 
-    typedef void (*task_t)();
+    typedef void (*task_function_t) (void* task_args);
 
-    struct thread_pool_t final {
-        bool running = false;
-        thread_t* threads;
-        usize thread_size;
-        circular_buffer_t<task_t> tasks;
-        mutex_t mutex_wake;
-        condition_var_t condition_var_wake;
+    struct SF_API task_t final {
+        void* args = nullptr;
+        task_function_t function = nullptr;
+
+        void operator()() const {
+            function(args);
+        }
     };
 
-    thread_pool_t thread_pool_init(usize thread_size, usize task_size, const char* name, SF_THREAD_PRIORITY priority) {
-        thread_pool_t thread_pool;
-        thread_pool.threads = static_cast<thread_t*>(memory_pool_allocate(global_memory.memory_pool, sizeof(thread_t) * thread_size));
-        thread_pool.thread_size = thread_size;
-        thread_pool.tasks = circular_buffer_init<task_t>(task_size);
-        thread_pool.mutex_wake = mutex_init();
-        thread_pool.condition_var_wake = condition_var_init();
-        for (int i = 0; i < thread_size ; i++) {
-            thread_t& thread = thread_pool.threads[i];
-            thread = thread_init(name, priority);
-            thread.run_function = [thread_pool] {
-                while (thread_pool.running) {
-                    if (std::function<void()> task; circular_buffer_pop(thread_pool.tasks, task)) {
-                        task();
-                    }
-                    else {
-                        // because we don't want to overhead cpu core with thread while loop
-                        // it's better to simply put thread into wait, until it is notified by outer thread with wake condition variable
-                        condition_var_wait(thread_pool.condition_var_wake, thread_pool.mutex_wake);
-                    }
-                }
-            };
-            thread.kill_function = {};
-            thread_run(thread);
-            thread_detach(thread);
-        }
-        return thread_pool;
-    }
+    struct SF_API thread_pool_t final {
+        bool running = false;
+        thread_t* threads = nullptr;
+        usize thread_size = 0;
+        circular_buffer_t<task_t> tasks;
+        mutex_t mutex_wake = {};
+        condition_var_t condition_var_wake = {};
+    };
 
-    template<usize thread_size, usize task_size>
-    void thread_pool_free(thread_pool_t<thread_size, task_size>& thread_pool) {
-        thread_pool.running = false;
-        for (int i = 0 ; i < thread_size ; i++) {
-            thread_free(thread_pool.threads[i]);
-        }
-    }
-
-    template<usize thread_buffer_size, usize task_buffer_size>
-    void thread_pool_add(const thread_pool_t<thread_buffer_size, task_buffer_size>& thread_pool, const std::function<void()> &task) {
-        // try to push a new task until it is pushed
-        while (!circular_buffer_push<std::function<void()>, task_buffer_size>(thread_pool.tasks, task)) {
-            condition_var_notify(thread_pool.wake_condition);
-            thread_yield();
-        }
-        condition_var_notify(thread_pool.wake_condition);
-    }
+    SF_API thread_pool_t thread_pool_init(usize thread_size, usize task_size, const char* name, SF_THREAD_PRIORITY priority);
+    SF_API void thread_pool_run(thread_pool_t& thread_pool);
+    SF_API void thread_pool_free(thread_pool_t& thread_pool);
+    SF_API void thread_pool_add(thread_pool_t& thread_pool, const task_t& task);
 
 }

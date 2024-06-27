@@ -493,7 +493,7 @@ namespace sf {
         t.tid = thread_get_tid();
         thread_set_info(t);
 #endif
-        t.run_function();
+        t.run_function(t.run_args);
         return nullptr;
     }
 
@@ -510,6 +510,61 @@ namespace sf {
     void thread_join(const thread_t &thread) {
         int result = pthread_join(thread.handle, nullptr);
         SF_ASSERT(result == 0, "Unable to join to a pthread %s", thread.name);
+    }
+
+    thread_pool_t thread_pool_init(const usize thread_size, const usize task_size, const char* name, const SF_THREAD_PRIORITY priority) {
+        thread_pool_t thread_pool;
+        thread_pool.threads = static_cast<thread_t*>(memory_pool_allocate(global_memory.memory_pool, sizeof(thread_t) * thread_size));
+        thread_pool.thread_size = thread_size;
+        thread_pool.tasks = circular_buffer_init<task_t>(task_size);
+        thread_pool.mutex_wake = mutex_init();
+        thread_pool.condition_var_wake = condition_var_init();
+        for (int i = 0; i < thread_size ; i++) {
+            thread_t& thread = thread_pool.threads[i];
+            thread = thread_init(name, priority);
+        }
+        return thread_pool;
+    }
+
+    void thread_pool_run(thread_pool_t& thread_pool) {
+        thread_pool.running = true;
+        const usize thread_size = thread_pool.thread_size;
+        for (int i = 0 ; i < thread_size ; i++) {
+            thread_t& thread = thread_pool.threads[i];
+            thread.run_args = &thread_pool;
+            thread.run_function = [] (void* args) {
+                auto& thread_pool = *static_cast<thread_pool_t*>(args);
+                while (thread_pool.running) {
+                    if (task_t task; circular_buffer_pop(thread_pool.tasks, task)) {
+                        task();
+                    }
+                    else {
+                        // because we don't want to overhead cpu core with thread while loop
+                        // it's better to simply put thread into wait, until it is notified by outer thread with wake condition variable
+                        condition_var_wait(thread_pool.condition_var_wake, thread_pool.mutex_wake);
+                    }
+                }
+            };
+            thread_run(thread);
+            thread_detach(thread);
+        }
+    }
+
+    void thread_pool_free(thread_pool_t& thread_pool) {
+        thread_pool.running = false;
+        const usize thread_size = thread_pool.thread_size;
+        for (int i = 0 ; i < thread_size ; i++) {
+            thread_free(thread_pool.threads[i]);
+        }
+    }
+
+    void thread_pool_add(thread_pool_t& thread_pool, const task_t& task) {
+        // try to push a new task until it is pushed
+        while (!circular_buffer_push<task_t>(thread_pool.tasks, task)) {
+            condition_var_notify(thread_pool.condition_var_wake);
+            thread_yield();
+        }
+        condition_var_notify(thread_pool.condition_var_wake);
     }
 
 }

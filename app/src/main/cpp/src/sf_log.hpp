@@ -77,7 +77,7 @@ enum SF_LOG_COLOR {
 namespace sf {
 
     extern FILE* global_log_file;
-    extern thread_pool_t<1, 10> global_log_thread_pool;
+    extern thread_pool_t global_log_thread_pool;
 
     SF_API void log_file_open(const char* filepath);
     SF_API void log_file_close();
@@ -91,11 +91,13 @@ namespace sf {
     SF_API void log_console_assert(SF_LOG_COLOR log_color, char* log);
 
     template<typename... Args>
-    static void log_verbose(const char* msg, Args... args) {
-        thread_pool_add(global_log_thread_pool, [msg, args...]() {
+    static void log_verbose(const char* msg, Args &&... args) {
+        task_t task_log;
+        task_log.args = nullptr;
+        task_log.function = [msg, args...](void* task_args) {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            date_time_t time = date_time_get_current();
+            date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
 #else
@@ -104,21 +106,23 @@ namespace sf {
             sprintf(
                     fmt_buffer,
                     fmt,
-                    time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                    date_time.d, date_time.m, date_time.y, date_time.h, date_time.min, date_time.s, date_time.ms,
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
             log_console_verbose(SF_LOG_COLOR_LIGHT_GREEN, text_buffer);
             log_file_write(text_buffer);
-        });
+        };
     }
 
     template<typename... Args>
-    static void log_info(const char* msg, Args... args) {
-        thread_pool_add(global_log_thread_pool, [msg, args...]() {
+    static void log_info(const char* msg, Args &&... args) {
+        task_t task_log;
+        task_log.args = nullptr;
+        task_log.function = [](void* task_args) {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            date_time_t time = date_time_get_current();
+            date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
 #else
@@ -127,21 +131,23 @@ namespace sf {
             sprintf(
                     fmt_buffer,
                     fmt,
-                    time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                    date_time.d, date_time.m, date_time.y, date_time.h, date_time.min, date_time.s, date_time.ms,
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
-            log_console_info(SF_LOG_COLOR_GREEN, text_buffer);
+            log_console_verbose(SF_LOG_COLOR_GREEN, text_buffer);
             log_file_write(text_buffer);
-        });
+        };
     }
 
     template<typename... Args>
-    static void log_debug(const char* msg, Args... args) {
-        thread_pool_add(global_log_thread_pool, [msg, args...]() {
+    static void log_debug(const char* msg, Args &&... args) {
+        task_t task_log;
+        task_log.args = nullptr;
+        task_log.function = [msg, args...](void* task_args) {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            date_time_t time = date_time_get_current();
+            date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
 #else
@@ -150,21 +156,23 @@ namespace sf {
             sprintf(
                     fmt_buffer,
                     fmt,
-                    time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                    date_time.d, date_time.m, date_time.y, date_time.h, date_time.min, date_time.s, date_time.ms,
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
-            log_console_debug(SF_LOG_COLOR_WHITE, text_buffer);
+            log_console_verbose(SF_LOG_COLOR_WHITE, text_buffer);
             log_file_write(text_buffer);
-        });
+        };
     }
 
     template<typename... Args>
-    static void log_warning(const char* msg, Args... args) {
-        thread_pool_add(global_log_thread_pool, [msg, args...]() {
+    static void log_warning(const char* msg, Args &&... args) {
+        task_t task_log;
+        task_log.args = nullptr;
+        task_log.function = [msg, args...](void* task_args) {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            date_time_t time = date_time_get_current();
+            date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
 #else
@@ -173,21 +181,23 @@ namespace sf {
             sprintf(
                     fmt_buffer,
                     fmt,
-                    time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                    date_time.d, date_time.m, date_time.y, date_time.h, date_time.min, date_time.s, date_time.ms,
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
-            log_console_warning(SF_LOG_COLOR_YELLOW, text_buffer);
+            log_console_verbose(SF_LOG_COLOR_YELLOW, text_buffer);
             log_file_write(text_buffer);
-        });
+        };
     }
 
     template<typename... Args>
-    static void log_error(const char* filename, const char* function, int line, const char* msg, Args... args) {
-        thread_pool_add(global_log_thread_pool, [filename, function, line, msg, args...]() {
+    static void log_error(const char* filename, const char* function, int line, const char* msg, Args &&... args) {
+        task_t task_log;
+        task_log.args = nullptr;
+        task_log.function = [filename, function, line, msg, args...](void* task_args) {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            date_time_t time = date_time_get_current();
+            date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] log_error in %s -> %s(%i line):\n%s";
 #else
@@ -196,22 +206,24 @@ namespace sf {
             sprintf(
                     fmt_buffer,
                     fmt,
-                    time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                    date_time.d, date_time.m, date_time.y, date_time.h, date_time.min, date_time.s, date_time.ms,
                     filename, function, line,
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
             log_console_error(SF_LOG_COLOR_RED, text_buffer);
             log_file_write(text_buffer);
-        });
+        };
     }
 
     template<typename... Args>
-    static void log_assert(const char* filename, const char* function, int line, const char* msg, Args... args) {
-        thread_pool_add(global_log_thread_pool, [filename, function, line, msg, args...]() {
+    static void log_assert(const char* filename, const char* function, int line, const char* msg, Args &&... args) {
+        task_t task_log;
+        task_log.args = nullptr;
+        task_log.function = [filename, function, line, msg, args...](void* task_args) {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
-            date_time_t time = date_time_get_current();
+            date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] Assertion Failed in %s -> %s(%i line):\n%s";
 #else
@@ -220,14 +232,14 @@ namespace sf {
             sprintf(
                     fmt_buffer,
                     fmt,
-                    time.d, time.m, time.y, time.h, time.min, time.s, time.ms,
+                    date_time.d, date_time.m, date_time.y, date_time.h, date_time.min, date_time.s, date_time.ms,
                     filename, function, line,
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
-            log_console_assert(SF_LOG_COLOR_RED, text_buffer);
+            log_console_error(SF_LOG_COLOR_RED, text_buffer);
             log_file_write(text_buffer);
-        });
+        };
     }
 
 }
