@@ -3,31 +3,32 @@
 
 namespace sf {
 
-    app_t global_app;
+    app_t s_app = {};
 
     void app_init() {
-        memory_init();
+        g_stl_memory_pool = memory_pool_init(sf::malloc(1_MB), 1_MB, 100);
         SF_LOG_OPEN("App.log");
-        global_app.window = window_init("SF App", 400, 300, 800, 600, true);
-        global_app.window.desktop_events.event_on_window_resize = app_on_window_resize;
-        global_app.window.desktop_events.event_on_key = app_on_key;
+        s_app.window = window_init("SF App", 400, 300, 800, 600, true);
+        s_app.window.desktop_events.event_on_window_resize = app_on_window_resize;
+        s_app.window.desktop_events.event_on_key = app_on_key;
     }
 
     void app_free() {
-        window_free(global_app.window);
+        window_free(s_app.window);
         SF_LOG_CLOSE();
-        memory_free();
+        memory_pool_free(g_stl_memory_pool);
+        sf::free(g_stl_memory_pool.memory);
     }
 
     void app_run() {
-        global_app.running = true;
-        while (global_app.running) {
+        s_app.running = true;
+        while (s_app.running) {
             float begin_time_ms = time_get_current_ms();
 
-            global_app.running = window_update(global_app.window);
+            s_app.running = window_update(s_app.window);
 
             float end_time_ms = time_get_current_ms();
-            global_app.delta_time = end_time_ms - begin_time_ms;
+            s_app.delta_time = end_time_ms - begin_time_ms;
         }
     }
 
@@ -41,7 +42,7 @@ namespace sf {
         if (pressed) {
             switch (keycode) {
                 case SF_KEYCODE_ESC: {
-                    global_app.running = false;
+                    s_app.running = false;
                 }
             }
         }

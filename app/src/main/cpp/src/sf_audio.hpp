@@ -15,6 +15,23 @@ enum SF_AUDIO_DEVICE_TYPE {
 
 namespace sf {
 
+    struct SF_API audio_allocator_t final {
+        void* allocate(usize size, usize alignment = SF_ALIGNMENT);
+        void deallocate(void* addr);
+    };
+
+    struct SF_API audio_loop_t final {
+        void* handle;
+        bool running = false;
+        thread_t thread;
+        circular_buffer_t<task_t, audio_allocator_t> task_buffer;
+    };
+
+    SF_API audio_loop_t audio_loop_init();
+    SF_API void audio_loop_free(const audio_loop_t& audio_loop);
+    SF_API void audio_loop_start(audio_loop_t& audio_loop);
+    SF_API void audio_loop_stop(audio_loop_t& audio_loop);
+
     struct SF_API audio_device_t final {
         string_t id;
         string_t name;
@@ -47,7 +64,7 @@ namespace sf {
         audio_device_t selected_device;
     };
 
-    extern audio_system_t global_audio_system;
+    inline audio_system_t g_audio_system = {};
 
     SF_API void audio_system_init();
     SF_API void audio_system_free();

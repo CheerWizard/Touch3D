@@ -47,7 +47,7 @@ macro(build_linux)
     add_executable("T3D_TESTS_LINUX" ${SRC} ${SRC_TEST})
     target_link_libraries("T3D_TESTS_LINUX" X11)
     add_executable(${PROJECT_NAME} ${SRC} linux_main.cpp)
-    target_link_libraries(${PROJECT_NAME} X11)
+    target_link_libraries(${PROJECT_NAME} X11 pulse)
 endmacro()
 
 # defines for OS

@@ -234,7 +234,6 @@ namespace sf {
 
     SF_API window_t window_init(const char* title, int x, int y, int w, int h, bool sync);
     SF_API void window_free(const window_t& window);
-
     SF_API bool window_update(window_t& window);
 
 }

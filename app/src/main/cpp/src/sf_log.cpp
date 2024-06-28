@@ -2,23 +2,31 @@
 
 namespace sf {
 
-    FILE* global_log_file = nullptr;
-    thread_pool_t global_log_thread_pool;
+    static memory_pool_t s_log_memory_pool = {};
+
+    void* log_allocator_t::allocate(usize size, usize alignment) {
+        return memory_pool_allocate(s_log_memory_pool, size, alignment);
+    }
+
+    void log_allocator_t::deallocate(void *addr) {
+        memory_pool_free(s_log_memory_pool, addr);
+    }
 
     void log_file_open(const char* filepath) {
-        global_log_thread_pool = thread_pool_init(1, 10, "Log", SF_THREAD_PRIORITY_HIGHEST);
+        s_log_memory_pool = memory_pool_init(sf::malloc(1_MB), 1_MB, 100);
+        g_log_thread_pool = thread_pool_init<log_allocator_t>(1, 10, "Log", SF_THREAD_PRIORITY_HIGHEST);
         task_t task_log_file_open;
         task_log_file_open.args = &filepath;
         task_log_file_open.function = [](void* args) {
             const char* filepath = *static_cast<const char**>(args);
-            global_log_file = fopen(filepath, "w+");
-            if (global_log_file == nullptr) {
+            g_log_file = fopen(filepath, "w+");
+            if (g_log_file == nullptr) {
                 printf("Unable to open Log file %s", filepath);
                 SF_DEBUG_BREAK();
             }
             log_info("Log file %s is open.", filepath);
         };
-        thread_pool_add(global_log_thread_pool, task_log_file_open);
+        thread_pool_add(g_log_thread_pool, task_log_file_open);
     }
 
     void log_file_close() {
@@ -26,15 +34,17 @@ namespace sf {
         task_log_file_close.args = nullptr;
         task_log_file_close.function = [](void* args) {
             log_info("Log file is closing...");
-            fflush(global_log_file);
-            fclose(global_log_file);
-            thread_pool_free(global_log_thread_pool);
+            fflush(g_log_file);
+            fclose(g_log_file);
+            thread_pool_free(g_log_thread_pool);
+            memory_pool_free(s_log_memory_pool);
+            sf::free(s_log_memory_pool.memory);
         };
     }
 
     void log_file_write(const char *log) {
-        if (global_log_file != nullptr) {
-            fputs(log, global_log_file);
+        if (g_log_file != nullptr) {
+            fputs(log, g_log_file);
         }
     }
 

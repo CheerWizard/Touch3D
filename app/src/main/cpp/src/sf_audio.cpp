@@ -3,9 +3,9 @@
 namespace sf {
 
     void audio_init() {
-        global_audio_system.devices = audio_device_get_all();
-        SF_ASSERT(!global_audio_system.devices.empty(), "audio_system: no available devices in the system!");
-        global_audio_system.selected_device = global_audio_system.devices[0];
+        g_audio_system.devices = audio_device_get_all();
+        SF_ASSERT(!g_audio_system.devices.empty(), "audio_system: no available devices in the system!");
+        g_audio_system.selected_device = g_audio_system.devices[0];
     }
 
     void audio_free() {
@@ -25,20 +25,37 @@ namespace sf {
 // SF_LINUX_BEGIN
 #if defined(SF_LINUX)
 
-#include <sys/soundcard.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <pulse/pulseaudio.h>
 
 namespace sf {
 
     vector_t<audio_device_t> audio_device_get_all() {
         vector_t<audio_device_t> devices;
 
-        int mixer = open("/dev/mixer", O_RDONLY, 0);
-        oss_sysinfo si = {};
-        ioctl(mixer, SNDCTL_SYSINFO, &si);
-        int n_devs = si.numaudios;
-        close(mixer);
+        pa_threaded_mainloop* mainloop = pa_threaded_mainloop_new();
+
+        pa_threaded_mainloop_start(mainloop);
+
+        pa_threaded_mainloop_lock(mainloop);
+
+        pa_mainloop_api* mainloop_api = pa_threaded_mainloop_get_api(mainloop);
+        pa_context* context = pa_context_new_with_proplist(mainloop_api, "SF Audio", nullptr);
+
+        void *udata = nullptr;
+        pa_context_set_state_callback(context, , udata);
+
+        pa_context_connect(context, NULL, 0, NULL);
+
+
+        pa_context_disconnect(context);
+
+        pa_context_unref(context);
+
+        pa_threaded_mainloop_unlock(mainloop);
+
+        pa_threaded_mainloop_stop(mainloop);
+
+        pa_threaded_mainloop_free(mainloop);
 
         return devices;
     }

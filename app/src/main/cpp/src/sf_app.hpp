@@ -10,8 +10,6 @@ namespace sf {
         window_t window;
     };
 
-    extern app_t global_app;
-
     SF_API void app_init();
     SF_API void app_free();
     SF_API void app_run();

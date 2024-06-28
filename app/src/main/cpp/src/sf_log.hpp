@@ -76,8 +76,13 @@ enum SF_LOG_COLOR {
 
 namespace sf {
 
-    extern FILE* global_log_file;
-    extern thread_pool_t global_log_thread_pool;
+    struct SF_API log_allocator_t final {
+        void* allocate(usize size, usize alignment = SF_ALIGNMENT);
+        void deallocate(void* addr);
+    };
+
+    inline FILE* g_log_file = nullptr;
+    inline thread_pool_t<log_allocator_t> g_log_thread_pool = {};
 
     SF_API void log_file_open(const char* filepath);
     SF_API void log_file_close();
@@ -99,7 +104,7 @@ namespace sf {
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
-            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
+            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][VERBOSE] %s";
 #else
             const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
 #endif
@@ -125,7 +130,7 @@ namespace sf {
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
-            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
+            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][INFO] %s";
 #else
             const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
 #endif
@@ -151,7 +156,7 @@ namespace sf {
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
-            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
+            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][DEBUG] %s";
 #else
             const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
 #endif
@@ -176,7 +181,7 @@ namespace sf {
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
-            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] %s";
+            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][WARNING] %s";
 #else
             const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
 #endif
@@ -201,7 +206,7 @@ namespace sf {
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
-            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] log_error in %s -> %s(%i line):\n%s";
+            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][ERROR] log_error in %s -> %s(%i line):\n%s";
 #else
             const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] Error in %s -> %s(%i line):\n%s";
 #endif
@@ -227,7 +232,7 @@ namespace sf {
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
-            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld] Assertion Failed in %s -> %s(%i line):\n%s";
+            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][ASSERTION] Assertion Failed in %s -> %s(%i line):\n%s";
 #else
             const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] Assertion Failed in %s -> %s(%i line):\n%s";
 #endif

@@ -416,42 +416,42 @@ namespace sf {
     SF_API void* moveptr(void* ptr, usize size);
 
     template<typename T>
-    T* malloc_t(usize count, usize alignment = SF_ALIGNMENT) {
+    constexpr T* malloc_t(usize count, usize alignment = SF_ALIGNMENT) {
         return static_cast<T*>(sf::malloc(sizeof(T) * count, alignment));
     }
 
     template<typename T>
-    T* realloc_t(T* data, usize count, usize alignment = SF_ALIGNMENT) {
+    constexpr T* realloc_t(T* data, usize count, usize alignment = SF_ALIGNMENT) {
         return static_cast<T*>(sf::realloc(data, sizeof(T) * count, alignment));
     }
 
     template<typename T>
-    T* reallocf_t(T* data, usize count, usize alignment = SF_ALIGNMENT) {
+    constexpr T* reallocf_t(T* data, usize count, usize alignment = SF_ALIGNMENT) {
         return static_cast<T*>(sf::reallocf(data, sizeof(T) * count, alignment));
     }
 
     template<typename T>
-    T* calloc_t(usize count, usize alignment = SF_ALIGNMENT) {
+    constexpr T* calloc_t(usize count, usize alignment = SF_ALIGNMENT) {
         return static_cast<T*>(sf::calloc(sizeof(T) * count, alignment));
     }
 
     template<typename T>
-    void memset_t(T* data, usize value, usize count, usize alignment = SF_ALIGNMENT) {
+    constexpr void memset_t(T* data, usize value, usize count, usize alignment = SF_ALIGNMENT) {
         sf::memset(data, value, sizeof(T) * count, alignment);
     }
 
     template<typename T>
-    void memcpy_t(T* dest_data, usize dest_count, const T* src_data, usize src_count, usize alignment = SF_ALIGNMENT) {
+    constexpr void memcpy_t(T* dest_data, usize dest_count, const T* src_data, usize src_count, usize alignment = SF_ALIGNMENT) {
         sf::memcpy(dest_data, sizeof(T) * dest_count, src_data, sizeof(T) * src_count, alignment);
     }
 
     template<typename T>
-    void memmove_t(T* dest_data, usize dest_count, T* src_data, usize src_count, usize alignment = SF_ALIGNMENT) {
+    constexpr void memmove_t(T* dest_data, usize dest_count, T* src_data, usize src_count, usize alignment = SF_ALIGNMENT) {
         sf::memmove(dest_data, sizeof(T) * dest_count, src_data, sizeof(T) * src_count, alignment);
     }
 
     template<typename T>
-    T* moveptr_t(T* ptr, usize count) {
+    constexpr T* moveptr_t(T* ptr, usize count) {
         return static_cast<T*>(moveptr(ptr, sizeof(T) * count));
     }
 
@@ -476,11 +476,17 @@ namespace sf {
     SF_API memory_arena_temp_t memory_arena_temp_init(memory_arena_t* memory_arena);
     SF_API void memory_arena_temp_free(memory_arena_temp_t memory_arena_temp);
 
+    struct SF_API memory_stack_t final {
+        void* memory = nullptr;
+        usize
+        usize size = 0;
+    };
+
     struct SF_API memory_pool_alloc_t final {
         bool free = true;
         usize size = 0;
         usize used_size = 0;
-        void* data = nullptr;
+        void* memory = nullptr;
     };
 
     struct SF_API memory_pool_t final {
@@ -495,7 +501,7 @@ namespace sf {
 
     SF_API memory_pool_t memory_pool_init(void* memory, usize size, usize alloc_capacity);
     SF_API void memory_pool_free(memory_pool_t& memory_pool);
-    SF_API void* memory_pool_allocate(memory_pool_t& memory_pool, usize size);
+    SF_API void* memory_pool_allocate(memory_pool_t& memory_pool, usize size, usize alignment = SF_ALIGNMENT);
     SF_API void memory_pool_free(const memory_pool_t& memory_pool, const void* addr);
 
     struct system_info_t final {
@@ -506,15 +512,7 @@ namespace sf {
 
     SF_API system_info_t system_info_get();
 
-    struct SF_API memory_t final {
-        memory_arena_t memory_arena;
-        memory_pool_t memory_pool;
-    };
-
-    SF_API void memory_init();
-    SF_API void memory_free();
-
-    extern memory_t global_memory;
+    inline memory_pool_t g_stl_memory_pool = {};
 
     template<typename T>
     struct stl_allocator_t {
@@ -526,11 +524,13 @@ namespace sf {
         constexpr stl_allocator_t(const stl_allocator_t<U>&) noexcept {}
 
         [[nodiscard]] T* allocate(std::size_t count) {
-            return static_cast<T*>(memory_pool_allocate(global_memory.memory_pool, sizeof(T) * count));
+            SF_ASSERT(g_stl_memory_pool.memory != nullptr, "stl_allocator::allocate(): stl_memory_pool is not initialized!");
+            return static_cast<T*>(memory_pool_allocate(g_stl_memory_pool, sizeof(T) * count));
         }
 
         void deallocate(T* element, std::size_t count) noexcept {
-            memory_pool_free(global_memory.memory_pool, element);
+            SF_ASSERT(g_stl_memory_pool.memory != nullptr, "stl_allocator::deallocate(): stl_memory_pool is not initialized!");
+            memory_pool_free(g_stl_memory_pool, element);
         }
     };
 
@@ -583,7 +583,7 @@ namespace sf {
     SF_API time_t time_get_current();
     SF_API float time_get_current_ms();
 
-    template<typename T>
+    template<typename T, typename A>
     struct circular_buffer_t final {
         T* elements = nullptr;
         usize size = 0;
@@ -591,21 +591,21 @@ namespace sf {
         usize head = 0;
     };
 
-    template<typename T>
-    circular_buffer_t<T> circular_buffer_init(const usize size) {
-        circular_buffer_t<T> circular_buffer;
-        circular_buffer.elements = static_cast<T*>(memory_pool_allocate(global_memory.memory_pool, sizeof(T) * size));
+    template<typename T, typename A>
+    circular_buffer_t<T, A> circular_buffer_init(const usize size) {
+        circular_buffer_t<T, A> circular_buffer;
+        circular_buffer.elements = static_cast<T*>(A().allocate(sizeof(T) * size));
         circular_buffer.size = size;
         return circular_buffer;
     }
 
-    template<typename T>
-    void circular_buffer_free(const circular_buffer_t<T>& circular_buffer) {
-        memory_pool_free(global_memory.memory_pool, circular_buffer.elements);
+    template<typename T, typename A>
+    void circular_buffer_free(const circular_buffer_t<T, A>& circular_buffer) {
+        A().deallocate(circular_buffer.elements);
     }
 
-    template<typename T>
-    bool circular_buffer_push(circular_buffer_t<T>& circular_buffer, const T &item) {
+    template<typename T, typename A>
+    bool circular_buffer_push(circular_buffer_t<T, A>& circular_buffer, const T &item) {
         bool pushed = false;
 
         usize next = (circular_buffer.head + 1) % circular_buffer.elements.size();
@@ -618,8 +618,8 @@ namespace sf {
         return pushed;
     }
 
-    template<typename T>
-    bool circular_buffer_pop(circular_buffer_t<T>& circular_buffer, T &item) {
+    template<typename T, typename A>
+    bool circular_buffer_pop(circular_buffer_t<T, A>& circular_buffer, T &item) {
         bool popped = false;
 
         if (circular_buffer.tail != circular_buffer.head) {
@@ -684,18 +684,75 @@ namespace sf {
         }
     };
 
+    template<typename A>
     struct SF_API thread_pool_t final {
         bool running = false;
         thread_t* threads = nullptr;
         usize thread_size = 0;
-        circular_buffer_t<task_t> tasks;
+        circular_buffer_t<task_t, A> tasks;
         mutex_t mutex_wake = {};
         condition_var_t condition_var_wake = {};
     };
 
-    SF_API thread_pool_t thread_pool_init(usize thread_size, usize task_size, const char* name, SF_THREAD_PRIORITY priority);
-    SF_API void thread_pool_run(thread_pool_t& thread_pool);
-    SF_API void thread_pool_free(thread_pool_t& thread_pool);
-    SF_API void thread_pool_add(thread_pool_t& thread_pool, const task_t& task);
+    template<typename A>
+    thread_pool_t<A> thread_pool_init(usize thread_size, usize task_size, const char* name, SF_THREAD_PRIORITY priority) {
+        thread_pool_t<A> thread_pool;
+        thread_pool.threads = static_cast<thread_t*>(A().allocate(sizeof(thread_t) * thread_size));
+        thread_pool.thread_size = thread_size;
+        thread_pool.tasks = circular_buffer_init<task_t, A>(task_size);
+        thread_pool.mutex_wake = mutex_init();
+        thread_pool.condition_var_wake = condition_var_init();
+        for (int i = 0; i < thread_size ; i++) {
+            thread_t& thread = thread_pool.threads[i];
+            thread = thread_init(name, priority);
+        }
+        return thread_pool;
+    }
+
+    template<typename A>
+    void thread_pool_run(thread_pool_t<A>& thread_pool) {
+        thread_pool.running = true;
+        const usize thread_size = thread_pool.thread_size;
+        for (int i = 0 ; i < thread_size ; i++) {
+            thread_t& thread = thread_pool.threads[i];
+            thread.run_args = &thread_pool;
+            thread.run_function = [] (void* args) {
+                auto& thread_pool = *static_cast<thread_pool_t<A>*>(args);
+                while (thread_pool.running) {
+                    if (task_t task; circular_buffer_pop(thread_pool.tasks, task)) {
+                        task();
+                    }
+                    else {
+                        // because we don't want to overhead cpu core with thread while loop
+                        // it's better to simply put thread into wait, until it is notified by outer thread with wake condition variable
+                        condition_var_wait(thread_pool.condition_var_wake, thread_pool.mutex_wake);
+                    }
+                }
+            };
+            thread_run(thread);
+            thread_detach(thread);
+        }
+    }
+
+    template<typename A>
+    void thread_pool_free(thread_pool_t<A>& thread_pool) {
+        thread_pool.running = false;
+        const usize thread_size = thread_pool.thread_size;
+        for (int i = 0 ; i < thread_size ; i++) {
+            thread_free(thread_pool.threads[i]);
+        }
+        A().deallocate(thread_pool.threads);
+        circular_buffer_free(thread_pool.tasks);
+    }
+
+    template<typename A>
+    void thread_pool_add(thread_pool_t<A>& thread_pool, const task_t& task) {
+        // try to push a new task until it is pushed
+        while (!circular_buffer_push<task_t>(thread_pool.tasks, task)) {
+            condition_var_notify(thread_pool.condition_var_wake);
+            thread_yield();
+        }
+        condition_var_notify(thread_pool.condition_var_wake);
+    }
 
 }

@@ -411,7 +411,7 @@ namespace sf {
         memory_pool.alloc_size++;
     }
 
-    void* memory_pool_allocate(memory_pool_t& memory_pool, const usize size) {
+    void* memory_pool_allocate(memory_pool_t& memory_pool, const usize size, usize alignment) {
         for (usize i = 0; i < memory_pool.alloc_size ; i++) {
             memory_pool_alloc_t* allocation = &memory_pool.allocs[i];
 
@@ -419,7 +419,7 @@ namespace sf {
             if (allocation->free && allocation->size >= size) {
                 allocation->free = false;
                 allocation->used_size = size;
-                return allocation->data;
+                return allocation->memory;
             }
 
             // check if used allocation has additional free space for usage
@@ -429,10 +429,10 @@ namespace sf {
                 new_allocation.free = false;
                 new_allocation.size = allocation->size - allocation->used_size;
                 new_allocation.used_size = size;
-                new_allocation.data = moveptr(allocation->data, allocation->used_size);
+                new_allocation.memory = moveptr(allocation->memory, allocation->used_size);
                 allocation->size = allocation->used_size;
                 memory_pool_add_allocation(memory_pool, &new_allocation);
-                return new_allocation.data;
+                return new_allocation.memory;
             }
         }
 
@@ -445,50 +445,19 @@ namespace sf {
         new_allocation.free = false;
         new_allocation.size = size;
         new_allocation.used_size = size;
-        new_allocation.data = memory_pool.last_ptr;
+        new_allocation.memory = memory_pool.last_ptr;
         memory_pool_add_allocation(memory_pool, &new_allocation);
         memory_pool.last_ptr = moveptr(memory_pool.last_ptr, size);
-        return new_allocation.data;
+        return new_allocation.memory;
     }
 
     void memory_pool_free(const memory_pool_t& memory_pool, const void *addr) {
         for (usize i = 0 ; i < memory_pool.alloc_size ; i++) {
-            if (memory_pool_alloc_t& allocation = memory_pool.allocs[i]; allocation.data == addr) {
+            if (memory_pool_alloc_t& allocation = memory_pool.allocs[i]; allocation.memory == addr) {
                 allocation.free = true;
                 allocation.used_size = 0;
             }
         }
-    }
-
-    memory_t global_memory;
-
-    void memory_init() {
-        auto [ram_total_bytes, ram_free_bytes, cpu_core_count] = system_info_get();
-
-        constexpr usize arena_size = 1_MB;
-        void* arena_memory = sf::malloc(arena_size);
-        global_memory.memory_arena = memory_arena_init(arena_memory, arena_size);
-
-        // memory size = 20% of RAM but less than 1GB
-        auto pool_size = static_cast<usize>(static_cast<double>(ram_free_bytes) * 0.2);
-        if (pool_size >= 1_MB) {
-            pool_size = 1_MB;
-        }
-
-        // pool_alloc_size value can be estimated and tested
-        constexpr usize pool_alloc_size = 100;
-        void* pool_memory = sf::malloc(pool_size);
-        global_memory.memory_pool = memory_pool_init(pool_memory, pool_size, pool_alloc_size);
-    }
-
-    void memory_free() {
-        memory_pool_free(global_memory.memory_pool);
-        sf::free(global_memory.memory_pool.memory);
-        global_memory.memory_pool.memory = nullptr;
-
-        memory_arena_free(global_memory.memory_arena);
-        sf::free(global_memory.memory_arena.memory);
-        global_memory.memory_arena.memory = nullptr;
     }
 
     u64 string_hash(const string_t& string) {
@@ -628,61 +597,6 @@ namespace sf {
     void thread_join(const thread_t &thread) {
         int result = pthread_join(thread.handle, nullptr);
         SF_ASSERT(result == 0, "Unable to join to a pthread %s", thread.name);
-    }
-
-    thread_pool_t thread_pool_init(const usize thread_size, const usize task_size, const char* name, const SF_THREAD_PRIORITY priority) {
-        thread_pool_t thread_pool;
-        thread_pool.threads = static_cast<thread_t*>(memory_pool_allocate(global_memory.memory_pool, sizeof(thread_t) * thread_size));
-        thread_pool.thread_size = thread_size;
-        thread_pool.tasks = circular_buffer_init<task_t>(task_size);
-        thread_pool.mutex_wake = mutex_init();
-        thread_pool.condition_var_wake = condition_var_init();
-        for (int i = 0; i < thread_size ; i++) {
-            thread_t& thread = thread_pool.threads[i];
-            thread = thread_init(name, priority);
-        }
-        return thread_pool;
-    }
-
-    void thread_pool_run(thread_pool_t& thread_pool) {
-        thread_pool.running = true;
-        const usize thread_size = thread_pool.thread_size;
-        for (int i = 0 ; i < thread_size ; i++) {
-            thread_t& thread = thread_pool.threads[i];
-            thread.run_args = &thread_pool;
-            thread.run_function = [] (void* args) {
-                auto& thread_pool = *static_cast<thread_pool_t*>(args);
-                while (thread_pool.running) {
-                    if (task_t task; circular_buffer_pop(thread_pool.tasks, task)) {
-                        task();
-                    }
-                    else {
-                        // because we don't want to overhead cpu core with thread while loop
-                        // it's better to simply put thread into wait, until it is notified by outer thread with wake condition variable
-                        condition_var_wait(thread_pool.condition_var_wake, thread_pool.mutex_wake);
-                    }
-                }
-            };
-            thread_run(thread);
-            thread_detach(thread);
-        }
-    }
-
-    void thread_pool_free(thread_pool_t& thread_pool) {
-        thread_pool.running = false;
-        const usize thread_size = thread_pool.thread_size;
-        for (int i = 0 ; i < thread_size ; i++) {
-            thread_free(thread_pool.threads[i]);
-        }
-    }
-
-    void thread_pool_add(thread_pool_t& thread_pool, const task_t& task) {
-        // try to push a new task until it is pushed
-        while (!circular_buffer_push<task_t>(thread_pool.tasks, task)) {
-            condition_var_notify(thread_pool.condition_var_wake);
-            thread_yield();
-        }
-        condition_var_notify(thread_pool.condition_var_wake);
     }
 
 }
