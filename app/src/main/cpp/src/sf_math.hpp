@@ -14,8 +14,8 @@ constexpr float operator ""_E(unsigned long long x) {
 
 #define SF_RADIANS(x) ((x) * 1_PI / 180.0f)
 
-constexpr float operator ""_RAD(float degree) {
-    return SF_RADIANS(degree);
+constexpr float operator ""_RAD(unsigned long long x) {
+    return SF_RADIANS(x);
 }
 
 namespace sf {

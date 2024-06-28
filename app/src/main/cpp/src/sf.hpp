@@ -404,44 +404,50 @@ namespace sf {
      * You can define SF_USE_STD_MALLOC macro in order to switch to std::malloc implementation of allocation functions.
      */
 
-    SF_API void* malloc(usize size, u8 alignment = SF_ALIGNMENT);
+    SF_API void* malloc(usize size, usize alignment = SF_ALIGNMENT);
     SF_API void free(void* data);
-    SF_API void* realloc(void* old_data, usize size, u8 alignment = SF_ALIGNMENT);
-    SF_API void* reallocf(void* old_data, usize size, u8 alignment = SF_ALIGNMENT);
-    SF_API void* calloc(usize size, u8 alignment = SF_ALIGNMENT);
-    SF_API void memset(void* data, usize value, usize size, u8 alignment = SF_ALIGNMENT);
-    SF_API void memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size, u8 alignment = SF_ALIGNMENT);
+    SF_API void* realloc(void* old_data, usize size, usize alignment = SF_ALIGNMENT);
+    SF_API void* reallocf(void* old_data, usize size, usize alignment = SF_ALIGNMENT);
+    SF_API void* calloc(usize size, usize alignment = SF_ALIGNMENT);
+    SF_API void memset(void* data, usize value, usize size, usize alignment = SF_ALIGNMENT);
+    SF_API void memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size, usize alignment = SF_ALIGNMENT);
+    SF_API void memmove(void* dest_data, usize dest_size, void* src_data, usize src_size, usize alignment = SF_ALIGNMENT);
 
     SF_API void* moveptr(void* ptr, usize size);
 
     template<typename T>
-    T* malloc_t(usize count) {
-        return static_cast<T*>(sf::malloc(sizeof(T) * count));
+    T* malloc_t(usize count, usize alignment = SF_ALIGNMENT) {
+        return static_cast<T*>(sf::malloc(sizeof(T) * count, alignment));
     }
 
     template<typename T>
-    T* realloc_t(T* data, usize count) {
-        return static_cast<T*>(sf::realloc(data, sizeof(T) * count));
+    T* realloc_t(T* data, usize count, usize alignment = SF_ALIGNMENT) {
+        return static_cast<T*>(sf::realloc(data, sizeof(T) * count, alignment));
     }
 
     template<typename T>
-    T* reallocf_t(T* data, usize count) {
-        return static_cast<T*>(sf::reallocf(data, sizeof(T) * count));
+    T* reallocf_t(T* data, usize count, usize alignment = SF_ALIGNMENT) {
+        return static_cast<T*>(sf::reallocf(data, sizeof(T) * count, alignment));
     }
 
     template<typename T>
-    T* calloc_t(usize count) {
-        return static_cast<T*>(sf::calloc(sizeof(T) * count));
+    T* calloc_t(usize count, usize alignment = SF_ALIGNMENT) {
+        return static_cast<T*>(sf::calloc(sizeof(T) * count, alignment));
     }
 
     template<typename T>
-    void memset_t(T* data, usize value, usize count) {
-        sf::memset(data, value, sizeof(T) * count);
+    void memset_t(T* data, usize value, usize count, usize alignment = SF_ALIGNMENT) {
+        sf::memset(data, value, sizeof(T) * count, alignment);
     }
 
     template<typename T>
-    void memcpy_t(T* dest_data, usize dest_count, const T* src_data, usize src_count) {
-        sf::memcpy(dest_data, sizeof(T) * dest_count, src_data, sizeof(T) * src_count);
+    void memcpy_t(T* dest_data, usize dest_count, const T* src_data, usize src_count, usize alignment = SF_ALIGNMENT) {
+        sf::memcpy(dest_data, sizeof(T) * dest_count, src_data, sizeof(T) * src_count, alignment);
+    }
+
+    template<typename T>
+    void memmove_t(T* dest_data, usize dest_count, T* src_data, usize src_count, usize alignment = SF_ALIGNMENT) {
+        sf::memmove(dest_data, sizeof(T) * dest_count, src_data, sizeof(T) * src_count, alignment);
     }
 
     template<typename T>
@@ -449,15 +455,26 @@ namespace sf {
         return static_cast<T*>(moveptr(ptr, sizeof(T) * count));
     }
 
-    struct SF_API memory_bump_t final {
+    struct SF_API memory_arena_t final {
         void* memory = nullptr;
+        usize prev_offset = 0;
+        usize current_offset = 0;
         usize size = 0;
-        usize used_size = 0;
     };
 
-    SF_API memory_bump_t memory_bump_init(usize size);
-    SF_API void memory_bump_free(memory_bump_t& memory_bump);
-    SF_API void* memory_bump_allocate(memory_bump_t& memory_bump, usize size);
+    SF_API memory_arena_t memory_arena_init(void* memory, usize size);
+    SF_API void memory_arena_free(memory_arena_t& memory_arena);
+    SF_API void* memory_arena_allocate(memory_arena_t& memory_arena, usize size, usize alignment = SF_ALIGNMENT);
+    SF_API void* memory_arena_resize(memory_arena_t& memory_arena, usize size, void* old_memory, usize old_size, usize alignment = SF_ALIGNMENT);
+
+    struct SF_API memory_arena_temp_t final {
+        memory_arena_t* memory_arena = nullptr;
+        usize prev_offset = 0;
+        usize current_offset = 0;
+    };
+
+    SF_API memory_arena_temp_t memory_arena_temp_init(memory_arena_t* memory_arena);
+    SF_API void memory_arena_temp_free(memory_arena_temp_t memory_arena_temp);
 
     struct SF_API memory_pool_alloc_t final {
         bool free = true;
@@ -476,7 +493,7 @@ namespace sf {
         usize alloc_capacity = 0;
     };
 
-    SF_API memory_pool_t memory_pool_init(usize size, usize alloc_capacity);
+    SF_API memory_pool_t memory_pool_init(void* memory, usize size, usize alloc_capacity);
     SF_API void memory_pool_free(memory_pool_t& memory_pool);
     SF_API void* memory_pool_allocate(memory_pool_t& memory_pool, usize size);
     SF_API void memory_pool_free(const memory_pool_t& memory_pool, const void* addr);
@@ -487,10 +504,10 @@ namespace sf {
         u8 cpu_core_count = 0;
     };
 
-    SF_API system_info_t memory_info_get();
+    SF_API system_info_t system_info_get();
 
     struct SF_API memory_t final {
-        memory_bump_t memory_bump;
+        memory_arena_t memory_arena;
         memory_pool_t memory_pool;
     };
 

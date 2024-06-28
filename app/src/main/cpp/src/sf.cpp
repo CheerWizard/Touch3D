@@ -98,13 +98,13 @@ namespace sf {
         return false;
     }
 
-    static void memory_block_copy(memory_block_t* dest_block, memory_block_t* src_block, u8 alignment) {
+    static void memory_block_copy(memory_block_t* dest_block, memory_block_t* src_block, usize alignment) {
         sf::memcpy(dest_block->ptr, dest_block->size, src_block->ptr, src_block->size, alignment);
     }
 
 #if defined(SF_USE_STD_MALLOC)
 
-    void* malloc(usize size, u8 alignment) {
+    void* malloc(usize size, usize alignment) {
         return std::malloc(size);
     }
 
@@ -112,34 +112,34 @@ namespace sf {
         std::free(data);
     }
 
-    void* realloc(void* old_data, usize size, const u8 alignment) {
+    void* realloc(void* old_data, usize size, const usize alignment) {
         return std::realloc(old_data, size);
     }
 
-    void* reallocf(void* old_data, const usize size, const u8 alignment) {
+    void* reallocf(void* old_data, const usize size, const usize alignment) {
         return std::reallocf(old_data, size);
     }
 
-    void* calloc(const usize size, const u8 alignment) {
+    void* calloc(const usize size, const usize alignment) {
         return std::calloc(size);
     }
 
-    void memset(void* data, const usize value, const usize size, const u8 alignment) {
+    void memset(void* data, const usize value, const usize size, const usize alignment) {
         std::memset(data, value, size);
     }
 
-    void memcpy(void* dest_data, const usize dest_size, const void* src_data, const usize src_size, const u8 alignment) {
+    void memcpy(void* dest_data, const usize dest_size, const void* src_data, const usize src_size, const usize alignment) {
         std::memcpy(dest_data, dest_size, src_data, src_size);
     }
 
 #else
 
-    void* malloc(usize size, u8 alignment) {
+    void* malloc(usize size, usize alignment) {
         SF_ASSERT_ALIGNMENT(alignment, "malloc(): incorrect memory alignment, must be power of 2!");
 
         memory_block_t* block;
         memory_block_t* last;
-        size = SF_ALIGN(size, alignment); // we should always malloc aligned size (aligned by 32-bit or 64-bit)
+        size = SF_ALIGN(size, alignment);
 
         if (block_root != nullptr) {
             last = block_root;
@@ -191,7 +191,7 @@ namespace sf {
         }
     }
 
-    void* realloc(void* old_data, usize size, const u8 alignment) {
+    void* realloc(void* old_data, usize size, const usize alignment) {
         SF_ASSERT_ALIGNMENT(alignment, "realloc(): incorrect memory alignment, must be power of 2!");
 
         memory_block_t* block;
@@ -238,7 +238,7 @@ namespace sf {
         return nullptr;
     }
 
-    void* reallocf(void* old_data, const usize size, const u8 alignment) {
+    void* reallocf(void* old_data, const usize size, const usize alignment) {
         SF_ASSERT_ALIGNMENT(alignment, "reallocf(): incorrect memory alignment, must be power of 2!");
 
         void* realloc_block = sf::realloc(old_data, size, alignment);
@@ -248,7 +248,7 @@ namespace sf {
         return realloc_block;
     }
 
-    void* calloc(const usize size, const u8 alignment) {
+    void* calloc(const usize size, const usize alignment) {
         SF_ASSERT_ALIGNMENT(alignment, "calloc(): incorrect memory alignment, must be power of 2!");
 
         void* block = sf::malloc(size, alignment);
@@ -258,7 +258,7 @@ namespace sf {
         return block;
     }
 
-    void memset(void* data, const usize value, const usize size, const u8 alignment) {
+    void memset(void* data, const usize value, const usize size, const usize alignment) {
         SF_ASSERT_ALIGNMENT(alignment, "memset(): incorrect memory alignment, must be power of 2!");
 
         auto* d = static_cast<usize*>(data);
@@ -270,7 +270,7 @@ namespace sf {
         }
     }
 
-    void memcpy(void* dest_data, const usize dest_size, const void* src_data, const usize src_size, const u8 alignment) {
+    void memcpy(void* dest_data, const usize dest_size, const void* src_data, const usize src_size, const usize alignment) {
         SF_ASSERT_ALIGNMENT(alignment, "memcpy(): incorrect memory alignment, must be power of 2!");
 
         const auto d = static_cast<usize*>(dest_data);
@@ -280,43 +280,110 @@ namespace sf {
         }
     }
 
+    void memmove(void *dest_data, usize dest_size, void *src_data, usize src_size, usize alignment) {
+        SF_ASSERT_ALIGNMENT(alignment, "memmove(): incorrect memory alignment, must be power of 2!");
+
+        sf::memcpy(dest_data, dest_size, src_data, src_size, alignment);
+        sf::free(src_data);
+    }
+
 #endif
 
     void* moveptr(void* ptr, const usize size) {
         return reinterpret_cast<void*>(reinterpret_cast<usize>(ptr) + size);
     }
 
-    memory_bump_t memory_bump_init(const usize size) {
-        memory_bump_t memory_bump;
-        memory_bump.memory = sbrk(0);
-        memory_bump.size = size;
-        if (const auto sbrk_result = reinterpret_cast<isize>(sbrk(size)); sbrk_result < 0) {
-            SF_DEBUG_BREAK();
-        }
-        return memory_bump;
+    memory_arena_t memory_arena_init(void *memory, usize size) {
+        memory_arena_t memory_arena;
+        memory_arena.memory = memory;
+        memory_arena.size = size;
+        memory_arena.prev_offset = 0;
+        memory_arena.current_offset = 0;
+        return memory_arena;
     }
 
-    void memory_bump_free(memory_bump_t& memory_bump) {
-        brk(memory_bump.memory);
-        memory_bump.size = 0;
-        memory_bump.used_size = 0;
+    void memory_arena_free(memory_arena_t &memory_arena) {
+        memory_arena.prev_offset = 0;
+        memory_arena.current_offset = 0;
     }
 
-    void* memory_bump_allocate(memory_bump_t& memory_bump, const usize size) {
-        void* addr = nullptr;
-        if (const usize aligned_size = (size + 7) & ~ 7; memory_bump.used_size + aligned_size <= memory_bump.size) {
-            addr = static_cast<char*>(memory_bump.memory) + memory_bump.used_size;
-            memory_bump.used_size += aligned_size;
+    static usize alignptr(void* ptr, usize alignment) {
+        SF_ASSERT_ALIGNMENT(alignment, "alignptr(): incorrect memory alignment, must be a power of 2!");
+
+        usize p = reinterpret_cast<usize>(ptr);
+        usize a = alignment;
+        // Same as (p % a) but faster as 'a' is a power of two
+        usize modulo = p & (a-1);
+
+        if (modulo != 0) {
+            // If 'p' address is not aligned, push the address to the
+            // next value which is aligned
+            p += a - modulo;
         }
-        else {
-            SF_DEBUG_BREAK();
-        }
-        return addr;
+
+        return p;
     }
 
-    memory_pool_t memory_pool_init(const usize size, const usize alloc_capacity) {
+    void* memory_arena_allocate(memory_arena_t &memory_arena, usize size, usize alignment) {
+        SF_ASSERT_ALIGNMENT(alignment, "memory_arena_allocate(): incorrect alignment value, must be a power of 2!");
+
+        void* current_ptr = moveptr(memory_arena.memory, memory_arena.current_offset);
+        usize offset = alignptr(current_ptr, alignment);
+        offset -= (usize) memory_arena.memory;
+
+        // Check to see if the backing memory has space left
+        if (offset + size <= memory_arena.size) {
+            void* ptr = moveptr(memory_arena.memory, offset);
+            memory_arena.prev_offset = offset;
+            memory_arena.current_offset = offset + size;
+            return ptr;
+        }
+
+        return nullptr;
+    }
+
+    void* memory_arena_resize(memory_arena_t &memory_arena, usize size, void *old_memory, usize old_size, usize alignment) {
+        SF_ASSERT_ALIGNMENT(alignment, "memory_arena_resize(): incorrect alignment value, must be a power of 2!");
+
+        unsigned char* old_mem = (unsigned char*) old_memory;
+
+        if (old_mem == nullptr || old_size == 0) {
+            return memory_arena_allocate(memory_arena, size, alignment);
+        }
+        else if (memory_arena.memory <= old_mem && old_mem < memory_arena.memory + memory_arena.size) {
+            if (memory_arena.memory + memory_arena.prev_offset == old_mem) {
+                memory_arena.current_offset = memory_arena.prev_offset + memory_arena.size;
+                return old_memory;
+            } else {
+                void* new_memory = memory_arena_allocate(memory_arena, size, alignment);
+                size_t copy_size = old_size < size ? old_size : size;
+                // Copy across old memory to the new memory
+                sf::memmove(new_memory, copy_size, old_memory, copy_size, alignment);
+                return new_memory;
+            }
+
+        } else {
+            SF_ASSERT(false, "Memory is out of bound of the buffer in memory_arena!");
+            return nullptr;
+        }
+    }
+
+    memory_arena_temp_t memory_arena_temp_init(memory_arena_t *memory_arena) {
+        memory_arena_temp_t memory_arena_temp;
+        memory_arena_temp.memory_arena = memory_arena;
+        memory_arena_temp.prev_offset = memory_arena->prev_offset;
+        memory_arena_temp.current_offset = memory_arena->current_offset;
+        return memory_arena_temp;
+    }
+
+    void memory_arena_temp_free(memory_arena_temp_t memory_arena_temp) {
+        memory_arena_temp.memory_arena->prev_offset = memory_arena_temp.prev_offset;
+        memory_arena_temp.memory_arena->current_offset = memory_arena_temp.current_offset;
+    }
+
+    memory_pool_t memory_pool_init(void* memory, const usize size, const usize alloc_capacity) {
         memory_pool_t memory_pool;
-        memory_pool.memory = sf::malloc(size);
+        memory_pool.memory = memory;
         memory_pool.size = size;
         memory_pool.last_ptr = memory_pool.memory;
         memory_pool.max_ptr = moveptr(memory_pool.memory, size);
@@ -326,9 +393,7 @@ namespace sf {
     }
 
     void memory_pool_free(memory_pool_t& memory_pool) {
-        sf::free(memory_pool.memory);
         sf::free(memory_pool.allocs);
-        memory_pool.memory = nullptr;
         memory_pool.allocs = nullptr;
         memory_pool.size = 0;
         memory_pool.alloc_capacity = 0;
@@ -398,10 +463,11 @@ namespace sf {
     memory_t global_memory;
 
     void memory_init() {
-        auto [ram_total_bytes, ram_free_bytes, cpu_core_count] = memory_info_get();
+        auto [ram_total_bytes, ram_free_bytes, cpu_core_count] = system_info_get();
 
-        constexpr usize bump_size = 1_MB;
-        global_memory.memory_bump = memory_bump_init(bump_size);
+        constexpr usize arena_size = 1_MB;
+        void* arena_memory = sf::malloc(arena_size);
+        global_memory.memory_arena = memory_arena_init(arena_memory, arena_size);
 
         // memory size = 20% of RAM but less than 1GB
         auto pool_size = static_cast<usize>(static_cast<double>(ram_free_bytes) * 0.2);
@@ -411,12 +477,18 @@ namespace sf {
 
         // pool_alloc_size value can be estimated and tested
         constexpr usize pool_alloc_size = 100;
-        global_memory.memory_pool = memory_pool_init(pool_size, pool_alloc_size);
+        void* pool_memory = sf::malloc(pool_size);
+        global_memory.memory_pool = memory_pool_init(pool_memory, pool_size, pool_alloc_size);
     }
 
     void memory_free() {
-        memory_bump_free(global_memory.memory_bump);
         memory_pool_free(global_memory.memory_pool);
+        sf::free(global_memory.memory_pool.memory);
+        global_memory.memory_pool.memory = nullptr;
+
+        memory_arena_free(global_memory.memory_arena);
+        sf::free(global_memory.memory_arena.memory);
+        global_memory.memory_arena.memory = nullptr;
     }
 
     u64 string_hash(const string_t& string) {
@@ -643,14 +715,18 @@ namespace sf {
         return VirtualFree(addr, length, 0);
     }
 
-    system_info_t Memory::get_memory_info() {
+    system_info_t system_info_get() {
         MEMORYSTATUSEX memory_status;
         memory_status.dwLength = sizeof(memory_status);
         GlobalMemoryStatusEx(&memory_status);
+
+        SYSTEM_INFO win_system_info;
+        GetSystemInfo(&win_system_info);
+
         system_info_t system_info;
         system_info.ram_total_bytes = memory_status.ullTotalVirtual;
         system_info.ram_free_bytes = memory_status.ullAvailVirtual;
-        system_info.cpu_core_count = memory_status.cpu_cores;
+        system_info.cpu_core_count = win_system_info.dwNumberOfProcessors;
         return system_info;
     }
 
@@ -688,8 +764,8 @@ namespace sf {
             THREAD_PRIORITY_HIGHEST,
     };
 
-    void Thread::set_thread_info() {
-        HANDLE handle = (HANDLE) m_handle;
+    void thread_set_info(thread_t& thread) {
+        HANDLE handle = (HANDLE) thread.handle;
 
         // set affinity mask
         DWORD_PTR affinityMask = 1ull << 0;
@@ -697,11 +773,11 @@ namespace sf {
     //    SF_ASSERT(affinity_result > 0, "Failed to set thread affinity mask on Windows!")
 
         // set priority
-        BOOL priority_result = SetThreadPriority(handle, SF_THREAD_PRIORITY_CODE[m_priority]);
+        BOOL priority_result = SetThreadPriority(handle, SF_THREAD_PRIORITY_CODE[thread.priority]);
     //    SF_ASSERT(priority_result != 0, "Failed to set thread priority on Windows!");
 
         // set name
-        HRESULT hr = SetThreadName(m_handle, m_name);
+        HRESULT hr = thread_set_name(handle, thread.name);
     //    SF_ASSERT(SUCCEEDED(hr), "Failed to set thread name on Windows!");
     }
 

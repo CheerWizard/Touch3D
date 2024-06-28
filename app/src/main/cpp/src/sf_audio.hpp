@@ -4,9 +4,9 @@
 
 #define SF_AUDIO_SAMPLE_TO_DB(s) log10((double)(s) * (1 / 32768.0)) * 20
 
-#define SF_AUDIO_DEFAULT_CHANNELS 2
-#define SF_AUDIO_DEFAULT_SAMLE_RATE 48000
-#define SF_AUDIO_DEFAULT_BUFFER_LENGTH_USEC 500 * 1000
+#define SF_AUDIO_CHANNELS 2
+#define SF_AUDIO_SAMLE_RATE 48000
+#define SF_AUDIO_BUFFER_LENGTH_USEC 500 * 1000
 
 enum SF_AUDIO_DEVICE_TYPE {
     SF_AUDIO_DEVICE_TYPE_PLAYBACK,
@@ -33,9 +33,9 @@ namespace sf {
         audio_buffer_t& audio_buffer,
         const audio_device_t& audio_device,
         bool is_playback,
-        u32 channels = SF_AUDIO_DEFAULT_CHANNELS,
-        u32 sample_rate = SF_AUDIO_DEFAULT_SAMLE_RATE,
-        u32 buffer_length_usec = SF_AUDIO_DEFAULT_BUFFER_LENGTH_USEC
+        u32 channels = SF_AUDIO_CHANNELS,
+        u32 sample_rate = SF_AUDIO_SAMLE_RATE,
+        u32 buffer_length_usec = SF_AUDIO_BUFFER_LENGTH_USEC
     );
     SF_API void audio_buffer_close(const audio_buffer_t& audio_buffer);
     SF_API void audio_buffer_play(audio_buffer_t& audio_buffer);
