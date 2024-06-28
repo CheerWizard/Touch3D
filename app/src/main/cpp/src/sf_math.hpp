@@ -4,9 +4,19 @@
 #include <cmath>
 #include <random>
 
-#define SF_PI 3.14159265359f
-#define SF_RADIANS(degree) ((degree) * SF_PI / 180.0f)
-#define SF_E 2.71828f
+constexpr float operator ""_PI(unsigned long long x) {
+    return x * 3.14159265359f;
+}
+
+constexpr float operator ""_E(unsigned long long x) {
+    return x * 2.71828f;
+}
+
+#define SF_RADIANS(x) ((x) * 1_PI / 180.0f)
+
+constexpr float operator ""_RAD(float degree) {
+    return SF_RADIANS(degree);
+}
 
 namespace sf {
 

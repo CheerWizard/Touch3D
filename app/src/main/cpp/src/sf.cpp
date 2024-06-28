@@ -6,29 +6,29 @@ namespace sf {
 
 #define SF_MEMORY_BLOCK_SIZE ( \
     sizeof(usize) +                 \
-    sizeof(MemoryBlock*) +          \
-    sizeof(MemoryBlock*) +          \
+    sizeof(memory_block_t*) +          \
+    sizeof(memory_block_t*) +          \
     sizeof(bool) +                  \
     sizeof(void*)                   \
 )
 
-    struct MemoryBlock final {
+    struct memory_block_t final {
         // metadata for each heap memory block
         usize size = 0;
-        MemoryBlock* prev = nullptr;
-        MemoryBlock* next = nullptr;
+        memory_block_t* prev = nullptr;
+        memory_block_t* next = nullptr;
         bool free = true;
         void* ptr = nullptr;
         // actual data from heap memory block
         char data[1];
     };
 
-    static MemoryBlock* block_root = nullptr;
+    static memory_block_t* block_root = nullptr;
 
-    static MemoryBlock* HeapResize(MemoryBlock* last, usize size) {
-        MemoryBlock* block;
+    static memory_block_t* heap_resize(memory_block_t* last, usize size) {
+        memory_block_t* block;
 
-        block = static_cast<MemoryBlock*>(sbrk(0));
+        block = static_cast<memory_block_t*>(sbrk(0));
 
         isize sbrk_result = reinterpret_cast<isize>(sbrk(SF_MEMORY_BLOCK_SIZE + size));
 
@@ -49,8 +49,8 @@ namespace sf {
         return block;
     }
 
-    static MemoryBlock* BlockFind(MemoryBlock** last, usize size) {
-        MemoryBlock* block = block_root;
+    static memory_block_t* memory_block_find(memory_block_t** last, usize size) {
+        memory_block_t* block = block_root;
         while (block && (block->free && block->size >= size)) {
             *last = block;
             block = block->next;
@@ -58,9 +58,9 @@ namespace sf {
         return block;
     }
 
-    static void BlockSplit(MemoryBlock* block, usize size) {
-        MemoryBlock* new_block;
-        new_block = reinterpret_cast<MemoryBlock*>(block->data + size);
+    static void memory_block_split(memory_block_t* block, usize size) {
+        memory_block_t* new_block;
+        new_block = reinterpret_cast<memory_block_t*>(block->data + size);
         new_block->size = block->size - size - SF_MEMORY_BLOCK_SIZE;
         new_block->next = block->next;
         new_block->free = true;
@@ -72,7 +72,7 @@ namespace sf {
         }
     }
 
-    static MemoryBlock* BlockConcat(MemoryBlock* block) {
+    static memory_block_t* memory_block_concat(memory_block_t* block) {
         if (block->next && block->next->free) {
             block->size = SF_MEMORY_BLOCK_SIZE + block->next->size;
             block->next = block->next->next;
@@ -83,48 +83,82 @@ namespace sf {
         return block;
     }
 
-    static MemoryBlock* BlockGet(void* ptr) {
+    static memory_block_t* memory_block_get(void* ptr) {
         char* tmp;
         tmp = static_cast<char*>(ptr);
-        return static_cast<MemoryBlock*>(ptr = tmp -= SF_MEMORY_BLOCK_SIZE);
+        return static_cast<memory_block_t*>(ptr = tmp -= SF_MEMORY_BLOCK_SIZE);
     }
 
-    static bool BlockIsValid(void* ptr) {
+    static bool memory_block_is_valid(void* ptr) {
         if (block_root) {
             if (ptr > block_root && ptr < sbrk(0)) {
-                return ptr == BlockGet(ptr)->ptr;
+                return ptr == memory_block_get(ptr)->ptr;
             }
         }
         return false;
     }
 
-    static void BlockCopy(MemoryBlock* dest_block, MemoryBlock* src_block, u8 alignment) {
-        memcpy(dest_block->ptr, dest_block->size, src_block->ptr, src_block->size, alignment);
+    static void memory_block_copy(memory_block_t* dest_block, memory_block_t* src_block, u8 alignment) {
+        sf::memcpy(dest_block->ptr, dest_block->size, src_block->ptr, src_block->size, alignment);
     }
 
+#if defined(SF_USE_STD_MALLOC)
+
     void* malloc(usize size, u8 alignment) {
-        MemoryBlock* block;
-        MemoryBlock* last;
+        return std::malloc(size);
+    }
+
+    void free(void* data) {
+        std::free(data);
+    }
+
+    void* realloc(void* old_data, usize size, const u8 alignment) {
+        return std::realloc(old_data, size);
+    }
+
+    void* reallocf(void* old_data, const usize size, const u8 alignment) {
+        return std::reallocf(old_data, size);
+    }
+
+    void* calloc(const usize size, const u8 alignment) {
+        return std::calloc(size);
+    }
+
+    void memset(void* data, const usize value, const usize size, const u8 alignment) {
+        std::memset(data, value, size);
+    }
+
+    void memcpy(void* dest_data, const usize dest_size, const void* src_data, const usize src_size, const u8 alignment) {
+        std::memcpy(dest_data, dest_size, src_data, src_size);
+    }
+
+#else
+
+    void* malloc(usize size, u8 alignment) {
+        SF_ASSERT_ALIGNMENT(alignment, "malloc(): incorrect memory alignment, must be power of 2!");
+
+        memory_block_t* block;
+        memory_block_t* last;
         size = SF_ALIGN(size, alignment); // we should always malloc aligned size (aligned by 32-bit or 64-bit)
 
         if (block_root != nullptr) {
             last = block_root;
-            block = BlockFind(&last, size);
+            block = memory_block_find(&last, size);
             if (block != nullptr) {
                 if (block->size - size >= SF_MEMORY_BLOCK_SIZE + alignment) {
-                    BlockSplit(block, size);
+                    memory_block_split(block, size);
                 }
                 block->free = false;
             }
             else {
-                block = HeapResize(last, size);
+                block = heap_resize(last, size);
                 if (block == nullptr) {
                     return nullptr;
                 }
             }
         }
         else {
-            block = HeapResize(nullptr, size);
+            block = heap_resize(nullptr, size);
             if (block == nullptr) {
                 return nullptr;
             }
@@ -135,15 +169,15 @@ namespace sf {
     }
 
     void free(void* data) {
-        MemoryBlock* block;
-        if (BlockIsValid(data)) {
-            block = BlockGet(data);
+        memory_block_t* block;
+        if (memory_block_is_valid(data)) {
+            block = memory_block_get(data);
             block->free = true;
             if (block->prev && block->prev->free) {
-                block = BlockConcat(block->prev);
+                block = memory_block_concat(block->prev);
             }
             if (block->next) {
-                BlockConcat(block->next);
+                memory_block_concat(block->next);
             }
             else {
                 if (block->prev) {
@@ -158,40 +192,42 @@ namespace sf {
     }
 
     void* realloc(void* old_data, usize size, const u8 alignment) {
-        MemoryBlock* block;
-        MemoryBlock* new_block;
+        SF_ASSERT_ALIGNMENT(alignment, "realloc(): incorrect memory alignment, must be power of 2!");
+
+        memory_block_t* block;
+        memory_block_t* new_block;
         void* new_data;
 
         if (old_data == nullptr) {
-            return malloc(size, alignment);
+            return sf::malloc(size, alignment);
         }
 
-        if (BlockIsValid(old_data)) {
+        if (memory_block_is_valid(old_data)) {
             size = SF_ALIGN(size, alignment);
-            block = BlockGet(old_data);
+            block = memory_block_get(old_data);
 
             if (block->size >= size) {
                 if (block->size - size >= SF_MEMORY_BLOCK_SIZE + alignment) {
-                    BlockSplit(block, size);
+                    memory_block_split(block, size);
                 }
             }
 
             else {
                 if (block->next && block->next->free && (block->size + SF_MEMORY_BLOCK_SIZE + block->next->size) >= size) {
-                    BlockConcat(block);
+                    memory_block_concat(block);
                     if (block->size - size >= SF_MEMORY_BLOCK_SIZE + alignment) {
-                        BlockSplit(block, size);
+                        memory_block_split(block, size);
                     }
                 }
 
                 else {
-                    new_data = malloc(size, alignment);
+                    new_data = sf::malloc(size, alignment);
                     if (new_data == nullptr) {
                         return nullptr;
                     }
-                    new_block = BlockGet(new_data);
-                    BlockCopy(new_block, block, alignment);
-                    free(old_data);
+                    new_block = memory_block_get(new_data);
+                    memory_block_copy(new_block, block, alignment);
+                    sf::free(old_data);
                     return new_data;
                 }
             }
@@ -203,22 +239,28 @@ namespace sf {
     }
 
     void* reallocf(void* old_data, const usize size, const u8 alignment) {
-        void* realloc_block = realloc(old_data, size, alignment);
+        SF_ASSERT_ALIGNMENT(alignment, "reallocf(): incorrect memory alignment, must be power of 2!");
+
+        void* realloc_block = sf::realloc(old_data, size, alignment);
         if (realloc_block == nullptr) {
-            free(old_data);
+            sf::free(old_data);
         }
         return realloc_block;
     }
 
     void* calloc(const usize size, const u8 alignment) {
-        void* block = malloc(size, alignment);
+        SF_ASSERT_ALIGNMENT(alignment, "calloc(): incorrect memory alignment, must be power of 2!");
+
+        void* block = sf::malloc(size, alignment);
         if (block) {
-            memset(block, 0, size, alignment);
+            sf::memset(block, 0, size, alignment);
         }
         return block;
     }
 
     void memset(void* data, const usize value, const usize size, const u8 alignment) {
+        SF_ASSERT_ALIGNMENT(alignment, "memset(): incorrect memory alignment, must be power of 2!");
+
         auto* d = static_cast<usize*>(data);
         if (data != nullptr) {
             const usize aligned_size = size << (alignment / 2);
@@ -229,12 +271,16 @@ namespace sf {
     }
 
     void memcpy(void* dest_data, const usize dest_size, const void* src_data, const usize src_size, const u8 alignment) {
+        SF_ASSERT_ALIGNMENT(alignment, "memcpy(): incorrect memory alignment, must be power of 2!");
+
         const auto d = static_cast<usize*>(dest_data);
         const auto* s = static_cast<const usize*>(src_data);
         for (usize i = 0 ; i * alignment < src_size && i * alignment < dest_size ; i++) {
             d[i] = s[i];
         }
     }
+
+#endif
 
     void* moveptr(void* ptr, const usize size) {
         return reinterpret_cast<void*>(reinterpret_cast<usize>(ptr) + size);
@@ -270,7 +316,7 @@ namespace sf {
 
     memory_pool_t memory_pool_init(const usize size, const usize alloc_capacity) {
         memory_pool_t memory_pool;
-        memory_pool.memory = malloc(size);
+        memory_pool.memory = sf::malloc(size);
         memory_pool.size = size;
         memory_pool.last_ptr = memory_pool.memory;
         memory_pool.max_ptr = moveptr(memory_pool.memory, size);
@@ -280,8 +326,8 @@ namespace sf {
     }
 
     void memory_pool_free(memory_pool_t& memory_pool) {
-        free(memory_pool.memory);
-        free(memory_pool.allocs);
+        sf::free(memory_pool.memory);
+        sf::free(memory_pool.allocs);
         memory_pool.memory = nullptr;
         memory_pool.allocs = nullptr;
         memory_pool.size = 0;
@@ -352,15 +398,15 @@ namespace sf {
     memory_t global_memory;
 
     void memory_init() {
-        auto [ram_total_bytes, ram_free_bytes] = memory_info_get();
+        auto [ram_total_bytes, ram_free_bytes, cpu_core_count] = memory_info_get();
 
-        constexpr usize bump_size = SF_MB(1);
+        constexpr usize bump_size = 1_MB;
         global_memory.memory_bump = memory_bump_init(bump_size);
 
         // memory size = 20% of RAM but less than 1GB
         auto pool_size = static_cast<usize>(static_cast<double>(ram_free_bytes) * 0.2);
-        if (pool_size >= SF_MB(1)) {
-            pool_size = SF_MB(1);
+        if (pool_size >= 1_MB) {
+            pool_size = 1_MB;
         }
 
         // pool_alloc_size value can be estimated and tested
@@ -379,8 +425,8 @@ namespace sf {
     }
 
     date_time_t date_time_get_current() {
-        const ::time_t t = time(nullptr);
-        const tm* lt = localtime(&t);
+        const std::time_t t = std::time(nullptr);
+        const std::tm* lt = std::localtime(&t);
         date_time_t date_time = {};
         date_time.y = lt->tm_year;
         date_time.m = lt->tm_mon;
@@ -393,8 +439,8 @@ namespace sf {
     }
 
     time_t time_get_current() {
-        const ::time_t t = time(nullptr);
-        const tm* lt = localtime(&t);
+        const std::time_t t = std::time(nullptr);
+        const std::tm* lt = std::localtime(&t);
         time_t time = {};
         time.ms = lt->tm_sec * 1000;
         time.s = lt->tm_sec;
@@ -404,8 +450,8 @@ namespace sf {
     }
 
     float time_get_current_ms() {
-        const ::time_t t = time(nullptr);
-        const tm* lt = localtime(&t);
+        const std::time_t t = std::time(nullptr);
+        const std::tm* lt = std::localtime(&t);
         return lt->tm_sec * 1000;
     }
 
@@ -597,20 +643,21 @@ namespace sf {
         return VirtualFree(addr, length, 0);
     }
 
-    MemoryInfo Memory::get_memory_info() {
+    system_info_t Memory::get_memory_info() {
         MEMORYSTATUSEX memory_status;
         memory_status.dwLength = sizeof(memory_status);
         GlobalMemoryStatusEx(&memory_status);
-        MemoryInfo memory_info;
-        memory_info.ram_total_bytes = memory_status.ullTotalVirtual;
-        memory_info.ram_free_bytes = memory_status.ullAvailVirtual;
-        return memory_info;
+        system_info_t system_info;
+        system_info.ram_total_bytes = memory_status.ullTotalVirtual;
+        system_info.ram_free_bytes = memory_status.ullAvailVirtual;
+        system_info.cpu_core_count = memory_status.cpu_cores;
+        return system_info;
     }
 
     const DWORD MS_VC_EXCEPTION = 0x406D1388;
     #pragma pack(push, 8)
 
-    struct ThreadInfo final {
+    struct thread_info_t final {
         DWORD type; // Must be 0x1000.
         LPCSTR name; // Pointer to name (in user addr space).
         DWORD id; // Thread ID (-1=caller thread).
@@ -619,8 +666,8 @@ namespace sf {
 
     #pragma pack(pop)
 
-    HRESULT SetThreadName(DWORD thread_id, const char* thread_name) {
-        ThreadInfo info {};
+    HRESULT thread_set_name(DWORD thread_id, const char* thread_name) {
+        thread_info_t info {};
         info.type = 0x1000;
         info.name = thread_name;
         info.id = thread_id;
@@ -687,13 +734,14 @@ namespace sf {
         return ::munmap(addr, length);
     }
 
-    memory_info_t memory_info_get() {
+    system_info_t memory_info_get() {
         struct sysinfo sys_info {};
         sysinfo(&sys_info);
-        memory_info_t memory_info;
-        memory_info.ram_total_bytes = sys_info.totalram;
-        memory_info.ram_free_bytes = sys_info.freeram;
-        return memory_info;
+        system_info_t system_info;
+        system_info.ram_total_bytes = sys_info.totalram;
+        system_info.ram_free_bytes = sys_info.freeram;
+        system_info.cpu_core_count = sys_info.procs;
+        return system_info;
     }
 
     static const int SF_THREAD_PRIORITY_CODE[SF_THREAD_PRIORITY_COUNT] = {
@@ -753,13 +801,14 @@ namespace sf {
         return ::munmap(addr, length);
     }
 
-    MemoryInfo Memory::get_memory_info() {
+    system_info_t system_info_get() {
         struct sysinfo sys_info {};
         sysinfo(&sys_info);
-        MemoryInfo memory_info;
-        memory_info.ram_total_bytes = sys_info.totalram;
-        memory_info.ram_free_bytes = sys_info.freeram;
-        return memory_info;
+        system_info_t system_info;
+        system_info.ram_total_bytes = sys_info.totalram;
+        system_info.ram_free_bytes = sys_info.freeram;
+        system_info.cpu_core_count = sys_info.procs.
+        return system_info;
     }
 
     static const int SF_THREAD_PRIORITY_CODE[SF_THREAD_PRIORITY_COUNT] = {

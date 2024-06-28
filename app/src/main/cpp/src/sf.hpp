@@ -328,15 +328,27 @@ __inline__ static void SF_DEBUG_BREAK()
 
 #endif // _MSC_VER
 
-#define SF_KB(c) ((c) * 1024)
-#define SF_MB(c) SF_KB(1024)
-#define SF_GB(c) SF_MB(1024)
-#define SF_TB(c) SF_GB(1024)
+constexpr unsigned long long operator ""_KB(unsigned long long bytes) {
+    return bytes * 1024;
+}
+
+constexpr unsigned long long operator ""_MB(unsigned long long bytes) {
+    return bytes * 1024_KB;
+}
+
+constexpr unsigned long long operator ""_GB(unsigned long long bytes) {
+    return bytes * 1024_MB;
+}
+
+constexpr unsigned long long operator ""_TB(unsigned long long bytes) {
+    return bytes * 1024_GB;
+}
 
 // x - target value to align
 // a - alignment in bytes
 #define SF_ALIGN(x,a) (((((x)-1)>>((a)/2))<<((a)/2))+(a))
 #define SF_ALIGNMENT sizeof(void*)
+#define SF_ASSERT_ALIGNMENT(x, ...) SF_ASSERT((x & (x-1)) == 0, ##__VA_ARGS__)
 
 #if defined(SF_DEBUG)
 
@@ -388,6 +400,10 @@ namespace sf {
     SF_API void* mmap(void* addr, usize length, int protection, int flags, int file_desc, long offset);
     SF_API int munmap(void* addr, usize length);
 
+    /**
+     * You can define SF_USE_STD_MALLOC macro in order to switch to std::malloc implementation of allocation functions.
+     */
+
     SF_API void* malloc(usize size, u8 alignment = SF_ALIGNMENT);
     SF_API void free(void* data);
     SF_API void* realloc(void* old_data, usize size, u8 alignment = SF_ALIGNMENT);
@@ -395,36 +411,37 @@ namespace sf {
     SF_API void* calloc(usize size, u8 alignment = SF_ALIGNMENT);
     SF_API void memset(void* data, usize value, usize size, u8 alignment = SF_ALIGNMENT);
     SF_API void memcpy(void* dest_data, usize dest_size, const void* src_data, usize src_size, u8 alignment = SF_ALIGNMENT);
+
     SF_API void* moveptr(void* ptr, usize size);
 
     template<typename T>
     T* malloc_t(usize count) {
-        return static_cast<T*>(malloc(sizeof(T) * count));
+        return static_cast<T*>(sf::malloc(sizeof(T) * count));
     }
 
     template<typename T>
     T* realloc_t(T* data, usize count) {
-        return static_cast<T*>(realloc(data, sizeof(T) * count));
+        return static_cast<T*>(sf::realloc(data, sizeof(T) * count));
     }
 
     template<typename T>
     T* reallocf_t(T* data, usize count) {
-        return static_cast<T*>(reallocf(data, sizeof(T) * count));
+        return static_cast<T*>(sf::reallocf(data, sizeof(T) * count));
     }
 
     template<typename T>
     T* calloc_t(usize count) {
-        return static_cast<T*>(calloc(sizeof(T) * count));
+        return static_cast<T*>(sf::calloc(sizeof(T) * count));
     }
 
     template<typename T>
     void memset_t(T* data, usize value, usize count) {
-        memset(data, value, sizeof(T) * count);
+        sf::memset(data, value, sizeof(T) * count);
     }
 
     template<typename T>
     void memcpy_t(T* dest_data, usize dest_count, const T* src_data, usize src_count) {
-        memcpy(dest_data, sizeof(T) * dest_count, src_data, sizeof(T) * src_count);
+        sf::memcpy(dest_data, sizeof(T) * dest_count, src_data, sizeof(T) * src_count);
     }
 
     template<typename T>
@@ -464,12 +481,13 @@ namespace sf {
     SF_API void* memory_pool_allocate(memory_pool_t& memory_pool, usize size);
     SF_API void memory_pool_free(const memory_pool_t& memory_pool, const void* addr);
 
-    struct memory_info_t final {
+    struct system_info_t final {
         usize ram_total_bytes = 0;
         usize ram_free_bytes = 0;
+        u8 cpu_core_count = 0;
     };
 
-    SF_API memory_info_t memory_info_get();
+    SF_API system_info_t memory_info_get();
 
     struct SF_API memory_t final {
         memory_bump_t memory_bump;
