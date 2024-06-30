@@ -4,10 +4,11 @@
 #include <cassert>
 #include <csignal>
 #include <cstdio>
+#include <functional>
 #include <pthread.h>
 #include <cstring>
 #include <string>
-#include <sstream>
+#include <utility>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -476,12 +477,6 @@ namespace sf {
     SF_API memory_arena_temp_t memory_arena_temp_init(memory_arena_t* memory_arena);
     SF_API void memory_arena_temp_free(memory_arena_temp_t memory_arena_temp);
 
-    struct SF_API memory_stack_t final {
-        void* memory = nullptr;
-        usize
-        usize size = 0;
-    };
-
     struct SF_API memory_pool_alloc_t final {
         bool free = true;
         usize size = 0;
@@ -608,7 +603,7 @@ namespace sf {
     bool circular_buffer_push(circular_buffer_t<T, A>& circular_buffer, const T &item) {
         bool pushed = false;
 
-        usize next = (circular_buffer.head + 1) % circular_buffer.elements.size();
+        usize next = (circular_buffer.head + 1) % circular_buffer.size;
         if (next != circular_buffer.tail) {
             circular_buffer.elements[circular_buffer.head] = item;
             circular_buffer.head = next;
@@ -624,7 +619,7 @@ namespace sf {
 
         if (circular_buffer.tail != circular_buffer.head) {
             item = circular_buffer.elements[circular_buffer.tail];
-            circular_buffer.tail = (circular_buffer.tail + 1) % circular_buffer.elements.size();
+            circular_buffer.tail = (circular_buffer.tail + 1) % circular_buffer.size;
             popped = true;
         }
 
@@ -673,16 +668,7 @@ namespace sf {
     SF_API void thread_join(const thread_t& thread);
     SF_API void thread_set_info(thread_t& thread);
 
-    typedef void (*task_function_t) (void* task_args);
-
-    struct SF_API task_t final {
-        void* args = nullptr;
-        task_function_t function = nullptr;
-
-        void operator()() const {
-            function(args);
-        }
-    };
+    typedef std::function<void()> task_t;
 
     template<typename A>
     struct SF_API thread_pool_t final {
@@ -746,7 +732,7 @@ namespace sf {
     }
 
     template<typename A>
-    void thread_pool_add(thread_pool_t<A>& thread_pool, const task_t& task) {
+    void thread_pool_add_task(thread_pool_t<A>& thread_pool, const task_t& task) {
         // try to push a new task until it is pushed
         while (!circular_buffer_push<task_t>(thread_pool.tasks, task)) {
             condition_var_notify(thread_pool.condition_var_wake);

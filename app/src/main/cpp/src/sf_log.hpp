@@ -97,16 +97,14 @@ namespace sf {
 
     template<typename... Args>
     static void log_verbose(const char* msg, Args &&... args) {
-        task_t task_log;
-        task_log.args = nullptr;
-        task_log.function = [msg, args...](void* task_args) {
+        thread_pool_add_task(g_log_thread_pool, [=] {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][VERBOSE] %s";
 #else
-            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld][VERBOSE] %s";
 #endif
             sprintf(
                     fmt_buffer,
@@ -117,22 +115,19 @@ namespace sf {
             sprintf(text_buffer, fmt_buffer, args...);
             log_console_verbose(SF_LOG_COLOR_LIGHT_GREEN, text_buffer);
             log_file_write(text_buffer);
-        };
+        });
     }
 
     template<typename... Args>
     static void log_info(const char* msg, Args &&... args) {
-        task_t task_log;
-        task_log.args = nullptr;
-        // TODO: need to figure out how to pass a function by lambda with input list params and args expansion
-        auto function = [=](void* task_args) {
+        thread_pool_add_task(g_log_thread_pool, [=] {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][INFO] %s";
 #else
-            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld][INFO] %s";
 #endif
             sprintf(
                     fmt_buffer,
@@ -141,24 +136,21 @@ namespace sf {
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
-            log_console_verbose(SF_LOG_COLOR_GREEN, text_buffer);
+            log_console_info(SF_LOG_COLOR_GREEN, text_buffer);
             log_file_write(text_buffer);
-        };
-        task_log.function = function();
+        });
     }
 
     template<typename... Args>
     static void log_debug(const char* msg, Args &&... args) {
-        task_t task_log;
-        task_log.args = nullptr;
-        task_log.function = [msg, args...](void* task_args) {
+        thread_pool_add_task(g_log_thread_pool, [=] {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][DEBUG] %s";
 #else
-            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld][DEBUG] %s";
 #endif
             sprintf(
                     fmt_buffer,
@@ -167,23 +159,21 @@ namespace sf {
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
-            log_console_verbose(SF_LOG_COLOR_WHITE, text_buffer);
+            log_console_debug(SF_LOG_COLOR_WHITE, text_buffer);
             log_file_write(text_buffer);
-        };
+        });
     }
 
     template<typename... Args>
     static void log_warning(const char* msg, Args &&... args) {
-        task_t task_log;
-        task_log.args = nullptr;
-        task_log.function = [msg, args...](void* task_args) {
+        thread_pool_add_task(g_log_thread_pool, [=] {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][WARNING] %s";
 #else
-            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] %s";
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld][WARNING] %s";
 #endif
             sprintf(
                     fmt_buffer,
@@ -192,23 +182,21 @@ namespace sf {
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
-            log_console_verbose(SF_LOG_COLOR_YELLOW, text_buffer);
+            log_console_warning(SF_LOG_COLOR_YELLOW, text_buffer);
             log_file_write(text_buffer);
-        };
+        });
     }
 
     template<typename... Args>
     static void log_error(const char* filename, const char* function, int line, const char* msg, Args &&... args) {
-        task_t task_log;
-        task_log.args = nullptr;
-        task_log.function = [filename, function, line, msg, args...](void* task_args) {
+        thread_pool_add_task(g_log_thread_pool, [=] {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
             const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][ERROR] log_error in %s -> %s(%i line):\n%s";
 #else
-            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] Error in %s -> %s(%i line):\n%s";
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld][ERROR] Error in %s -> %s(%i line):\n%s";
 #endif
             sprintf(
                     fmt_buffer,
@@ -220,21 +208,19 @@ namespace sf {
             sprintf(text_buffer, fmt_buffer, args...);
             log_console_error(SF_LOG_COLOR_RED, text_buffer);
             log_file_write(text_buffer);
-        };
+        });
     }
 
     template<typename... Args>
     static void log_assert(const char* filename, const char* function, int line, const char* msg, Args &&... args) {
-        task_t task_log;
-        task_log.args = nullptr;
-        task_log.function = [filename, function, line, msg, args...](void* task_args) {
+        thread_pool_add_task(g_log_thread_pool, [=] {
             char fmt_buffer[256] = {};
             char text_buffer[256] = {};
             date_time_t date_time = date_time_get_current();
 #if defined(__LP64__)
-            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][ASSERTION] Assertion Failed in %s -> %s(%i line):\n%s";
+            const char *fmt = "\n[%d.%d.%d][%ld:%ld:%ld.%ld][ASSERT] Assertion Failed in %s -> %s(%i line):\n%s";
 #else
-            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld] Assertion Failed in %s -> %s(%i line):\n%s";
+            const char* fmt = "\n[%d.%d.%d][%lld:%lld:%lld.%lld][ASSERT] Assertion Failed in %s -> %s(%i line):\n%s";
 #endif
             sprintf(
                     fmt_buffer,
@@ -244,9 +230,9 @@ namespace sf {
                     msg
             );
             sprintf(text_buffer, fmt_buffer, args...);
-            log_console_error(SF_LOG_COLOR_RED, text_buffer);
+            log_console_assert(SF_LOG_COLOR_RED, text_buffer);
             log_file_write(text_buffer);
-        };
+        });
     }
 
 }
