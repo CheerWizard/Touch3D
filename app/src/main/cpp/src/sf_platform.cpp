@@ -13,23 +13,23 @@ namespace sf {
 
 namespace sf {
 
-    #define SF_WINDOW (HWND) window.handle
+    #define SF_WINDOW_WIN (HWND) window.handle
 
     static LRESULT CALLBACK WindowProc(HWND handle, UINT msg, WPARAM w_param, LPARAM l_param) {
-        window_t::desktop_events_t* desktop_events;
+        window_t::desktop_events_t* events;
 
         // only called when window is created first time
         if (msg == WM_CREATE) {
             CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT*>(l_param);
-            desktop_events = reinterpret_cast<window_t::desktop_events_t*>(pCreate->lpCreateParams);
-            SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) desktop_events);
+            events = reinterpret_cast<window_t::desktop_events_t*>(pCreate->lpCreateParams);
+            SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) events);
         }
         else {
             LONG_PTR ptr = GetWindowLongPtr(handle, GWLP_USERDATA);
-            desktop_events = reinterpret_cast<window_t::desktop_events_t*>(ptr);
+            events = reinterpret_cast<window_t::desktop_events_t*>(ptr);
         }
 
-        SF_ASSERT(desktop_events != nullptr, "DesktopEvents should not be null here!");
+        SF_ASSERT(events != nullptr, "DesktopEvents should not be null here!");
 
         switch (msg) {
             case WM_PAINT:
@@ -45,7 +45,30 @@ namespace sf {
             {
                 int w = LOWORD(l_param);
                 int h = HIWORD(l_param);
-                desktop_events->event_on_window_resize(w, h);
+                events->event_on_window_resize(w, h);
+                break;
+            }
+
+            case WM_MOUSEMOVE:
+            {
+
+                break;
+            }
+
+            case WM_LBUTTONDOWN:
+            {
+
+                break;
+            }
+
+            case WM_LBUTTONUP:
+            {
+                break;
+            }
+
+            case WM_LBUTTONDBLCLK:
+            {
+
                 break;
             }
 
@@ -70,7 +93,7 @@ namespace sf {
         window_class.lpfnWndProc = WindowProc;
         RegisterClass(&window_class);
 
-        m_handle = (void*) CreateWindowEx(
+        window.handle = (void*) CreateWindowEx(
                 0,
                 window_class.lpszClassName,
                 title,
@@ -83,21 +106,21 @@ namespace sf {
                 &window.desktop_events
         );
 
-        if (m_handle == nullptr) {
+        if (window.handle == nullptr) {
             SF_ASSERT(false, "Failed to create window for Windows!");
         }
 
-        ShowWindow(SF_WINDOW, SW_SHOWDEFAULT);
+        ShowWindow(SF_WINDOW_WIN, SW_SHOWDEFAULT);
 
         DEVMODE devmode;
         EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devmode);
-        m_refresh_rate = devmode.dmDisplayFrequency;
+        window.refresh_rate = devmode.dmDisplayFrequency;
 
         return window;
     }
 
     void window_free(const window_t& window) {
-        DestroyWindow(SF_WINDOW);
+        DestroyWindow(SF_WINDOW_WIN);
     }
 
     bool window_update(window_t& window) {
@@ -106,7 +129,25 @@ namespace sf {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-        return IsWindow(SF_WINDOW);
+        return IsWindow(SF_WINDOW_WIN);
+    }
+
+    bool key_is_pressed(SF_KEYCODE keycode) {
+        return GetAsyncKeyState(keycode) & 0b1;
+    }
+
+    bool mouse_is_pressed(SF_MOUSE_CODE mouse_code) {
+        return GetAsyncKeyState(mouse_code) & 0b1;
+    }
+
+    bool gamepad_is_pressed(SF_GAMEPAD_CODE gamepad_code) {
+        return false;
+    }
+
+    cursor_t cursor_get() {
+        POINT p;
+        GetCursorPos(&p);
+        return { p.x, p.y };
     }
 
 }
@@ -123,7 +164,7 @@ namespace sf {
 
 namespace sf {
 
-    #define SF_WINDOW (XID) window.handle
+    #define SF_WINDOW_WIN (XID) window.handle
 
     static Display* s_display = nullptr;
     static int s_screen;
@@ -156,7 +197,7 @@ namespace sf {
 
         XSetStandardProperties(
                 s_display,
-                SF_WINDOW,
+                SF_WINDOW_WIN,
                 title,
                 title,
                 None,
@@ -167,25 +208,25 @@ namespace sf {
 
         XSelectInput(
                 s_display,
-                SF_WINDOW,
+                SF_WINDOW_WIN,
                 ExposureMask |
                 ButtonPressMask |
                 KeyPressMask
         );
 
-        s_context = XCreateGC(s_display, SF_WINDOW, 0, 0);
+        s_context = XCreateGC(s_display, SF_WINDOW_WIN, 0, 0);
 
         XSetBackground(s_display, s_context, white);
         XSetForeground(s_display, s_context, black);
-        XClearWindow(s_display, SF_WINDOW);
-        XMapRaised(s_display, SF_WINDOW);
+        XClearWindow(s_display, SF_WINDOW_WIN);
+        XMapRaised(s_display, SF_WINDOW_WIN);
 
         return window;
     }
 
     void window_free(const window_t &window) {
         XFreeGC(s_display, s_context);
-        XDestroyWindow(s_display, SF_WINDOW);
+        XDestroyWindow(s_display, SF_WINDOW_WIN);
         XCloseDisplay(s_display);
     }
 
@@ -193,7 +234,7 @@ namespace sf {
         XEvent event;
         bool updated = XNextEvent(s_display, &event) == 0;
         if (event.type == Expose && event.xexpose.count == 0) {
-            XClearWindow(s_display, SF_WINDOW);
+            XClearWindow(s_display, SF_WINDOW_WIN);
         }
         return updated;
     }

@@ -236,4 +236,14 @@ namespace sf {
     SF_API void window_free(const window_t& window);
     SF_API bool window_update(window_t& window);
 
+    SF_API bool key_is_pressed(SF_KEYCODE keycode);
+    SF_API bool mouse_is_pressed(SF_MOUSE_CODE mouse_code);
+    SF_API bool gamepad_is_pressed(SF_GAMEPAD_CODE gamepad_code);
+
+    struct SF_API cursor_t final {
+        int x,y;
+    };
+
+    SF_API cursor_t cursor_get();
+
 }

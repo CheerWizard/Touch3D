@@ -6,6 +6,7 @@ namespace sf {
     app_t s_app = {};
 
     void app_init() {
+        g_system_info = system_info_get();
         g_stl_memory_pool = memory_pool_init(sf::malloc(1_MB), 1_MB, 100);
         SF_LOG_OPEN("App.log");
         s_app.window = window_init("SF App", 400, 300, 800, 600, true);

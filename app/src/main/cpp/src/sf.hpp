@@ -396,11 +396,6 @@ namespace sf {
         assert(condition && text_buffer);
     }
 
-    SF_API int brk(void* addr);
-    SF_API void* sbrk(intptr_t delta);
-    SF_API void* mmap(void* addr, usize length, int protection, int flags, int file_desc, long offset);
-    SF_API int munmap(void* addr, usize length);
-
     /**
      * You can define SF_USE_STD_MALLOC macro in order to switch to std::malloc implementation of allocation functions.
      */
@@ -502,10 +497,13 @@ namespace sf {
     struct system_info_t final {
         usize ram_total_bytes = 0;
         usize ram_free_bytes = 0;
+        usize page_size = 0;
         u8 cpu_core_count = 0;
     };
 
     SF_API system_info_t system_info_get();
+
+    inline system_info_t g_system_info = {};
 
     inline memory_pool_t g_stl_memory_pool = {};
 

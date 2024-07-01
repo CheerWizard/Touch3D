@@ -2,13 +2,15 @@
 
 namespace sf {
 
-    void audio_init() {
-        g_audio_system.devices = audio_device_get_all();
-        SF_ASSERT(!g_audio_system.devices.empty(), "audio_system: no available devices in the system!");
-        g_audio_system.selected_device = g_audio_system.devices[0];
+    static audio_system_t s_audio_system = {};
+
+    void audio_system_init() {
+        s_audio_system.devices = audio_device_get_all();
+        SF_ASSERT(!s_audio_system.devices.empty(), "audio_system: no available devices in the system!");
+        s_audio_system.selected_device = s_audio_system.devices[0];
     }
 
-    void audio_free() {
+    void audio_system_free() {
     }
 
 }
@@ -17,6 +19,49 @@ namespace sf {
 #if defined(SF_WINDOWS)
 
 namespace sf {
+
+    audio_loop_t audio_loop_init() {
+        return {};
+    }
+
+    void audio_loop_free(const audio_loop_t &audio_loop) {
+
+    }
+
+    void audio_loop_start(audio_loop_t &audio_loop) {
+
+    }
+
+    void audio_loop_stop(audio_loop_t &audio_loop) {
+
+    }
+
+    vector_t<audio_device_t> audio_device_get_all() {
+        return {};
+    }
+
+    void
+    audio_buffer_open(audio_buffer_t &audio_buffer, const audio_device_t &audio_device, bool is_playback, u32 channels,
+                      u32 sample_rate, u32 buffer_length_usec) {
+
+    }
+
+    void audio_buffer_close(const audio_buffer_t &audio_buffer) {
+
+    }
+
+    void audio_buffer_play(audio_buffer_t &audio_buffer) {
+
+    }
+
+    void audio_buffer_record(audio_buffer_t &audio_buffer) {
+
+    }
+
+    void audio_buffer_drain(audio_buffer_t &audio_buffer) {
+
+    }
+
 }
 
 #endif

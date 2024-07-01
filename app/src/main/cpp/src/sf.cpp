@@ -4,6 +4,9 @@
 
 namespace sf {
 
+    void* mmap(void* addr, usize size);
+    int munmap(void* addr, usize size);
+
 #define SF_MEMORY_BLOCK_SIZE ( \
     sizeof(usize) +                 \
     sizeof(memory_block_t*) +          \
@@ -28,7 +31,7 @@ namespace sf {
     static memory_block_t* heap_resize(memory_block_t* last, usize size) {
         memory_block_t* block;
 
-        block = static_cast<memory_block_t*>(sbrk(0));
+        block = static_cast<memory_block_t*>(mmap(block, size, ));
 
         isize sbrk_result = reinterpret_cast<isize>(sbrk(SF_MEMORY_BLOCK_SIZE + size));
 
@@ -621,8 +624,8 @@ namespace sf {
         return nullptr;
     }
 
-    void* mmap(void *addr, usize length, int protection, int flags, int file_desc, long offset) {
-        return VirtualAlloc(addr, length, file_desc, protection);
+    void* mmap(void *addr, usize length) {
+        return VirtualAlloc(addr, length, );
     }
 
     int munmap(void *addr, usize length) {
@@ -640,6 +643,7 @@ namespace sf {
         system_info_t system_info;
         system_info.ram_total_bytes = memory_status.ullTotalVirtual;
         system_info.ram_free_bytes = memory_status.ullAvailVirtual;
+        system_info.page_size = win_system_info.dwPageSize;
         system_info.cpu_core_count = win_system_info.dwNumberOfProcessors;
         return system_info;
     }
@@ -691,7 +695,7 @@ namespace sf {
     //    SF_ASSERT(priority_result != 0, "Failed to set thread priority on Windows!");
 
         // set name
-        HRESULT hr = thread_set_name(handle, thread.name);
+        HRESULT hr = thread_set_name(thread.tid, thread.name);
     //    SF_ASSERT(SUCCEEDED(hr), "Failed to set thread name on Windows!");
     }
 

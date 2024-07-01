@@ -64,8 +64,6 @@ namespace sf {
         audio_device_t selected_device;
     };
 
-    inline audio_system_t g_audio_system = {};
-
     SF_API void audio_system_init();
     SF_API void audio_system_free();
 
