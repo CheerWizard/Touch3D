@@ -10,8 +10,8 @@ namespace sf {
         g_stl_memory_pool = memory_pool_init(sf::malloc(1_MB), 1_MB, 100);
         SF_LOG_OPEN("App.log");
         s_app.window = window_init("SF App", 400, 300, 800, 600, true);
-        s_app.window.desktop_events.event_on_window_resize = app_on_window_resize;
-        s_app.window.desktop_events.event_on_key = app_on_key;
+        s_app.window.desktop_events.event_window_resize = app_on_window_resize;
+        s_app.window.desktop_events.event_key_press = app_on_key;
     }
 
     void app_free() {

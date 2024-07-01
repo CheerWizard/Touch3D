@@ -348,13 +348,11 @@ namespace sf {
     void* memory_arena_resize(memory_arena_t &memory_arena, usize size, void *old_memory, usize old_size, usize alignment) {
         SF_ASSERT_ALIGNMENT(alignment, "memory_arena_resize(): incorrect alignment value, must be a power of 2!");
 
-        unsigned char* old_mem = (unsigned char*) old_memory;
-
-        if (old_mem == nullptr || old_size == 0) {
+        if (old_memory == nullptr || old_size == 0) {
             return memory_arena_allocate(memory_arena, size, alignment);
         }
-        else if (memory_arena.memory <= old_mem && old_mem < memory_arena.memory + memory_arena.size) {
-            if (memory_arena.memory + memory_arena.prev_offset == old_mem) {
+        if (memory_arena.memory <= old_memory && old_memory < moveptr(memory_arena.memory, memory_arena.size)) {
+            if (moveptr(memory_arena.memory, memory_arena.prev_offset) == old_memory) {
                 memory_arena.current_offset = memory_arena.prev_offset + memory_arena.size;
                 return old_memory;
             } else {

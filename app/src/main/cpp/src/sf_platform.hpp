@@ -201,27 +201,33 @@ enum SF_GAMEPAD_AXIS
 
 namespace sf {
 
-    typedef void (*event_on_window_resize_t)(int w, int h);
-    typedef void (*event_on_window_move_t)(int x, int y);
-    typedef void (*event_on_key_t)(SF_KEYCODE keycode, bool pressed);
-    typedef void (*event_on_mouse_t)(SF_MOUSE_CODE mouse_code, bool pressed);
-    typedef void (*event_on_gamepad_t)(SF_GAMEPAD_CODE gamepad_code, bool pressed);
-    typedef void (*event_on_cursor_move_t)(double x, double y);
-    typedef void (*event_on_touch_move_t)(double x, double y);
+    typedef void (*event_window_resize_t)(int w, int h);
+    typedef void (*event_window_move_t)(int x, int y);
+    typedef void (*event_key_press_t)(SF_KEYCODE keycode);
+    typedef void (*event_key_release_t)(SF_KEYCODE keycode);
+    typedef void (*event_mouse_press_t)(SF_MOUSE_CODE mouse_code);
+    typedef void (*event_mouse_release_t)(SF_MOUSE_CODE mouse_code);
+    typedef void (*event_gamepad_press_t)(SF_GAMEPAD_CODE gamepad_code);
+    typedef void (*event_gamepad_release_t)(SF_GAMEPAD_CODE gamepad_code);
+    typedef void (*event_cursor_move_t)(double x, double y);
+    typedef void (*event_touch_move_t)(double x, double y);
 
     struct SF_API window_t final {
 
         struct SF_API desktop_events_t final {
-            event_on_window_resize_t event_on_window_resize;
-            event_on_window_move_t event_on_window_move;
-            event_on_key_t event_on_key;
-            event_on_mouse_t event_on_mouse;
-            event_on_gamepad_t event_on_gamepad;
-            event_on_cursor_move_t event_on_cursor_move;
+            event_window_resize_t event_window_resize;
+            event_window_move_t event_window_move;
+            event_key_press_t event_key_press;
+            event_key_release_t event_key_release;
+            event_mouse_press_t event_mouse_press;
+            event_mouse_release_t event_mouse_release;
+            event_gamepad_press_t event_gamepad_press;
+            event_gamepad_release_t event_gamepad_release;
+            event_cursor_move_t event_on_cursor_move;
         };
 
         struct SF_API phone_events_t final {
-            event_on_touch_move_t event_on_touch_move;
+            event_touch_move_t event_on_touch_move;
         };
 
         desktop_events_t desktop_events;

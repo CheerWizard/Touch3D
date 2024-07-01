@@ -161,10 +161,11 @@ namespace sf {
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
 #include <X11/Xutil.h>
+#include <X11/extensions/Xrandr.h>
 
 namespace sf {
 
-    #define SF_WINDOW_WIN (XID) window.handle
+    #define SF_WINDOW_X11 (XID) window.handle
 
     static Display* s_display = nullptr;
     static int s_screen;
@@ -188,8 +189,8 @@ namespace sf {
         window.handle = reinterpret_cast<void*>(XCreateSimpleWindow(
             s_display,
             DefaultRootWindow(s_display),
-            400, 300,
-            800, 600,
+            x, y,
+            w, h,
             5,
             black,
             white
@@ -197,7 +198,7 @@ namespace sf {
 
         XSetStandardProperties(
                 s_display,
-                SF_WINDOW_WIN,
+                SF_WINDOW_X11,
                 title,
                 title,
                 None,
@@ -208,35 +209,78 @@ namespace sf {
 
         XSelectInput(
                 s_display,
-                SF_WINDOW_WIN,
+                SF_WINDOW_X11,
                 ExposureMask |
                 ButtonPressMask |
                 KeyPressMask
         );
 
-        s_context = XCreateGC(s_display, SF_WINDOW_WIN, 0, 0);
+        s_context = XCreateGC(s_display, SF_WINDOW_X11, 0, 0);
 
         XSetBackground(s_display, s_context, white);
         XSetForeground(s_display, s_context, black);
-        XClearWindow(s_display, SF_WINDOW_WIN);
-        XMapRaised(s_display, SF_WINDOW_WIN);
+        XSync(s_display, sync);
+        int num_sizes;
+        XRRScreenSize* xrrs = XRRSizes(s_display, 0, &num_sizes);
+        XRRScreenConfiguration* conf = XRRGetScreenInfo(s_display, SF_WINDOW_X11);
+        window.refresh_rate = XRRConfigCurrentRate(conf);
+        XClearWindow(s_display, SF_WINDOW_X11);
+        XMapRaised(s_display, SF_WINDOW_X11);
 
         return window;
     }
 
     void window_free(const window_t &window) {
         XFreeGC(s_display, s_context);
-        XDestroyWindow(s_display, SF_WINDOW_WIN);
+        XDestroyWindow(s_display, SF_WINDOW_X11);
         XCloseDisplay(s_display);
+    }
+
+    static void handle_event(window_t& window, const XEvent& event) {
+        window_t::desktop_events_t& events = window.desktop_events;
+        switch (event.type) {
+            case Expose: {
+                if (event.xexpose.count == 0) {
+                    XClearWindow(s_display, SF_WINDOW_X11);
+                }
+                break;
+            }
+            case KeyPress: {
+                events.event_key_press(static_cast<SF_KEYCODE>(event.xkey.keycode));
+                break;
+            }
+            case KeyRelease: {
+                events.event_key_release(static_cast<SF_KEYCODE>(event.xkey.keycode));
+                break;
+            }
+            case ButtonPress: {
+                events.event_mouse_press(static_cast<SF_MOUSE_CODE>(event.xbutton.button));
+                break;
+            }
+            case ButtonRelease: {
+                events.event_mouse_release(static_cast<SF_MOUSE_CODE>(event.xbutton.button));
+                break;
+            }
+        }
     }
 
     bool window_update(window_t &window) {
         XEvent event;
         bool updated = XNextEvent(s_display, &event) == 0;
-        if (event.type == Expose && event.xexpose.count == 0) {
-            XClearWindow(s_display, SF_WINDOW_WIN);
-        }
+        handle_event(window, event);
         return updated;
+    }
+
+    bool key_is_pressed(SF_KEYCODE keycode) {
+    }
+
+    bool mouse_is_pressed(SF_MOUSE_CODE mouse_code) {
+    }
+
+    bool gamepad_is_pressed(SF_GAMEPAD_CODE gamepad_code) {
+    }
+
+    cursor_t cursor_get() {
     }
 
 }
