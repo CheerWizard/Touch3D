@@ -15,6 +15,32 @@ enum SF_AUDIO_DEVICE_TYPE {
 
 namespace sf {
 
+    struct SF_API sound_t final {
+        usize size = 0;
+        void* data = nullptr;
+    };
+
+    struct SF_API sound_player_t final {
+        vector_t<sound_t> sounds;
+    };
+
+    SF_API sound_player_t sound_player_init();
+    SF_API void sound_player_free(const sound_player_t& sound_player);
+    SF_API void sound_player_start(sound_player_t& sound_player);
+    SF_API void sound_player_stop(sound_player_t& sound_player);
+    SF_API void sound_player_add_sound(sound_player_t& sound_player, const sound_t& sound);
+
+    struct SF_API sound_recorder_t final {};
+
+    SF_API sound_recorder_t sound_recorder_init();
+    SF_API void sound_recorder_free(const sound_recorder_t& sound_recorder);
+    SF_API void sound_recorder_start(sound_recorder_t& sound_recorder);
+    SF_API void sound_recorder_stop(sound_recorder_t& sound_recorder);
+
+    SF_API void audio_play(const audio_t& audio);
+    SF_API void audio_play_from_file(const char* filepath);
+    SF_API void audio_write_to_file(const char* filepath, char*);
+
     struct SF_API audio_allocator_t final {
         void* allocate(usize size, usize alignment = SF_ALIGNMENT);
         void deallocate(void* addr);

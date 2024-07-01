@@ -116,6 +116,12 @@ namespace sf {
         EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devmode);
         window.refresh_rate = devmode.dmDisplayFrequency;
 
+        if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) {
+            MessageBox(nullptr, "Failed to initialize COM!", "FAILURE", MB_OK);
+            SF_ASSERT(false, "Failed to initialize COM!");
+            return {};
+        }
+
         return window;
     }
 
